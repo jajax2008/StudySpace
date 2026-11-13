@@ -69,6 +69,9 @@ button:disabled{opacity:.5;cursor:default}
 .bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:6px}
 .bar i{display:block;height:100%;background:var(--accent)}
 .bar.over i{background:#c2410c}
+.choice-btn{width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);padding:12px 14px;border-radius:10px;font-weight:500;margin-bottom:8px}
+.choice-btn.correct{background:#16a34a;color:#fff;border-color:#16a34a}
+.choice-btn.wrong{background:#dc2626;color:#fff;border-color:#dc2626}
 </style>
 </head>
 <body>
@@ -77,15 +80,34 @@ button:disabled{opacity:.5;cursor:default}
 <script>
 const COLORS=['#3d7a5a','#c0793b','#5b7fb5','#a45a7c','#8a8f3a'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const blank=()=>({subjects:[],tasks:[],sessions:[],exams:[],notes:[],decks:[],res:[],reviews:[],grades:{},wallet:{tx:[],budget:0,goals:[]},journal:{},habits:[],sleep:{bed:'22:30',wake:'06:00'},theme:'',alerts:false,lead:10,fired:{}});
-function load(){let d=blank();try{d=Object.assign(d,JSON.parse(localStorage.getItem('studyspace1')))}catch(e){}
-d.subjects.forEach(s=>{s.classes=s.classes||[]});d.tasks.forEach(t=>{t.time=t.time||'23:59'});return d}
-let S=load();
-function save(){try{localStorage.setItem('studyspace1',JSON.stringify(S))}catch(e){}}
-const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AI_WORKER_URL='https://studyspace-ai.jasper-esclamado02.workers.dev';
+const MAX_AI_MB=10;
+const MAX_AI_BYTES=MAX_AI_MB*1024*1024;
+const MAX_AI_DAILY=2;
+
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const todayStr=()=>ymd(new Date());
+
+const blank=()=>({subjects:[],tasks:[],sessions:[],exams:[],notes:[],decks:[],res:[],reviews:[],grades:{},wallet:{tx:[],budget:0,goals:[]},journal:{},habits:[],sleep:{bed:'22:30',wake:'06:00'},theme:'',alerts:false,lead:10,fired:{},ai:{date:todayStr(),used:0}});
+function load(){
+  let d=blank();
+  try{d=Object.assign(d,JSON.parse(localStorage.getItem('studyspace1')))}catch(e){}
+  d.subjects.forEach(s=>{s.classes=s.classes||[]});
+  d.tasks.forEach(t=>{t.time=t.time||'23:59'});
+  if(!d.ai)d.ai={date:todayStr(),used:0};
+  delete d.ai.key; // Remove any previously stored local key
+  if(d.ai.date!==todayStr()){d.ai.date=todayStr();d.ai.used=0;}
+  return d;
+}
+let S=load();
+function save(){try{localStorage.setItem('studyspace1',JSON.stringify(S))}catch(e){}}
+function aiLeft(){
+  if(S.ai.date!==todayStr()){S.ai.date=todayStr();S.ai.used=0;save();}
+  return Math.max(0,MAX_AI_DAILY-S.ai.used);
+}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmtT=t=>{const[h,m]=t.split(':').map(Number);return((h+11)%12+1)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')};
 function applyTheme(){if(S.theme)document.documentElement.setAttribute('data-theme',S.theme);else document.documentElement.removeAttribute('data-theme')}
@@ -126,7 +148,7 @@ return'<h1>'+g+'</h1><p class="sub">'+new Date().toLocaleDateString(undefined,{w
 '<h2>Today\u2019s classes</h2><div class="card">'+(tc.length?tc.map(x=>'<div class="row"><span class="dot" style="background:'+x.s.color+'"></span><div class="t"><div>'+esc(x.s.name)+'</div><small>'+fmtT(x.c.start)+(x.c.end?' – '+fmtT(x.c.end):'')+(x.c.room?' · '+esc(x.c.room):'')+'</small></div></div>').join(''):'<div class="empty">No classes today.</div>')+'</div>'+
 '<h2>Due soon</h2><div class="card">'+(open.length?open.slice(0,5).map(t=>taskRow(t)).join(''):'<div class="empty">Nothing due. Open a subject in Academics to add assignments.</div>')+'</div>'+
 '<h2>Exam countdown</h2><div class="card">'+(up.length?up.map(x=>examRow(x,1)).join(''):'<div class="empty">No upcoming exams.</div>')+'<button class="ghost" data-mod="exams" style="margin-top:8px;width:100%">'+(S.exams.length?'Manage exams':'Add an exam')+'</button></div>'+
-'<h2>Study tools</h2><div class="tiles">'+tile('notes','Notes',S.notes.length+' saved')+tile('learn','Learning Techniques',due?due+' to review':'Guided methods')+tile('lib','Resource Library',S.res.length+' saved')+tile('buddy','StudyBuddy','Summaries and quizzes')+tile('grades','Grade Calculator','Scores and targets')+tile('exams','Exams',up.length+' upcoming')+'</div>'+
+'<h2>Study tools</h2><div class="tiles">'+tile('notes','Notes',S.notes.length+' saved')+tile('learn','Learning Techniques',due?due+' to review':'Flashcards & AI')+tile('lib','Resource Library',S.res.length+' saved')+tile('buddy','StudyBuddy','Summaries and quizzes')+tile('grades','Grade Calculator','Scores and targets')+tile('exams','Exams',up.length+' upcoming')+'</div>'+
 '<h2>Money and life</h2><div class="tiles">'+tile('wallet','Wallet',money(walletBal()))+tile('journal','Daily Journal',je&&je.text?'Written today':'Write today')+tile('life','Life Tracker',S.habits.length?hd+' of '+S.habits.length+' done today':'Build habits')+'</div>'+
 '<h2>Ready to study?</h2><button data-go="focus" style="width:100%">Start a focus session</button>'}
 function acad(){
@@ -155,10 +177,11 @@ ringHTML()+
 '<div class="card"><b>'+focusToday()+' minutes</b> focused today across '+S.sessions.filter(x=>x.date===todayStr()).length+' sessions.</div>'}
 function more(){return moreMain()}
 function moreMain(){
-return'<h1>More</h1><p class="sub">Alerts and settings</p>'+
+return'<h1>More</h1><p class="sub">Alerts, AI quota, and settings</p>'+
 '<h2 style="margin-top:0">Alerts</h2><div class="card"><div class="row"><div class="t">Beep for classes and deadlines</div><button id="alerton" class="'+(S.alerts?'ghost':'')+'">'+(S.alerts?'Turn off':'Turn on')+'</button></div>'+
 '<div class="row"><div class="t">Remind me</div><select id="lead" style="width:auto"><option value="0">At the time</option><option value="10">10 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option></select></div>'+
-'<div class="row"><div class="t"><small>Alerts sound while StudySpace is open or running in the background. A fully closed app cannot wake itself up.</small></div><button class="ghost" id="testalert">Test</button></div></div>'+
+'<div class="row"><div class="t"><small>Alerts sound while StudySpace is open or running in the background.</small></div><button class="ghost" id="testalert">Test</button></div></div>'+
+'<h2>AI Flashcards Quota</h2><div class="card"><div class="row"><div class="t">Daily AI uses remaining<br><small>Resets every midnight (Max 2/day, 10MB max file)</small></div><b>'+aiLeft()+' / '+MAX_AI_DAILY+'</b></div></div>'+
 '<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
 '<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'}
 function render(){
@@ -179,7 +202,7 @@ function learnView(){
 const due=S.reviews.filter(r=>r.next<=todayStr()).length;
 return'<button class="ghost" id="mvback">‹ Home</button><h1 style="margin-top:14px">Learning Techniques</h1><p class="sub">Pick a method and it guides you step by step</p>'+
 Object.entries(TECH).map(([k,t])=>'<button class="subcard" data-tech="'+k+'"><span class="t"><b>'+t.n+'</b><br><small>'+t.d+'</small></span><span aria-hidden="true">›</span></button>').join('')+
-'<button class="subcard" data-tech="flash"><span class="t"><b>Flashcards</b><br><small>Make cards from a note, file or text'+(S.decks.length?' · '+S.decks.length+' decks':'')+'</small></span><span aria-hidden="true">›</span></button>'+
+'<button class="subcard" data-tech="flash"><span class="t"><b>Flashcards (AI & Offline)</b><br><small>Summarize & generate multiple choice cards · '+aiLeft()+'/'+MAX_AI_DAILY+' AI left'+(S.decks.length?' · '+S.decks.length+' decks':'')+'</small></span><span aria-hidden="true">›</span></button>'+
 '<button class="subcard" data-tech="spaced"><span class="t"><b>Spaced Repetition</b><br><small>Review at growing intervals'+(due?' · '+due+' due':'')+'</small></span><span aria-hidden="true">›</span></button>'}
 function wizard(){
 if(L.k==='spaced')return spacedView();
@@ -209,10 +232,19 @@ return'<div class="row"><button class="rmain" data-resopen="'+r.id+'"><div>'+esc
 const rlist=()=>{const l=S.res.filter(r=>(rf===''||(rf==='fav'?r.fav:r.subj===rf))&&(!rq||r.name.toLowerCase().includes(rq.toLowerCase()))).sort((a,b)=>b.added-a.added);return l.length?l.map(resRow).join(''):'<div class="empty">'+(S.res.length?'Nothing matches.':'Nothing saved yet. Add a file or a link above.')+'</div>'};
 function libView(){
 const fo='<option value=""'+(rf===''?' selected':'')+'>All</option><option value="fav"'+(rf==='fav'?' selected':'')+'>Favorites</option>'+S.subjects.map(s=>'<option value="'+s.id+'"'+(rf===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('');
-return'<button class="ghost" id="mvback">‹ Home</button><h1 style="margin-top:14px">Resource Library</h1><p class="sub">Files are saved on this phone and open offline. Links need internet.</p>'+
+return'<button class="ghost" id="mvback">‹ Home</button><h1 style="margin-top:14px">Resource Library</h1><p class="sub">Files are saved on this phone and open offline (max 10 MB per file). Links need internet.</p>'+
 '<div class="form"><label>Add to subject<select id="rsubj">'+subjOpts('')+'</select></label><button id="addfile">Add file</button><input id="resfile" type="file" multiple hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,image/*"><input id="rlname" placeholder="Link name (optional)" maxlength="60"><input id="rlurl" type="url" placeholder="https://..."><button class="ghost" id="addlink">Add link</button></div>'+
 '<div class="two" style="margin-top:16px"><input id="rsearch" type="search" placeholder="Search" value="'+esc(rq)+'"><select id="rfilter">'+fo+'</select></div><div class="card" style="margin-top:10px" id="rlist">'+rlist()+'</div>'}
-async function addFiles(fl){const sid=$('#rsubj')?$('#rsubj').value:'';try{for(const f of fl){const id=uid();await fput(id,f);S.res.push({id,type:'file',name:f.name,mime:f.type,size:f.size,subj:sid,fav:false,added:Date.now()})}save();try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}}catch(e){banner('Could not save that file. Your phone storage may be full.')}render()}
+async function addFiles(fl){
+const sid=$('#rsubj')?$('#rsubj').value:'';
+try{
+  for(const f of fl){
+    if(f.size>MAX_AI_BYTES){banner(f.name+' exceeds the 10 MB limit.');continue;}
+    const id=uid();await fput(id,f);S.res.push({id,type:'file',name:f.name,mime:f.type,size:f.size,subj:sid,fav:false,added:Date.now()})
+  }
+  save();try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+}catch(e){banner('Could not save that file. Your phone storage may be full.')}
+render()}
 function sure(b,label){if(b.dataset.armed)return true;b.dataset.armed='1';b.dataset.old=b.textContent;b.textContent=label||'Tap again to confirm';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=b.dataset.old}},4000);return false}
 /* grades, wallet, journal, life, buddy */
 const BK='<button class="ghost" id="nback">‹ Home</button>';
@@ -258,49 +290,151 @@ const sm=mins(S.sleep.bed,S.sleep.wake);
 const rows=S.habits.slice().sort((a,b)=>HCATS.indexOf(a.cat)-HCATS.indexOf(b.cat)).map(h=>{let dots='';for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);dots+='<span class="dot" style="background:'+(h.days[ymd(d)]?'var(--accent)':'var(--line)')+'"></span>'}
 return'<div class="row"><input type="checkbox" style="width:22px;height:22px;flex:none" data-habit="'+h.id+'"'+(h.days[t]?' checked':'')+' aria-label="Done today"><div class="t"><div>'+esc(h.name)+'</div><small>'+h.cat+' · '+habitStreak(h)+' day streak</small></div><div style="display:flex;gap:3px">'+dots+'</div><button class="x" data-dhabit="'+h.id+'" aria-label="Delete">×</button></div>'}).join('');
 return BK+'<h1 style="margin-top:14px">Life Tracker</h1><p class="sub">Habits and routines. The dots show the last 7 days.</p><div class="card">'+(rows||'<div class="empty">No habits yet.</div>')+'</div><div class="form" style="margin-top:12px"><input id="hname" placeholder="New habit, e.g. Drink water" maxlength="40"><select id="hcat">'+HCATS.map(c=>'<option>'+c+'</option>').join('')+'</select><button id="addhabit">Add habit</button></div><h2>Sleep schedule</h2><div class="card"><div class="two"><label>Bedtime<input id="sbed" type="time" value="'+S.sleep.bed+'"></label><label>Wake up<input id="swake" type="time" value="'+S.sleep.wake+'"></label></div><p style="margin:10px 0 0">Planned sleep: <b>'+Math.floor(sm/60)+'h '+sm%60+'m</b></p></div>'}
-let B={mode:'',cards:[],i:0,show:false,ok:0,miss:[],sum:null,nid:'',text:''};
+
+let B={mode:'',cards:[],i:0,show:false,picked:null,ok:0,miss:[],sum:null,nid:'',text:''};
 const bsrc=()=>{const t=$('#btext').value.trim();if(t)return t;const n=S.notes.find(x=>x.id===$('#bnote').value);return n?n.body:''};
 function summarize(t,n){n=n||4;const ss=t.split(/(?<=[.!?])\s+|\n+/).map(x=>x.trim()).filter(x=>x.length>25);if(ss.length<=n)return ss;
 const stop=new Set('the and that with this from have for are was were which their there about into when what your you can not but'.split(' ')),f={};
 (t.toLowerCase().match(/[a-z]{4,}/g)||[]).forEach(w=>{if(!stop.has(w))f[w]=(f[w]||0)+1});
 return ss.map((x,i)=>({i,x,s:(x.toLowerCase().match(/[a-z]{4,}/g)||[]).reduce((a,w)=>a+(f[w]||0),0)/Math.sqrt(x.length)})).sort((a,b)=>b.s-a.s).slice(0,n).sort((a,b)=>a.i-b.i).map(o=>o.x)}
 function makeCards(t){const c=[];t.split(/\n+/).forEach(l=>{if(l.length>220)return;const m=l.match(/^\s*[-•*\d.)\s]*(.{2,60}?)\s*(?::|=| - | – | — )\s*(.{3,})$/);if(m)c.push({q:m[1].trim(),a:m[2].trim()})});return c}
+
 function buddyView(){
-if(B.mode==='quiz'){const c=B.cards[B.i];
-if(!c)return'<h1>Quiz finished</h1><p class="sub">'+B.ok+' of '+B.cards.length+' correct</p><div class="two"><button id="bretry"'+(B.miss.length?'':' disabled')+'>Retry missed</button><button class="ghost" id="bdone">Done</button></div>';
-return'<button class="ghost" id="bdone">‹ Stop</button><p class="sub" style="margin-top:16px">Card '+(B.i+1)+' of '+B.cards.length+'</p><div class="card" style="min-height:140px"><h1 style="font-size:22px">'+esc(c.q)+'</h1>'+(B.show?'<p>'+esc(c.a)+'</p>':'')+'</div><div style="margin-top:12px">'+(B.show?'<div class="two"><button class="ghost" id="bmiss">Missed</button><button id="bgot">Got it</button></div>':'<button id="bshow" style="width:100%">Show answer</button>')+'</div>'}
-return BK+'<h1 style="margin-top:14px">StudyBuddy</h1><p class="sub">Works fully offline using your own notes. It summarizes and quizzes you, but it is not a chat AI yet.</p><div class="form"><select id="bnote"><option value="">Pick a note</option>'+S.notes.map(n=>'<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</select><textarea id="btext" placeholder="Or paste text here. For quizzes, write one card per line like: Term: definition" style="min-height:22vh">'+esc(B.text)+'</textarea><div class="two"><button id="bsum">Summarize</button><button id="bcards">Quiz me</button></div></div>'+
+if(B.mode==='quiz'){
+  const c=B.cards[B.i];
+  if(!c)return'<h1>Quiz finished</h1><p class="sub">'+B.ok+' of '+B.cards.length+' correct</p><div class="two"><button id="bretry"'+(B.miss.length?'':' disabled')+'>Retry missed</button><button class="ghost" id="bdone">Done</button></div>';
+  const hasChoices=Array.isArray(c.choices)&&c.choices.length>1;
+  let choicesHTML='';
+  if(hasChoices){
+    choicesHTML='<div style="margin-top:14px">'+c.choices.map((ch,idx)=>{
+      let cls='choice-btn';
+      if(B.show){
+        if(ch===c.a)cls+=' correct';
+        else if(B.picked===idx)cls+=' wrong';
+      }
+      return'<button class="'+cls+'" data-pick="'+idx+'"'+(B.show?' disabled':'')+'>'+esc(ch)+'</button>';
+    }).join('')+'</div>';
+  }
+  return'<button class="ghost" id="bdone">‹ Stop</button><p class="sub" style="margin-top:16px">Card '+(B.i+1)+' of '+B.cards.length+'</p><div class="card" style="min-height:140px"><h1 style="font-size:20px">'+esc(c.q)+'</h1>'+(!hasChoices&&B.show?'<p style="margin-top:12px;font-weight:600;color:var(--accent)">'+esc(c.a)+'</p>':'')+'</div>'+
+  choicesHTML+
+  '<div style="margin-top:12px">'+(hasChoices?(B.show?'<button id="bnext" style="width:100%">Next card ›</button>':''):(B.show?'<div class="two"><button class="ghost" id="bmiss">Missed</button><button id="bgot">Got it</button></div>':'<button id="bshow" style="width:100%">Show answer</button>'))+'</div>';
+}
+return BK+'<h1 style="margin-top:14px">StudyBuddy</h1><p class="sub">Works offline using your notes, or study your AI multiple-choice decks from Flashcards.</p><div class="form"><select id="bnote"><option value="">Pick a note</option>'+S.notes.map(n=>'<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</select><textarea id="btext" placeholder="Or paste text here. For quizzes, write one card per line like: Term: definition" style="min-height:22vh">'+esc(B.text)+'</textarea><div class="two"><button id="bsum">Summarize</button><button id="bcards">Quiz me</button></div></div>'+
 (B.sum?'<h2>Key points</h2><div class="card">'+(B.sum.length?B.sum.map(x=>'<div class="row"><div class="t"><div>'+esc(x)+'</div></div></div>').join(''):'<div class="empty">Not enough text to summarize.</div>')+'</div>'+(B.sum.length?'<button class="ghost" id="bsave" style="margin-top:10px;width:100%">Save as note</button>':''):'')}
-/* flashcards from files */
-let F={src:'',text:'',cards:[],sum:[],name:'',msg:''};
+
+/* flashcards from files + AI */
+let F={src:'',text:'',cards:[],sum:[],name:'',msg:'',loading:false};
 function loadPdfJs(){return new Promise((ok,no)=>{if(window.pdfjsLib)return ok();const el=document.createElement('script');el.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';el.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok()};el.onerror=()=>no(new Error('net'));document.head.appendChild(el)})}
 async function pdfText(f){await loadPdfJs();const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let t='';for(let i=1;i<=Math.min(pdf.numPages,40);i++){const c=await(await pdf.getPage(i)).getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n'}return t}
-async function fileText(f){const n=f.name.toLowerCase();if(n.endsWith('.pdf'))return pdfText(f);if(/\.(txt|md|csv)$/.test(n)||(f.type||'').startsWith('text/'))return f.text();throw new Error('type')}
+async function fileText(f){
+  if(f.size>MAX_AI_BYTES)throw new Error('size');
+  const n=f.name.toLowerCase();
+  if(n.endsWith('.pdf'))return pdfText(f);
+  if(/\.(txt|md|csv)$/.test(n)||(f.type||'').startsWith('text/'))return f.text();
+  throw new Error('type');
+}
 function buildCards(t){
 const cards=makeCards(t),seen=new Set(cards.map(c=>c.q.toLowerCase()));
 t.replace(/\s+/g,' ').split(/(?<=[.!?])\s+/).forEach(x=>{const m=x.match(/^([A-Z][\w\s'’()-]{2,50}?)\s+(is|are|refers to|means)\s+(.{15,})$/);if(m&&!seen.has(m[1].toLowerCase())){seen.add(m[1].toLowerCase());cards.push({q:'What '+(m[2]==='are'?'are ':'is ')+m[1]+'?',a:m[3]})}});
 const f={};(t.toLowerCase().match(/[a-z]{4,}/g)||[]).forEach(w=>f[w]=(f[w]||0)+1);
 summarize(t,14).filter(x=>x.length<=220).forEach(x=>{const ws=(x.match(/[A-Za-z]{6,}/g)||[]).sort((a,b)=>(f[b.toLowerCase()]||0)-(f[a.toLowerCase()]||0)||b.length-a.length);if(!ws.length)return;const w=ws[0],q='Fill in the blank: '+x.replace(new RegExp('\\b'+w+'\\b','i'),'_____');if(!seen.has(q)){seen.add(q);cards.push({q,a:w})}});
 return cards.slice(0,30)}
+
+async function readFlashSource(){
+  F.src=$('#fsrc').value;F.text=$('#ftext').value;
+  const fi=$('#ffile').files[0];
+  let t='';
+  if(fi){
+    if(fi.size>MAX_AI_BYTES)throw new Error('size');
+    t=await fileText(fi);F.name=fi.name.replace(/\.[^.]+$/,'');
+  }else if(F.text.trim()){
+    if(new Blob([F.text]).size>MAX_AI_BYTES)throw new Error('size');
+    t=F.text;F.name='Pasted text';
+  }else if(F.src.startsWith('n:')){
+    const n=S.notes.find(x=>x.id===F.src.slice(2));
+    t=n?n.body:'';F.name=n?noteTitle(n):'';
+  }else if(F.src.startsWith('r:')){
+    const r=S.res.find(x=>x.id===F.src.slice(2));
+    if(r&&r.size>MAX_AI_BYTES)throw new Error('size');
+    const b=r&&await fget(r.id);
+    if(b){
+      if(b.size>MAX_AI_BYTES)throw new Error('size');
+      t=await fileText(new File([b],r.name,{type:b.type}));
+      F.name=r.name.replace(/\.[^.]+$/,'');
+    }
+  }
+  return t;
+}
+
 async function fmake(){
-F.src=$('#fsrc').value;F.text=$('#ftext').value;const fi=$('#ffile').files[0];F.msg='Reading...';F.cards=[];F.sum=[];render();
-try{let t='';
-if(fi){t=await fileText(fi);F.name=fi.name.replace(/\.[^.]+$/,'')}
-else if(F.text.trim()){t=F.text;F.name='Pasted text'}
-else if(F.src.startsWith('n:')){const n=S.notes.find(x=>x.id===F.src.slice(2));t=n?n.body:'';F.name=n?noteTitle(n):''}
-else if(F.src.startsWith('r:')){const r=S.res.find(x=>x.id===F.src.slice(2)),b=r&&await fget(r.id);if(b){t=await fileText(new File([b],r.name,{type:b.type}));F.name=r.name.replace(/\.[^.]+$/,'')}}
-if(t.trim().length<60)F.msg='Not enough text found. Try another source.';
-else{F.cards=buildCards(t);F.sum=summarize(t);F.msg=F.cards.length?'':'Could not find anything to turn into cards.'}
-}catch(e){F.msg=e.message==='net'?'Reading a PDF needs an internet connection the first time.':'Could not read that file. Try a .txt or .pdf, or paste the text.'}
-render()}
+  F.msg='Reading...';F.cards=[];F.sum=[];render();
+  try{
+    const t=await readFlashSource();
+    if(t.trim().length<60)F.msg='Not enough text found. Try another source.';
+    else{F.cards=buildCards(t);F.sum=summarize(t);F.msg=F.cards.length?'Built offline (no AI credit used).':'Could not find anything to turn into cards.'}
+  }catch(e){
+    F.msg=e.message==='size'?'File exceeds the 10 MB maximum limit.':e.message==='net'?'Reading a PDF needs an internet connection the first time.':'Could not read that file. Try a .txt or .pdf, or paste the text.';
+  }
+  render();
+}
+
+async function fmakeAI(){
+  if(aiLeft()<=0){
+    banner('Daily AI limit reached (2/2 used today). Try again tomorrow!');
+    return;
+  }
+  F.loading=true;F.msg='✨ AI is summarizing and writing multiple-choice flashcards...';F.cards=[];F.sum=[];render();
+  try{
+    const t=await readFlashSource();
+    if(t.trim().length<60){
+      F.loading=false;F.msg='Not enough text found (minimum 60 characters).';render();return;
+    }
+    const promptText=t.slice(0,30000);
+    const res=await fetch(AI_WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:promptText})
+    });
+    if(!res.ok){
+      const errData=await res.json().catch(()=>({}));
+      throw new Error((errData.error&&errData.error.message)||('Server Error '+res.status));
+    }
+    const data=await res.json();
+    const raw=data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts[0].text;
+    const parsed=JSON.parse(raw);
+    F.sum=Array.isArray(parsed.summary)?parsed.summary:[];
+    F.cards=(Array.isArray(parsed.cards)?parsed.cards:[]).map(c=>{
+      let ch=Array.isArray(c.choices)?c.choices.slice(0,4):[];
+      if(!ch.includes(c.a))ch[0]=c.a;
+      ch.sort(()=>Math.random()-.5);
+      return {q:c.q,a:c.a,choices:ch};
+    });
+    S.ai.used=(S.ai.used||0)+1;
+    S.ai.date=todayStr();
+    save();
+    F.msg='✨ AI generated '+F.cards.length+' multiple-choice cards & summary! ('+aiLeft()+'/2 AI uses left today)';
+  }catch(e){
+    if(e.message==='size')F.msg='File exceeds the 10 MB maximum limit.';
+    else if(e.message==='net')F.msg='Internet connection required to read PDF or reach AI.';
+    else F.msg='AI Error: '+e.message;
+  }
+  F.loading=false;
+  render();
+}
+
 function flashView(){
 const files=S.res.filter(r=>r.type==='file'&&/\.(txt|md|pdf)$/i.test(r.name));
-const decks=S.decks.map(d=>'<div class="row"><div class="t"><div>'+esc(d.name)+'</div><small>'+d.cards.length+' cards</small></div><button data-study="'+d.id+'">Study</button><button class="x" data-deldeck="'+d.id+'" aria-label="Delete">×</button></div>').join('');
-return'<button class="ghost" id="lback">‹ Techniques</button><h1 style="margin-top:14px">Flashcards</h1><p class="sub">Pick a note, a saved file, a new file, or paste text. StudySpace builds the cards on your phone, with no AI service.</p>'+
-'<div class="form"><select id="fsrc"><option value="">Pick a note or saved file</option><optgroup label="Notes">'+S.notes.map(n=>'<option value="n:'+n.id+'"'+(F.src==='n:'+n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</optgroup><optgroup label="Library files">'+files.map(r=>'<option value="r:'+r.id+'"'+(F.src==='r:'+r.id?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</optgroup></select><label>Or choose a file (.txt, .md, .pdf)<input id="ffile" type="file" accept=".txt,.md,.pdf,text/plain"></label><textarea id="ftext" placeholder="Or paste text here" style="min-height:18vh">'+esc(F.text)+'</textarea><button id="fmake">Make flashcards</button></div>'+
+const left=aiLeft();
+const decks=S.decks.map(d=>'<div class="row"><div class="t"><div>'+esc(d.name)+'</div><small>'+d.cards.length+' cards'+(d.cards.some(c=>c.choices)?' · Multiple Choice':'')+'</small></div><button data-study="'+d.id+'">Study</button><button class="x" data-deldeck="'+d.id+'" aria-label="Delete">×</button></div>').join('');
+return'<button class="ghost" id="lback">‹ Techniques</button><h1 style="margin-top:14px">Flashcards</h1><p class="sub">Max 10 MB per file. Use AI to summarize & write multiple-choice questions (<b>'+left+' of '+MAX_AI_DAILY+' daily AI uses left</b>), or build offline for free.</p>'+
+'<div class="form"><select id="fsrc"><option value="">Pick a note or saved file</option><optgroup label="Notes">'+S.notes.map(n=>'<option value="n:'+n.id+'"'+(F.src==='n:'+n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</optgroup><optgroup label="Library files">'+files.map(r=>'<option value="r:'+r.id+'"'+(F.src==='r:'+r.id?' selected':'')+'>'+esc(r.name)+' ('+fmtSize(r.size)+')</option>').join('')+'</optgroup></select><label>Or choose a file (.txt, .md, .pdf — max 10 MB)<input id="ffile" type="file" accept=".txt,.md,.pdf,text/plain"></label><textarea id="ftext" placeholder="Or paste text here" style="min-height:18vh">'+esc(F.text)+'</textarea>'+
+'<button id="fmakeai"'+(left<=0||F.loading?' disabled':'')+'>✨ AI Summarize & Make Choices ('+left+'/'+MAX_AI_DAILY+' left)</button>'+
+'<button class="ghost" id="fmake"'+(F.loading?' disabled':'')+'>Make basic cards offline (Free)</button></div>'+
 (F.msg?'<p class="sub" style="margin-top:10px">'+esc(F.msg)+'</p>':'')+
-(F.cards.length?'<h2>'+F.cards.length+' cards ready</h2><div class="card">'+F.cards.slice(0,5).map(c=>'<div class="row"><div class="t"><div>'+esc(c.q)+'</div><small>'+esc(c.a)+'</small></div></div>').join('')+'</div>'+(F.sum.length?'<h2>Key points</h2><div class="card">'+F.sum.map(x=>'<div class="row"><div class="t"><div>'+esc(x)+'</div></div></div>').join('')+'</div>':'')+'<div class="form" style="margin-top:10px"><input id="fname" value="'+esc(F.name)+'" placeholder="Deck name" maxlength="50"><button id="fsave">Save deck</button></div>':'')+
+(F.sum.length?'<h2>Key points summary</h2><div class="card">'+F.sum.map(x=>'<div class="row"><div class="t"><div>'+esc(x)+'</div></div></div>').join('')+'</div>':'')+
+(F.cards.length?'<h2>'+F.cards.length+' cards ready</h2><div class="card">'+F.cards.slice(0,6).map(c=>'<div class="row"><div class="t"><div><b>Q:</b> '+esc(c.q)+'</div><small><b>Ans:</b> '+esc(c.a)+(c.choices?'<br><b>Choices:</b> '+c.choices.map(esc).join(' · '):'')+'</small></div></div>').join('')+'</div><div class="form" style="margin-top:10px"><input id="fname" value="'+esc(F.name)+'" placeholder="Deck name" maxlength="50"><button id="fsave">Save deck (& summary)</button></div>':'')+
 '<h2>Your decks</h2><div class="card">'+(decks||'<div class="empty">No decks yet.</div>')+'</div>'}
+
 /* exams and notes */
 let hv=null;
 const examAt=x=>new Date(x.date+'T'+(x.time||'08:00')).getTime();
@@ -357,7 +491,17 @@ if(d.t){tab=d.t;curSub=null;hv=null;mv=null;L=null;render();return}
 if(d.go){tab=d.go;render();return}
 if(d.open){curSub=d.open;render();$('#view').scrollTop=0;return}
 if(d.mode){setMode(d.mode);render();return}
-if(d.study){const dk=S.decks.find(x=>x.id===d.study);if(dk){B.cards=dk.cards.slice().sort(()=>Math.random()-.5);B.i=0;B.show=false;B.ok=0;B.miss=[];B.mode='quiz';B.back='flash';hv='buddy';L=null;render()}return}
+if(d.study){const dk=S.decks.find(x=>x.id===d.study);if(dk){B.cards=dk.cards.slice().sort(()=>Math.random()-.5);B.i=0;B.show=false;B.picked=null;B.ok=0;B.miss=[];B.mode='quiz';B.back='flash';hv='buddy';L=null;render()}return}
+if(d.pick!==undefined){
+  const idx=+d.pick,c=B.cards[B.i];
+  if(c&&!B.show){
+    B.picked=idx;B.show=true;
+    if(c.choices[idx]===c.a)B.ok++;
+    else B.miss.push(c);
+    render();
+  }
+  return;
+}
 if(d.deldeck){if(sure(t,'Delete?')){S.decks=S.decks.filter(x=>x.id!==d.deldeck);save();render()}return}
 if(d.mod){hv=d.mod;L=null;render();$('#view').scrollTop=0;return}
 if(d.mood){jent(jd||todayStr()).mood=d.mood;save();render();return}
@@ -381,18 +525,27 @@ if(d.deltask){S.tasks=S.tasks.filter(x=>x.id!==d.deltask);save();render();return
 switch(t.id){
 case'back':curSub=null;render();break;
 case'fmake':fmake();break;
-case'fsave':{S.decks.push({id:uid(),name:$('#fname').value.trim()||'Untitled deck',cards:F.cards});save();F.cards=[];F.sum=[];F.msg='Deck saved.';render();break}
+case'fmakeai':fmakeAI();break;
+case'fsave':{
+  const dname=$('#fname').value.trim()||'Untitled deck';
+  S.decks.push({id:uid(),name:dname,cards:F.cards});
+  if(F.sum&&F.sum.length){
+    S.notes.push({id:uid(),title:'Summary: '+dname,body:F.sum.map(s=>'• '+s).join('\n\n'),subj:'',pinned:false,updated:Date.now()});
+  }
+  save();F.cards=[];F.sum=[];F.msg='Deck and summary note saved!';render();break;
+}
 case'addgrade':{const n=$('#gname').value.trim(),sc=+$('#gscore').value,tt=+$('#gtotal').value,w=+$('#gweight').value;if(!n||$('#gscore').value===''||!(tt>0)||!(w>0)){banner('Fill in the name, score, out of, and weight.');return}(S.grades[gs]=S.grades[gs]||{target:90,items:[]}).items.push({id:uid(),name:n,score:sc,total:tt,w});save();render();break}
 case'addtx':{const amt=+$('#wamt').value,cat=$('#wcat').value;if(!(amt>0)){$('#wamt').focus();return}S.wallet.tx.push({id:uid(),type:INC.includes(cat)?'in':'out',amt,cat,note:$('#wnote').value.trim(),date:todayStr()});save();render();break}
 case'addgoal':{const n=$('#goalname').value.trim(),tg=+$('#goaltarget').value;if(!n||!(tg>0)){$('#goalname').focus();return}S.wallet.goals.push({id:uid(),name:n,target:tg,saved:0});save();render();break}
 case'addhabit':{const n=$('#hname').value.trim();if(!n){$('#hname').focus();return}S.habits.push({id:uid(),name:n,cat:$('#hcat').value,days:{}});save();render();break}
 case'bsum':{const tx=bsrc();if(tx.length<40){banner('Add a longer note or paste some text first.');return}B.nid=$('#bnote').value;B.text=$('#btext').value;B.sum=summarize(tx);render();break}
-case'bcards':{const c=makeCards(bsrc());if(c.length<2){banner('Write cards one per line like: Term: definition');return}B.nid=$('#bnote').value;B.text=$('#btext').value;B.cards=c.sort(()=>Math.random()-.5);B.i=0;B.show=false;B.ok=0;B.miss=[];B.mode='quiz';render();break}
+case'bcards':{const c=makeCards(bsrc());if(c.length<2){banner('Write cards one per line like: Term: definition');return}B.nid=$('#bnote').value;B.text=$('#btext').value;B.cards=c.sort(()=>Math.random()-.5);B.i=0;B.show=false;B.picked=null;B.ok=0;B.miss=[];B.mode='quiz';render();break}
 case'bsave':{S.notes.push({id:uid(),title:'Summary',body:B.sum.join('\n\n'),subj:'',pinned:false,updated:Date.now()});save();banner('Saved to Notes');break}
 case'bshow':B.show=true;render();break;
-case'bgot':B.ok++;B.i++;B.show=false;render();break;
-case'bmiss':B.miss.push(B.cards[B.i]);B.i++;B.show=false;render();break;
-case'bretry':B.cards=B.miss;B.miss=[];B.i=0;B.ok=0;B.show=false;render();break;
+case'bnext':B.i++;B.show=false;B.picked=null;render();break;
+case'bgot':B.ok++;B.i++;B.show=false;B.picked=null;render();break;
+case'bmiss':B.miss.push(B.cards[B.i]);B.i++;B.show=false;B.picked=null;render();break;
+case'bretry':B.cards=B.miss;B.miss=[];B.i=0;B.ok=0;B.show=false;B.picked=null;render();break;
 case'bdone':B.mode='';if(B.back){hv='learn';L={k:'flash',i:0,data:{}};B.back=''}render();break;
 case'mvback':hv=null;L=null;render();break;
 case'lback':L=null;hv='learn';render();break;
@@ -429,6 +582,7 @@ if(el.id==='nsearch'){$('#nlist').innerHTML=nlist(el.value);return}
 if(el.id==='ntitle'||el.id==='nbody'){const n=S.notes.find(x=>x.id===hv.slice(2));if(n){n[el.id==='ntitle'?'title':'body']=el.value;n.updated=Date.now();save();$('#nsaved').textContent='Saved'}}});
 document.addEventListener('change',e=>{
 const el=e.target;
+if(el.id==='ffile'&&el.files[0]&&el.files[0].size>MAX_AI_BYTES){banner('That file is over 10 MB. Please pick a smaller file.');el.value='';return}
 if(el.dataset.habit){const h=S.habits.find(x=>x.id===el.dataset.habit);if(h){if(el.checked)h.days[todayStr()]=1;else delete h.days[todayStr()];save();render()}}
 if(el.id==='gsubj'){gs=el.value;render()}
 if(el.id==='gtarget'){(S.grades[gs]=S.grades[gs]||{target:90,items:[]}).target=Math.min(100,Math.max(1,+el.value||90));save();render()}
