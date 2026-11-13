@@ -1,4 +1,4 @@
-const CACHE = "studyspace-v7";
+const CACHE = "studyspace-v9";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -15,8 +15,6 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// Cache first so the app opens instantly and works offline.
-// The PDF reader library (cdnjs) is saved the first time it is used.
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
@@ -24,7 +22,11 @@ self.addEventListener("fetch", (e) => {
       (hit) =>
         hit ||
         fetch(e.request).then((res) => {
-          if (e.request.url.includes("cdnjs.cloudflare.com")) {
+          if (
+            e.request.url.includes("cdnjs.cloudflare.com") ||
+            e.request.url.includes("cdn.jsdelivr.net") ||
+            e.request.url.includes("huggingface.co")
+          ) {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(e.request, copy));
           }
