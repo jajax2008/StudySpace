@@ -383,7 +383,7 @@ async function fmakeAI(){
     banner('Daily AI limit reached (2/2 used today). Try again tomorrow!');
     return;
   }
-  F.loading=true;F.msg='✨ AI is summarizing and writing multiple-choice flashcards...';F.cards=[];F.sum=[];render();
+  F.loading=true;F.msg='✨AI is summarizing and writing multiple-choice flashcards...';F.cards=[];F.sum=[];render();
   try{
     const t=await readFlashSource();
     if(t.trim().length<60){
@@ -412,7 +412,7 @@ async function fmakeAI(){
     S.ai.used=(S.ai.used||0)+1;
     S.ai.date=todayStr();
     save();
-    F.msg='✨ AI generated '+F.cards.length+' multiple-choice cards & summary! ('+aiLeft()+'/2 AI uses left today)';
+    F.msg='AI generated '+F.cards.length+' multiple-choice cards & summary! ('+aiLeft()+'/2 AI uses left today)';
   }catch(e){
     if(e.message==='size')F.msg='File exceeds the 10 MB maximum limit.';
     else if(e.message==='net')F.msg='Internet connection required to read PDF or reach AI.';
