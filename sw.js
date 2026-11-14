@@ -1,4 +1,4 @@
-const CACHE = "studyspace-v9";
+const CACHE = "studyspace-v10";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -22,11 +22,7 @@ self.addEventListener("fetch", (e) => {
       (hit) =>
         hit ||
         fetch(e.request).then((res) => {
-          if (
-            e.request.url.includes("cdnjs.cloudflare.com") ||
-            e.request.url.includes("cdn.jsdelivr.net") ||
-            e.request.url.includes("huggingface.co")
-          ) {
+          if (e.request.url.includes("cdnjs.cloudflare.com")) {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(e.request, copy));
           }
