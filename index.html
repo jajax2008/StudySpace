@@ -280,6 +280,7 @@ return'<h1>More</h1><p class="sub">Alerts, AI quotas, and settings</p>'+
 '<div class="row"><div class="t">Flashcards AI Generator<br><small>Max 10MB file · Resets midnight</small></div><b>'+aiLeft()+' / '+MAX_AI_DAILY+'</b></div>'+
 '<div class="row"><div class="t">StudyBuddy Online AI<br><small>Cloud AI queries left today</small></div><b>'+buddyOnlineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
 '<div class="row"><div class="t">StudyBuddy Offline AI<br><small>Instant local engine · Zero download</small></div><b>'+buddyOfflineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
+'<div class="row"><div class="t">Test online AI<br><small id="aitestmsg">'+esc(AITEST||'Checks the server, then Gemini')+'</small></div><button class="ghost" id="aitest">Test</button></div>'+
 '</div>'+
 '<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
 '<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'}
@@ -452,6 +453,7 @@ async function askStudyBuddy(){
   if($('#bnote'))B.nid=$('#bnote').value;
   if($('#btext'))B.text=$('#btext').value;
   const mode=S.ai.mode||'online';
+  if(mode==='device'){await askDevice(q,ctx);return}
 
   if(mode==='online'){
     if(buddyOnlineLeft()<=0){banner('Daily Online AI limit reached (20/20). Switch to Offline Mode!');return;}
@@ -460,7 +462,7 @@ async function askStudyBuddy(){
     try{
       const notesCtx=ctx||S.notes.slice(0,5).map(n=>noteTitle(n)+': '+n.body).join('\n\n');
       const ctrl=new AbortController();
-      const tid=setTimeout(()=>ctrl.abort(),18000);
+      const tid=setTimeout(()=>ctrl.abort(),50000);
       const res=await fetch(AI_WORKER_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -516,19 +518,132 @@ if(B.mode==='quiz'){
 }
 const mode=S.ai.mode||'online';
 const onLeft=buddyOnlineLeft(),offLeft=buddyOfflineLeft();
-return BK_ACAD+'<h1 style="margin-top:14px">StudyBuddy AI</h1><p class="sub">Switch between Online Cloud AI and Instant Offline AI anytime (20 queries/day each).</p>'+
+return BK_ACAD+'<h1 style="margin-top:14px">StudyBuddy AI</h1><p class="sub">Online (cloud AI), Instant (keyword search in your notes), or On-device (a real AI model running on your phone).</p>'+
 '<div class="modes">'+
-'<button data-aimode="online" class="'+(mode==='online'?'on':'')+'">☁️ Online AI<br><small>'+onLeft+'/'+MAX_BUDDY_DAILY+' left today</small></button>'+
-'<button data-aimode="offline" class="'+(mode==='offline'?'on':'')+'">⚡ Offline AI (Instant)<br><small>'+offLeft+'/'+MAX_BUDDY_DAILY+' left today</small></button>'+
-'</div>'+
+'<button data-aimode="online" class="'+(mode==='online'?'on':'')+'">☁️ Online<br><small>'+onLeft+'/'+MAX_BUDDY_DAILY+' left</small></button>'+
+'<button data-aimode="offline" class="'+(mode==='offline'?'on':'')+'">⚡ Instant<br><small>'+offLeft+'/'+MAX_BUDDY_DAILY+' left</small></button>'+
+'<button data-aimode="device" class="'+(mode==='device'?'on':'')+'">📱 On-device<br><small>'+(DEV.state==='ready'?'ready':'free')+'</small></button>'+
+'</div>'+(mode==='device'?devCard():'')+
 '<div class="chat-box" id="chatbox">'+
-(B.chat.length?B.chat.map(m=>'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Ask StudyBuddy to explain a concept, summarize, or quiz you! ('+(mode==='online'?'Online Cloud Mode':'Instant Offline Mode — works with zero internet')+')</div>')+
+(B.chat.length?B.chat.map(m=>'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Ask StudyBuddy to explain a concept, summarize, or quiz you! ('+(mode==='online'?'Online Cloud Mode':mode==='device'?'On-device AI. Runs on your phone, no internet needed':'Instant Offline Mode — works with zero internet')+')</div>')+
 (B.busy?'<div class="bubble a">Thinking...</div>':'')+
 '</div>'+
 '<div style="display:flex;gap:8px;margin-bottom:18px"><input id="bask" placeholder="Ask a question..." value="'+esc(B.q)+'" maxlength="240"'+(B.busy?' disabled':'')+'><button id="bsend"'+(B.busy?' disabled':'')+'>Ask</button></div>'+
 '<h2>Study Material & Quick Tools</h2>'+
 '<div class="form"><select id="bnote"><option value="">Pick a note for context</option>'+S.notes.map(n=>'<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</select><textarea id="btext" placeholder="Or paste text here. For quizzes, write one card per line like: Term: definition" style="min-height:18vh">'+esc(B.text)+'</textarea><div class="two"><button class="ghost" id="bsum">Quick Summarize</button><button class="ghost" id="bcards">Quiz me</button></div></div>'+
 (B.sum?'<h2>Key points</h2><div class="card">'+(B.sum.length?B.sum.map(x=>'<div class="row"><div class="t"><div>'+esc(x)+'</div></div></div>').join(''):'<div class="empty">Not enough text to summarize.</div>')+'</div>'+(B.sum.length?'<button class="ghost" id="bsave" style="margin-top:10px;width:100%">Save as note</button>':''):'')}
+
+/* ON-DEVICE AI (WebLLM) */
+const WEBLLM_URL='https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm';
+const DEVMODELS={
+  tiny:{label:'Tiny: fastest, simple answers',pre:'SmolLM2-360M-Instruct-',mb:'about 200 MB'},
+  small:{label:'Small: recommended',pre:'Qwen2.5-0.5B-Instruct-',mb:'about 400 MB'},
+  med:{label:'Medium: smarter but slower',pre:'Qwen2.5-1.5B-Instruct-',mb:'about 1 GB'}
+};
+const DEV={state:'idle',pct:0,msg:'',id:'',check:''};
+let WL=null,ENG=null,AITEST='';
+async function wlib(){if(!WL)WL=await import(WEBLLM_URL);return WL}
+async function pickModelId(key){
+  const w=await wlib();
+  const ids=w.prebuiltAppConfig.model_list.map(m=>m.model_id);
+  const pre=(DEVMODELS[key]||DEVMODELS.small).pre;
+  let f16=false;
+  try{const ad=await navigator.gpu.requestAdapter();f16=!!(ad&&ad.features.has('shader-f16'))}catch(e){}
+  const c=ids.filter(i=>i.startsWith(pre));
+  const id=c.find(i=>i.includes(f16?'q4f16_1':'q4f32_1'))||c.find(i=>i.includes('q4'))||c[0];
+  if(!id)throw new Error('That model is not available in this version of the AI engine.');
+  return id;
+}
+function updDev(){const b=$('#devbar'),m=$('#devmsg');if(b)b.style.width=DEV.pct+'%';if(m)m.textContent=DEV.msg}
+function devErr(e){
+  const m=String((e&&e.message)||e);
+  if(/memory|OOM|lost/i.test(m))return 'The phone ran out of memory. Close other apps or pick a smaller model.';
+  if(/fetch|network|load failed/i.test(m))return 'The download failed. Check your wifi and try again. It continues where it stopped.';
+  return m;
+}
+async function devLoad(){
+  if(DEV.state==='loading'||DEV.state==='ready')return;
+  if(!navigator.gpu){DEV.state='error';DEV.msg='This browser has no WebGPU, so on-device AI cannot run here. Use Instant or Online mode.';render();return}
+  DEV.state='loading';DEV.pct=0;DEV.msg='Starting...';render();
+  try{
+    const w=await wlib();
+    const id=await pickModelId(S.ai.dev||'small');
+    DEV.id=id;
+    ENG=await w.CreateMLCEngine(id,{initProgressCallback:p=>{DEV.pct=Math.round((p.progress||0)*100);DEV.msg=p.text||'';updDev()}});
+    DEV.state='ready';S.ai.devCached=S.ai.dev||'small';save();
+  }catch(e){ENG=null;DEV.state='error';DEV.msg=devErr(e)}
+  render();
+}
+async function devCheckPhone(){
+  DEV.check='Checking...';render();
+  try{
+    if(!navigator.gpu)DEV.check='No WebGPU in this browser. On-device AI will not run here.';
+    else{const ad=await navigator.gpu.requestAdapter();
+      DEV.check=!ad?'WebGPU exists but no GPU was found.':'WebGPU works. '+(ad.features.has('shader-f16')?'Fast 16-bit mode is supported.':'16-bit mode is not supported, so the slower 32-bit model will be used.')}
+  }catch(e){DEV.check='Check failed: '+e.message}
+  render();
+}
+function devCard(){
+  const key=S.ai.dev||'small',m=DEVMODELS[key];
+  if(DEV.state==='ready')return'<div class="card" style="margin-bottom:12px"><b>On-device model ready</b><br><small>'+esc(DEV.id)+'. Runs on your phone with no internet. Free and unlimited.</small><div style="display:flex;gap:8px;margin-top:10px"><button class="ghost" id="devunload" style="flex:1">Unload</button><button class="ghost" id="devdelete" style="flex:1">Delete download</button></div></div>';
+  if(DEV.state==='loading')return'<div class="card" style="margin-bottom:12px"><b>'+(S.ai.devCached===key?'Loading model...':'Downloading model...')+'</b><div class="bar"><i id="devbar" style="width:'+DEV.pct+'%"></i></div><small id="devmsg">'+esc(DEV.msg)+'</small></div>';
+  return'<div class="card" style="margin-bottom:12px"><label>Model size<select id="devsize">'+Object.entries(DEVMODELS).map(([k,v])=>'<option value="'+k+'"'+(key===k?' selected':'')+'>'+v.label+'</option>').join('')+'</select></label>'+
+  (DEV.state==='error'?'<p class="late" style="margin:8px 0 0">'+esc(DEV.msg)+'</p>':'')+
+  '<div style="display:flex;gap:8px;margin-top:10px"><button id="devload" style="flex:1">'+(S.ai.devCached===key?'Load model':'Download model')+'</button><button class="ghost" id="devcheck" style="flex:1">Check my phone</button></div>'+
+  '<small>The first download needs wifi ('+m.mb+'). After that it works offline.</small>'+(DEV.check?'<p style="margin:8px 0 0">'+esc(DEV.check)+'</p>':'')+'</div>';
+}
+function pickContext(q,ctx,max){
+  const words=(q.toLowerCase().match(/[a-z0-9]{3,}/g)||[]);
+  const ss=splitSents(ctx).map((x,i)=>({i,x,sc:words.reduce((a,w)=>a+(x.toLowerCase().includes(w)?1:0),0)}));
+  const keep=ss.slice().sort((a,b)=>b.sc-a.sc||a.i-b.i);
+  let n=0;const pick=[];
+  for(const o of keep){if(n+o.x.length>max)continue;pick.push(o);n+=o.x.length;if(n>=max)break}
+  return pick.sort((a,b)=>a.i-b.i).map(o=>o.x).join(' ');
+}
+async function askDevice(q,ctx){
+  if(!ENG){banner('Load the on-device model first.');return}
+  B.chat.push({role:'u',text:q});B.q='';B.busy=true;render();
+  try{
+    const raw=ctx||S.notes.slice(0,5).map(n=>noteTitle(n)+': '+n.body).join('\n\n');
+    const notes=pickContext(q,raw,2500);
+    const msgs=[
+      {role:'system',content:'You are StudyBuddy, a friendly tutor. Answer in at most 5 short sentences. If the study notes contain the answer, use them. If not, say the notes do not cover it, then give a brief general answer.'},
+      {role:'user',content:(notes?'Study notes:\n'+notes+'\n\n':'')+'Question: '+q}
+    ];
+    const stream=await ENG.chat.completions.create({messages:msgs,stream:true,max_tokens:350,temperature:0.3});
+    let txt='',first=true;
+    for await(const ch of stream){
+      const d=(ch.choices&&ch.choices[0]&&ch.choices[0].delta&&ch.choices[0].delta.content)||'';
+      if(!d)continue;
+      txt+=d;
+      if(first){first=false;B.chat.push({role:'a',text:txt});B.busy=false;render()}
+      else{B.chat[B.chat.length-1].text=txt;const el=$('#chatbox');if(el&&el.lastElementChild){el.lastElementChild.textContent=txt;el.scrollTop=el.scrollHeight}}
+    }
+    if(first)B.chat.push({role:'a',text:'No response generated.'});
+  }catch(e){
+    B.chat.push({role:'a',text:'On-device AI error: '+devErr(e)+'\n\nInstant offline answer:\n\n'+offlineSmartAnswer(q,ctx)});
+  }
+  B.busy=false;render();
+}
+async function testOnline(){
+  const say=m=>{AITEST=m;const el=$('#aitestmsg');if(el)el.textContent=m};
+  say('Checking the AI server...');
+  const t0=Date.now();
+  try{
+    const a=new AbortController(),ta=setTimeout(()=>a.abort(),10000);
+    await fetch(AI_WORKER_URL,{signal:a.signal});clearTimeout(ta);
+  }catch(e){say('Cannot reach the AI server (no answer in 10 seconds). Check your connection or try another network.');return}
+  say('Server reached in '+((Date.now()-t0)/1000).toFixed(1)+'s. Asking Gemini...');
+  const t1=Date.now();
+  try{
+    const a=new AbortController(),ta=setTimeout(()=>a.abort(),50000);
+    const r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'chat',question:'Reply with the single word OK.',context:''}),signal:a.signal});
+    clearTimeout(ta);
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)say('Server reached, but Gemini returned an error: '+((j.error&&j.error.message)||('status '+r.status)));
+    else say('Online AI works. Gemini answered in '+((Date.now()-t1)/1000).toFixed(1)+'s'+(j.model?' ('+j.model+')':'')+'.');
+  }catch(e){say('Server reached, but Gemini did not answer within 50 seconds. The worker or the model is too slow.')}
+}
 
 /* FLASHCARDS FROM FILES + AI */
 let F={src:'',text:'',file:null,fileName:'',cards:[],sum:[],name:'',msg:'',loading:false};
@@ -640,7 +755,7 @@ async function fmakeAI(){
     }
     const promptText=t.slice(0,20000);
     const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),25000);
+    const tid=setTimeout(()=>ctrl.abort(),70000);
     const res=await fetch(AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -802,6 +917,11 @@ case'fmake':fmake();break;
 case'fmakeai':fmakeAI();break;
 case'fclearfile':F.file=null;F.fileName='';render();break;
 case'bsend':askStudyBuddy();break;
+case'devload':devLoad();break;
+case'devcheck':devCheckPhone();break;
+case'devunload':{(async()=>{try{if(ENG)await ENG.unload()}catch(e){}ENG=null;DEV.state='idle';render()})();break}
+case'devdelete':{if(sure(t,'Tap again to delete')){(async()=>{try{if(ENG){await ENG.unload();ENG=null}const w=await wlib();await w.deleteModelAllInfoInCache(DEV.id||await pickModelId(S.ai.dev||'small'))}catch(e){}DEV.state='idle';S.ai.devCached='';save();render()})()}break}
+case'aitest':testOnline();break;
 case'fsave':{
   const dname=($('#fname')&&$('#fname').value.trim())||F.name||'Untitled deck';
   if(F.cards&&F.cards.length){
@@ -887,6 +1007,7 @@ if(el.id==='nsubj'){const n=S.notes.find(x=>x.id===hv.slice(2));if(n){n.subj=el.
 if(el.dataset.done){const x=S.tasks.find(t=>t.id===el.dataset.done);if(x){x.done=el.checked;save();render()}}
 if(el.id==='theme'){S.theme=el.value;save();applyTheme()}
 if(el.id==='lead'){S.lead=+el.value;save()}
+if(el.id==='devsize'){S.ai.dev=el.value;DEV.state='idle';DEV.check='';save();render()}
 });
 render();
 if("serviceWorker" in navigator){
