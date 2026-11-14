@@ -1,4 +1,4 @@
-const CACHE = "studyspace-v10";
+const CACHE = "studyspace-v11";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -15,19 +15,17 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
+// Network-first for HTML/app files so updates never get stuck on a white screen,
+// with full offline fallback when disconnected.
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then(
-      (hit) =>
-        hit ||
-        fetch(e.request).then((res) => {
-          if (e.request.url.includes("cdnjs.cloudflare.com")) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, copy));
-          }
-          return res;
-        })
-    )
+    fetch(e.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
