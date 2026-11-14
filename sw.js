@@ -1,4 +1,4 @@
-const CACHE = "studyspace-v11";
+const CACHE = "studyspace-v12";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -15,8 +15,6 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// Network-first for HTML/app files so updates never get stuck on a white screen,
-// with full offline fallback when disconnected.
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
