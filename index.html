@@ -150,22 +150,6 @@ nav{display:none!important}
 .bud.sleepy .ey{animation:none;transform:scaleY(.15)}.bud.sleepy .wv{animation:none}
 @keyframes zz{0%{opacity:0;transform:translateY(6px)}50%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
 @media (prefers-reduced-motion:reduce){.bud.sleepy .zz{animation:none}}
-.tacc{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:10px;margin-bottom:10px}
-.tacc h3{margin:0 0 6px;font-size:16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.tcols{display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--ink)}
-.tcols>div{min-height:48px;padding:6px 8px}
-.tcols>div:first-child{border-right:2px solid var(--ink)}
-.tcols .hd{display:block;text-align:center;color:var(--muted);margin-bottom:2px}
-.tl{display:flex;justify-content:space-between;align-items:center;gap:6px;font-variant-numeric:tabular-nums;font-size:15px;padding:2px 0}
-.tl button{padding:0 8px;background:none;color:var(--muted);font-size:18px}
-.ttot{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);font-weight:600;font-variant-numeric:tabular-nums}
-.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.keys button{padding:14px 0;font-size:20px;background:var(--card);color:var(--ink);border:1px solid var(--line)}
-.keys button.op{background:var(--bg)}
-.keys button.eq{background:var(--accent);color:var(--on);border-color:var(--accent)}
-.cdisp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;text-align:right}
-.cdisp .ex{color:var(--muted);min-height:20px;overflow-wrap:anywhere;font-size:14px}
-.cdisp .rs{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 </style>
 <script>
 // Safety net. If the app fails to start, show a recovery card. Once it is running, a stray error only shows a small banner and never wipes the screen or your data.
@@ -227,8 +211,7 @@ const blank=()=>({
   theme:'',alerts:false,lead:10,fired:{},
   ai:{date:todayStr(),used:0,onlineUsed:0,offlineUsed:0,mode:'online'},
   lb:{date:todayStr(),used:0,noted:false},
-  prof:{name:'',age:'',level:'',done:false},ui:{},
-  acct:{doc:'',name:'',chat:[],pads:[],calc:[]}
+  prof:{name:'',age:'',level:'',done:false},ui:{}
 });
 
 function load(){
@@ -485,7 +468,6 @@ function home(){
 
 /* ACADEMICS TAB */
 function acad(){
-  if(hv==='acct'&&isKate())return acctView();
   if(hv==='exams')return examsView();
   if(hv==='learn')return L?wizard():learnView();
   if(hv==='lib')return libView();
@@ -507,158 +489,8 @@ function acad(){
   tile('buddy','StudyBuddy AI','Online & Offline AI')+
   tile('grades','Grade Calculator','Scores and targets')+
   tile('exams','Exams',up.length+' upcoming')+
-  '</div>'+(isKate()?'<h2>Accounting Lab</h2><div class="tiles">'+tile('acct','Accounting Companion','Socratic ledger tutor')+'</div>':'');
+  '</div>';
 }
-
-/* ACCOUNTING COMPANION (shown only when the profile name is Kate) */
-const ACCT_MAX_DOC=45000;
-const ACT={sub:'tutor',busy:false,q:'',a:'',paste:'',msg:'',expr:'',res:'0',last:0};
-const fmtN=n=>isFinite(n)?(Math.round(n*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'Error';
-const TA_NAMES=['Cash','Accounts Receivable','Allowance for Doubtful Accounts','Merchandise Inventory','Accounts Payable','Sales','Purchases','Sales Returns'];
-const padBal=p=>p.dr.reduce((a,x)=>a+x.amt,0)-p.cr.reduce((a,x)=>a+x.amt,0);
-function acctState(){const A=S.acct=S.acct||{};A.doc=A.doc||'';A.name=A.name||'';A.chat=A.chat||[];A.pads=A.pads||[];A.calc=A.calc||[];return A}
-
-async function docxText(file){
-  const buf=new Uint8Array(await file.arrayBuffer()),dv=new DataView(buf.buffer);
-  let e=buf.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;
-  if(e<0)throw new Error('docx');
-  const cnt=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true),found=null;
-  for(let i=0;i<cnt;i++){
-    if(dv.getUint32(p,true)!==0x02014b50)break;
-    const method=dv.getUint16(p+10,true),csize=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true);
-    if(new TextDecoder().decode(buf.subarray(p+46,p+46+nl))==='word/document.xml'){found={method,csize,off};break}
-    p+=46+nl+xl+cl;
-  }
-  if(!found)throw new Error('docx');
-  const ln=dv.getUint16(found.off+26,true),lx=dv.getUint16(found.off+28,true),st=found.off+30+ln+lx,data=buf.subarray(st,st+found.csize);
-  let xml;
-  if(found.method===0)xml=new TextDecoder().decode(data);
-  else xml=await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
-  return xml.replace(/<w:tab\/>/g,'\t').replace(/<w:br[^>]*\/>/g,'\n').replace(/<\/w:p>\s*<\/w:tc>/g,'</w:tc>').replace(/<\/w:tc>/g,' | ').replace(/<\/w:tr>/g,'\n').replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/ \| (\n|$)/g,'$1')
-    .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
-}
-
-function acctView(){
-  const A=acctState();
-  const docCard=A.doc
-    ?'<div class="card"><b>'+esc(A.name||'Assessment')+'</b><br><small>'+A.doc.length.toLocaleString()+' characters loaded. The tutor treats this as the source of truth.</small><button class="ghost" id="acdocclear" style="margin-top:10px;width:100%">Replace document</button></div>'
-    :'<div class="card"><b>Add your assessment</b><br><small>Upload a .docx, .pdf or .txt, or paste the text. The tutor reads its rules and opening balances first.</small><label style="margin-top:10px">Choose a file<input id="acfile" type="file" accept=".docx,.pdf,.txt,.md"></label><textarea id="acpaste" placeholder="Or paste the assessment text here" style="min-height:14vh;margin-top:8px">'+esc(ACT.paste)+'</textarea><button id="acuse" style="margin-top:8px;width:100%">Use this text</button>'+(ACT.msg?'<p class="late" style="margin:8px 0 0">'+esc(ACT.msg)+'</p>':'')+'</div>';
-  const tab=(k,l)=>'<button data-actab="'+k+'" class="'+(ACT.sub===k?'on':'')+'">'+l+'</button>';
-  return'<button class="ghost" id="acback">‹ Academics</button><h1 style="margin-top:14px">Accounting Companion</h1><p class="sub">A strict but fair tutor. It questions your thinking and never gives you the answer.</p>'+docCard+
-  '<div class="modes" style="margin-top:14px">'+tab('tutor','Tutor')+tab('calc','Calculator')+tab('tacc','T-accounts')+'</div>'+
-  (ACT.sub==='calc'?acCalc():ACT.sub==='tacc'?acTAcc():acTutor());
-}
-function acTutor(){
-  const A=acctState();
-  const chat=A.chat.length?A.chat.map(m=>'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Write your own answer first. The tutor will question it, not solve it.</div>';
-  return'<div class="chat-box" id="acchat">'+chat+(ACT.busy?'<div class="bubble a">Thinking...</div>':'')+'</div>'+
-  '<div class="form"><label>What are you working on?<textarea id="acq" placeholder="e.g. The Feb 16 payment to Apex Wholesale" style="min-height:9vh">'+esc(ACT.q)+'</textarea></label><label>My attempt so far (required, even a rough guess)<textarea id="aca" placeholder="e.g. I think this affects Accounts Payable because..." style="min-height:14vh">'+esc(ACT.a)+'</textarea></label><div class="two"><button id="acsend"'+(ACT.busy?' disabled':'')+'>Check my thinking</button><button class="ghost" id="acnew">Clear chat</button></div></div>'+
-  (ACT.msg&&A.doc?'<p class="late" style="margin:8px 0 0">'+esc(ACT.msg)+'</p>':'');
-}
-async function askAccounting(){
-  const A=acctState();
-  if(ACT.busy)return;
-  const q=($('#acq')||{value:ACT.q}).value.trim(),a=($('#aca')||{value:ACT.a}).value.trim();
-  ACT.q=q;ACT.a=a;ACT.msg='';
-  if(!A.doc){ACT.msg='Add the assessment first so the tutor can read its rules.';render();return}
-  if(a.length<3){ACT.msg='Write your own attempt first, even a rough guess. Then I can help.';render();return}
-  const hist=A.chat.filter(m=>!m.x).slice(-10).map(m=>({role:m.role==='u'?'user':'model',text:m.text.slice(0,1200)}));
-  A.chat.push({role:'u',text:(q?'Working on: '+q+'\n\n':'')+'My attempt: '+a});
-  ACT.q='';ACT.a='';ACT.busy=true;save();render();
-  try{
-    const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),65000);
-    const res=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'accounting',name:(S.prof&&S.prof.name)||'',doc:A.doc,question:q,attempt:a,history:hist,device:DEVID}),signal:ctrl.signal});
-    clearTimeout(tid);
-    if(res.status===429)A.chat.push({role:'a',text:'I have reached my limit for today, so I have to stop here. Keep working on your own, and I will be back tomorrow.',x:true});
-    else if(!res.ok){const ed=await res.json().catch(()=>({}));throw new Error((ed.error&&ed.error.message)||('Server error '+res.status))}
-    else{
-      const data=await res.json();
-      const parts=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
-      const tp=parts.find(p=>p.text&&!p.thought)||parts[0];
-      const reply=(tp&&tp.text||'').trim();
-      A.chat.push({role:'a',text:reply||'I could not form a reply. Try wording your attempt a little differently.',x:!reply});
-    }
-  }catch(e){A.chat.push({role:'a',text:'I could not reach the tutor just now ('+String(e.message).slice(0,120)+'). Try again in a moment.',x:true})}
-  ACT.busy=false;A.chat=A.chat.slice(-40);save();render();
-}
-async function acLoadFile(f){
-  if(!f)return;
-  const A=acctState();
-  ACT.msg='Reading...';render();
-  try{
-    const t=(await fileText(f)).trim();
-    if(t.length<80)throw new Error('short');
-    A.doc=t.slice(0,ACCT_MAX_DOC);A.name=f.name;
-    ACT.msg=t.length>ACCT_MAX_DOC?'Only the first '+ACCT_MAX_DOC.toLocaleString()+' characters were kept.':'';
-    save();
-  }catch(e){ACT.msg=e.message==='size'?'That file is too large.':e.message==='short'?'Not enough readable text. Try pasting it instead.':'Could not read that file. Try pasting the text instead.'}
-  render();
-}
-
-/* calculator */
-function acEval(s){
-  const t=s.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/(\d+(?:\.\d+)?)%/g,'($1/100)');
-  if(!t.trim()||!/^[0-9+\-*/().\s]+$/.test(t))return null;
-  try{const v=Function('"use strict";return ('+t+')')();return typeof v==='number'&&isFinite(v)?v:null}catch(e){return null}
-}
-function acCalc(){
-  const K=[['C','op'],['(','op'],[')','op'],['÷','op'],['7'],['8'],['9'],['×','op'],['4'],['5'],['6'],['−','op'],['1'],['2'],['3'],['+','op'],['0'],['00'],['.'],['⌫','op'],['%','op'],['Ans','op']];
-  const keys=K.map(k=>'<button class="'+(k[1]||'')+'" data-ck="'+k[0]+'">'+k[0]+'</button>').join('')+'<button class="eq" data-ck="=" style="grid-column:span 2">=</button>';
-  const hist=acctState().calc.slice().reverse().map(h=>'<div class="row" style="padding:6px 0"><div class="t"><small>'+esc(h.e)+'</small></div><b>'+esc(h.r)+'</b></div>').join('');
-  return'<div style="margin-top:12px"><div class="cdisp"><div class="ex" id="acex">'+esc(ACT.expr)+'</div><div class="rs" id="acrs">'+esc(ACT.res)+'</div></div><div class="keys">'+keys+'</div>'+(hist?'<h2>Recent</h2><div class="card">'+hist+'</div>':'')+
-  '<h2>Chain discount</h2><div class="form"><div class="two"><label>List price<input id="cdp" type="number" step="any"></label><label>Discounts % (comma)<input id="cdd" placeholder="20,10,5"></label></div><button class="ghost" id="cdgo">Compute</button><div class="card" id="cdout" style="display:none"></div></div>'+
-  '<h2>Depreciation</h2><div class="form"><div class="two"><label>Cost<input id="dpc" type="number" step="any"></label><label>Salvage<input id="dps" type="number" step="any"></label></div><div class="two"><label>Life (years)<input id="dpl" type="number" min="1" step="1"></label><label>Method<select id="dpm"><option value="sl">Straight-line</option><option value="ddb">Double-declining</option><option value="syd">Sum-of-years</option></select></label></div><button class="ghost" id="dpgo">Compute</button><div class="card" id="dpout" style="display:none"></div></div></div>';
-}
-function acKey(v){
-  if(v==='C'){ACT.expr='';ACT.res='0'}
-  else if(v==='⌫')ACT.expr=ACT.expr.slice(0,-1);
-  else if(v==='Ans')ACT.expr+=String(ACT.last||0);
-  else if(v==='='){
-    const r=acEval(ACT.expr);
-    if(r===null){ACT.res='Check the entry'}
-    else{ACT.res=fmtN(r);ACT.last=r;const A=acctState();A.calc.push({e:ACT.expr,r:ACT.res});A.calc=A.calc.slice(-6);ACT.expr=String(Math.round(r*1e6)/1e6);save();render();return}
-  }else ACT.expr+=v;
-  if(v!=='='&&v!=='C'){const r=acEval(ACT.expr);if(r!==null)ACT.res=fmtN(r)}
-  if(!ACT.expr)ACT.res='0';
-  const ex=$('#acex'),rs=$('#acrs');if(ex)ex.textContent=ACT.expr;if(rs)rs.textContent=ACT.res;
-}
-
-/* T-account scratchpad */
-function acTAcc(){
-  const P=acctState().pads;
-  const col=(p,side)=>p[side].map(x=>'<div class="tl"><span>'+(x.ref?'<small>'+esc(x.ref)+'</small> ':'')+fmtN(x.amt)+'</span><button data-taent="'+p.id+':'+side+':'+x.id+'" aria-label="Remove entry">×</button></div>').join('');
-  const cards=P.map(p=>{
-    const b=padBal(p),sd=p.dr.reduce((a,x)=>a+x.amt,0),sc=p.cr.reduce((a,x)=>a+x.amt,0);
-    return'<div class="tacc"><h3><span>'+esc(p.name)+'</span><button class="x" data-tadel="'+p.id+'" aria-label="Delete account">×</button></h3><div class="tcols"><div><small class="hd">Debit</small>'+col(p,'dr')+'</div><div><small class="hd">Credit</small>'+col(p,'cr')+'</div></div><div class="ttot"><span style="padding:4px 8px">'+fmtN(sd)+'</span><span style="padding:4px 8px">'+fmtN(sc)+'</span></div><p style="margin:6px 0 8px">Balance: <b>'+(Math.abs(b)<0.005?'0.00':(b>0?'Dr ':'Cr ')+fmtN(Math.abs(b)))+'</b></p><div class="two"><input id="taamt-'+p.id+'" type="number" step="any" placeholder="Amount"><input id="taref-'+p.id+'" placeholder="Ref (optional)" maxlength="12"></div><div class="two" style="margin-top:6px"><button class="ghost" data-taadd="'+p.id+':dr">+ Debit</button><button class="ghost" data-taadd="'+p.id+':cr">+ Credit</button></div></div>';
-  }).join('');
-  const dr=P.reduce((a,p)=>a+Math.max(0,padBal(p)),0),cr=P.reduce((a,p)=>a+Math.max(0,-padBal(p)),0),diff=dr-cr;
-  return'<p class="sub" style="margin-top:12px">Your own scratchpad. Nothing here is sent to the tutor.</p><div style="display:flex;gap:8px"><input id="taname" placeholder="Account name" maxlength="40"><button id="taaddpad" style="white-space:nowrap">Add</button></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px">'+TA_NAMES.map((n,i)=>'<button class="ghost" style="padding:6px 10px;font-size:13px" data-tachip="'+i+'">'+n+'</button>').join('')+'</div>'+
-  (cards||'<div class="empty">Add an account to start.</div>')+
-  (P.length?'<div class="card"><b>Trial balance check</b><br>Debit balances: '+fmtN(dr)+'<br>Credit balances: '+fmtN(cr)+'<br>'+(Math.abs(diff)<0.005?'<span style="color:var(--accent);font-weight:600">Balanced</span>':'<span class="late">Off by '+fmtN(Math.abs(diff))+'</span>')+'</div>':'');
-}
-function acStash(){if($('#acq'))ACT.q=$('#acq').value;if($('#aca'))ACT.a=$('#aca').value}
-function acClick(t,d){
-  const A=acctState();
-  if(d.actab){acStash();ACT.sub=d.actab;ACT.msg='';render();return true}
-  if(d.ck){acKey(d.ck);return true}
-  if(d.tachip!==undefined){A.pads.push({id:uid(),name:TA_NAMES[+d.tachip],dr:[],cr:[]});save();render();return true}
-  if(d.taadd){const[id,side]=d.taadd.split(':'),p=A.pads.find(x=>x.id===id),el=$('#taamt-'+id),amt=el?+el.value:0;if(!p||!(amt>0)){if(el)el.focus();return true}p[side].push({id:uid(),amt,ref:($('#taref-'+id)||{value:''}).value.trim()});save();render();return true}
-  if(d.taent){const[id,side,eid]=d.taent.split(':'),p=A.pads.find(x=>x.id===id);if(p){p[side]=p[side].filter(x=>x.id!==eid);save();render()}return true}
-  if(d.tadel){if(sure(t,'Delete?')){A.pads=A.pads.filter(x=>x.id!==d.tadel);save();render()}return true}
-  switch(t.id){
-    case'acback':hv=null;render();return true;
-    case'acuse':{const tx=$('#acpaste').value.trim();if(tx.length<80){ACT.paste=tx;ACT.msg='Paste more of the assessment (at least a few lines).';render();return true}A.doc=tx.slice(0,ACCT_MAX_DOC);A.name='Pasted text';ACT.paste='';ACT.msg='';save();render();return true}
-    case'acdocclear':A.doc='';A.name='';ACT.msg='';save();render();return true;
-    case'acsend':askAccounting();return true;
-    case'acnew':if(sure(t,'Tap again to clear')){A.chat=[];save();render()}return true;
-    case'taaddpad':{const n=$('#taname').value.trim();if(!n){$('#taname').focus();return true}A.pads.push({id:uid(),name:n.slice(0,40),dr:[],cr:[]});save();render();return true}
-    case'cdgo':{const p=+$('#cdp').value,ds=$('#cdd').value.split(/[,\s]+/).map(Number).filter(x=>x>0&&x<100),o=$('#cdout');o.style.display='block';if(!(p>0)||!ds.length){o.textContent='Enter a list price and at least one discount, like 20,10,5.';return true}const net=ds.reduce((a,x)=>a*(1-x/100),p);o.innerHTML='Net price: <b>'+fmtN(net)+'</b><br>Total discount: '+fmtN(p-net)+' ('+fmtN((1-net/p)*100)+'% single equivalent)';return true}
-    case'dpgo':{const c=+$('#dpc').value,s=+$('#dps').value||0,n=Math.round(+$('#dpl').value),m=$('#dpm').value,o=$('#dpout');o.style.display='block';if(!(c>0)||!(n>=1)||s<0||s>=c){o.textContent='Enter cost, a salvage value below cost, and life in years.';return true}let bv=c,acc=0,rows='';for(let y=1;y<=n;y++){let e=m==='sl'?(c-s)/n:m==='syd'?(n-y+1)/(n*(n+1)/2)*(c-s):Math.min(bv*2/n,bv-s);if(m==='ddb'&&y===n)e=bv-s;e=Math.max(0,e);acc+=e;bv-=e;rows+='<div class="row" style="padding:6px 0"><div class="t">Year '+y+'</div><div style="text-align:right"><b>'+fmtN(e)+'</b><br><small>Accum '+fmtN(acc)+' · Book '+fmtN(bv)+'</small></div></div>'}o.innerHTML=rows;return true}
-  }
-  return false;
-}
-document.addEventListener('input',e=>{const el=e.target;if(el.id==='acq')ACT.q=el.value;else if(el.id==='aca')ACT.a=el.value;else if(el.id==='acpaste')ACT.paste=el.value});
-document.addEventListener('change',e=>{if(e.target.id==='acfile')acLoadFile(e.target.files[0])});
 
 /* LIFE TAB */
 function life(){
@@ -780,7 +612,6 @@ function render(){
     motionAfterRender();
     if(tab==='more'&&$('#theme')){$('#theme').value=S.theme;$('#lead').value=String(S.lead)}
     const cb=$('#chatbox');if(cb)cb.scrollTop=cb.scrollHeight;
-    const ac=$('#acchat');if(ac)ac.scrollTop=ac.scrollHeight;
     if(tab==='life'&&hv==='lifebuddy'&&LB.breath)breatheStart();else breatheStop();
   }catch(err){
     $('#view').innerHTML='<div class="card"><h2>Display Error</h2><p><small>'+esc(err.message)+'</small></p><button id="hardrepair">Download backup &amp; repair</button></div>';
@@ -1058,4 +889,569 @@ async function devLoad(){
     const w=await wlib();
     const id=await pickModelId(S.ai.dev||'small');
     DEV.id=id;
-    ENG=await w.CreateMLCEngine(id,{i
+    ENG=await w.CreateMLCEngine(id,{initProgressCallback:p=>{DEV.pct=Math.round((p.progress||0)*100);DEV.msg=p.text||'';updDev()}});
+    DEV.state='ready';S.ai.devCached=S.ai.dev||'small';save();
+  }catch(e){ENG=null;DEV.state='error';DEV.msg=devErr(e)}
+  render();
+}
+async function devCheckPhone(){
+  DEV.check='Checking...';render();
+  try{
+    if(!navigator.gpu)DEV.check='No WebGPU in this browser. On-device AI will not run here.';
+    else{const ad=await navigator.gpu.requestAdapter();
+      DEV.check=!ad?'WebGPU exists but no GPU was found.':'WebGPU works. '+(ad.features.has('shader-f16')?'Fast 16-bit mode is supported.':'16-bit mode is not supported, so the slower 32-bit model will be used.')}
+  }catch(e){DEV.check='Check failed: '+e.message}
+  render();
+}
+function devCard(){
+  const key=S.ai.dev||'small',m=DEVMODELS[key];
+  if(DEV.state==='ready')return'<div class="card" style="margin-bottom:12px"><b>On-device model ready</b><br><small>'+esc(DEV.id)+'. Runs on your phone with no internet. Free and unlimited.</small><div style="display:flex;gap:8px;margin-top:10px"><button class="ghost" id="devunload" style="flex:1">Unload</button><button class="ghost" id="devdelete" style="flex:1">Delete download</button></div></div>';
+  if(DEV.state==='loading')return'<div class="card" style="margin-bottom:12px"><b>'+(S.ai.devCached===key?'Loading model...':'Downloading model...')+'</b><div class="bar"><i id="devbar" style="width:'+DEV.pct+'%"></i></div><small id="devmsg">'+esc(DEV.msg)+'</small></div>';
+  return'<div class="card" style="margin-bottom:12px"><label>Model size<select id="devsize">'+Object.entries(DEVMODELS).map(([k,v])=>'<option value="'+k+'"'+(key===k?' selected':'')+'>'+v.label+'</option>').join('')+'</select></label>'+
+  (DEV.state==='error'?'<p class="late" style="margin:8px 0 0">'+esc(DEV.msg)+'</p>':'')+
+  '<div style="display:flex;gap:8px;margin-top:10px"><button id="devload" style="flex:1">'+(S.ai.devCached===key?'Load model':'Download model')+'</button><button class="ghost" id="devcheck" style="flex:1">Check my phone</button></div>'+
+  '<small>The first download needs wifi ('+m.mb+'). After that it works offline.</small>'+(DEV.check?'<p style="margin:8px 0 0">'+esc(DEV.check)+'</p>':'')+'</div>';
+}
+function pickContext(q,ctx,max){
+  const words=(q.toLowerCase().match(/[a-z0-9]{3,}/g)||[]);
+  const ss=splitSents(ctx).map((x,i)=>({i,x,sc:words.reduce((a,w)=>a+(x.toLowerCase().includes(w)?1:0),0)}));
+  const keep=ss.slice().sort((a,b)=>b.sc-a.sc||a.i-b.i);
+  let n=0;const pick=[];
+  for(const o of keep){if(n+o.x.length>max)continue;pick.push(o);n+=o.x.length;if(n>=max)break}
+  return pick.sort((a,b)=>a.i-b.i).map(o=>o.x).join(' ');
+}
+async function askDevice(q,ctx){
+  if(!ENG){banner('Load the on-device model first.');return}
+  B.chat.push({role:'u',text:q});B.q='';B.busy=true;render();
+  try{
+    const raw=ctx||S.notes.slice(0,5).map(n=>noteTitle(n)+': '+n.body).join('\n\n');
+    const notes=pickContext(q,raw,2500);
+    const msgs=[
+      {role:'system',content:'You are StudyBuddy, a friendly tutor. Answer in at most 5 short sentences. If the study notes contain the answer, use them. If not, say the notes do not cover it, then give a brief general answer.'},
+      {role:'user',content:(notes?'Study notes:\n'+notes+'\n\n':'')+'Question: '+q}
+    ];
+    const stream=await ENG.chat.completions.create({messages:msgs,stream:true,max_tokens:350,temperature:0.3});
+    let txt='',first=true;
+    for await(const ch of stream){
+      const d=(ch.choices&&ch.choices[0]&&ch.choices[0].delta&&ch.choices[0].delta.content)||'';
+      if(!d)continue;
+      txt+=d;
+      if(first){first=false;B.chat.push({role:'a',text:txt});B.busy=false;render()}
+      else{B.chat[B.chat.length-1].text=txt;const el=$('#chatbox');if(el&&el.lastElementChild){el.lastElementChild.textContent=txt;el.scrollTop=el.scrollHeight}}
+    }
+    if(first)B.chat.push({role:'a',text:'No response generated.'});
+  }catch(e){
+    B.chat.push({role:'a',text:'On-device AI error: '+devErr(e)+'\n\nInstant offline answer:\n\n'+offlineSmartAnswer(q,ctx)});
+  }
+  B.busy=false;render();
+}
+async function testOnline(){
+  const say=m=>{AITEST=m;const el=$('#aitestmsg');if(el)el.textContent=m};
+  say('Checking the AI server...');
+  const t0=Date.now();
+  try{
+    const a=new AbortController(),ta=setTimeout(()=>a.abort(),10000);
+    await fetch(AI_WORKER_URL,{signal:a.signal});clearTimeout(ta);
+  }catch(e){say('Cannot reach the AI server (no answer in 10 seconds). Check your connection or try another network.');return}
+  say('Server reached in '+((Date.now()-t0)/1000).toFixed(1)+'s. Asking Gemini...');
+  const t1=Date.now();
+  try{
+    const a=new AbortController(),ta=setTimeout(()=>a.abort(),50000);
+    const r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'chat',question:'Reply with the single word OK.',context:'',device:DEVID}),signal:a.signal});
+    clearTimeout(ta);
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)say('Server reached, but Gemini returned an error: '+((j.error&&j.error.message)||('status '+r.status)));
+    else say('Online AI works. Gemini answered in '+((Date.now()-t1)/1000).toFixed(1)+'s'+(j.model?' ('+j.model+')':'')+'.');
+  }catch(e){say('Server reached, but Gemini did not answer within 50 seconds. The worker or the model is too slow.')}
+}
+
+/* LIFE BUDDY */
+const CRISIS_LINES=[
+ {n:'NCMH Crisis Hotline',d:'Free, 24/7. Tagalog and English.',c:[['1553 (landline)','1553'],['0919-057-1553 (Smart/TNT)','09190571553'],['0917-899-8727 (Globe/TM)','09178998727']]},
+ {n:'Hopeline Philippines',d:'Emotional support.',c:[['2919 (Globe/TM)','2919'],['0917-558-4673','09175584673'],['(02) 8804-4673','0288044673']]},
+ {n:'Emergency',d:'If you are in danger right now.',c:[['911','911']]}
+];
+const CRISIS_RE=[
+ /kill(ing)?\s+my\s?self\b/,/\bsuicid/,/\bend(ing)?\s+(my\s+life|it\s+all)/,/take\s+my\s+(own\s+)?life/,
+ /(want|wanna|wish)\s+(to\s+)?(die|be\s+dead|disappear\s+forever)/,
+ /wish\s+(i|that\s+i)\s+(was|were|could|would)\s+(dead|die|not\s+alive|never\s+born)/,
+ /(don'?t|do\s+not|dont)\s+(want\s+to|wanna)\s+(live|be\s+alive|exist)/,
+ /no\s+(reason|point)\s+(to|in)\s+(live|living|going\s+on)/,/better\s+off\s+(dead|without\s+me)/,
+ /(hurt|harm|cut|cutting|injure)(ing)?\s+(my\s?self)/,/self[\s-]?harm/,/\boverdos/,
+ /magpakamatay|magpapakamatay|nagpakamatay/,
+ /gusto\s+(ko\s+|kong\s+)?(na\s+)?(nang\s+|ng\s+)?mamatay/,
+ /(ayoko|ayaw)\s+(ko\s+)?(na\s+)?(nang\s+|ng\s+)?mabuhay/,
+ /(tapusin|wakasan)\s+(ko\s+)?(na\s+)?(ang\s+)?(buhay|lahat)/,
+ /(saktan|sasaktan|sugatan)\s+(ko\s+)?(na\s+)?(ang\s+)?(sarili|aking\s+sarili)/,
+ /patayin\s+ko\s+(na\s+)?(ang\s+)?sarili/
+];
+const isCrisis=t=>{const x=String(t||'').toLowerCase().replace(/[\u2018\u2019]/g,"'");return CRISIS_RE.some(r=>r.test(x))};
+const CRISIS_MSG="I'm really glad you told me. What you're feeling matters, and you don't have to carry it alone. Please reach out to someone who can help right now. A trained person on a call can do things I can't. If you might act on these thoughts or you're in danger, call 911 or go to the nearest hospital, and try not to stay alone. If someone you trust is nearby, tell them how you're feeling, or ask them to stay with you.";
+const LB_BYE="I've reached my limit for today, buddy, so I have to stop here. I hope you get through it. I'll be back tomorrow. If it feels too heavy, talk to someone you trust.";
+let LB={chat:[],q:'',busy:false,help:false,showBreath:false,breath:false};
+try{const raw=JSON.parse(localStorage.getItem('studyspace-lb')||'[]');if(Array.isArray(raw))LB.chat=raw.filter(m=>m&&(m.role==='u'||m.role==='a')&&typeof m.text==='string').slice(-60)}catch(e){}
+function lbSave(){try{localStorage.setItem('studyspace-lb',JSON.stringify(LB.chat.slice(-60)))}catch(e){}}
+function lbLeft(){if(S.lb.date!==todayStr()){S.lb.date=todayStr();S.lb.used=0;save()}return Math.max(0,MAX_LIFE_DAILY-(S.lb.used||0))}
+function hotlinesHTML(){return'<div class="hot">'+CRISIS_LINES.map(l=>'<div style="margin-top:10px"><b>'+esc(l.n)+'</b><br><small>'+esc(l.d)+'</small><br>'+l.c.map(x=>'<a href="tel:'+x[1]+'">'+esc(x[0])+'</a>').join('')+'</div>').join('')+'</div>'}
+function lbBubble(m){return'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+(m.crisis?hotlinesHTML():'')+'</div>'}
+function breathCard(){return'<div class="card" style="margin-bottom:12px"><b>Breathe with me</b><div class="breath"><div id="brcircle"></div><div id="brtext" style="font-weight:600">Tap Start</div><div class="two" style="width:100%"><button id="brstart">Start</button><button class="ghost" id="brstop">Stop</button></div></div><small>In for 4, hold for 4, out for 6. Do a few rounds.</small></div>'}
+function lifeBuddyView(){
+  const head=BK_LIFE+'<h1 style="margin-top:14px">Life Buddy</h1><p class="sub">A friendly listener. Not a therapist or an emergency service.</p>';
+  const help='<div class="card" style="margin-bottom:12px"><b>Need help now?</b>'+hotlinesHTML()+'</div>';
+  if(!S.lb.noted)return head+help+'<div class="card"><b>Before you start</b><p style="margin:8px 0">Your messages are sent to Google\u2019s Gemini AI through this app\u2019s server. On the free tier, Google may have people review them and use them to improve its products. Please avoid names, addresses, and anything you would not want others to read.</p><p style="margin:8px 0">Your chat history stays only on this phone, and you can clear it any time.</p><button id="lbok" style="width:100%">I understand</button></div>';
+  const limited=lbLeft()<=0;
+  const chat=LB.chat.length?LB.chat.map(lbBubble).join(''):'<div class="empty">Hi, I\u2019m Life Buddy. I\u2019m here to listen. How are you feeling today?</div>';
+  return head+
+  '<div class="two" style="margin-bottom:12px"><button class="ghost" id="lbhelp">'+(LB.help?'Hide help lines':'Need help now?')+'</button><button class="ghost" id="lbbreath">'+(LB.showBreath||limited?'Breathing exercise \u2713':'Breathing exercise')+'</button></div>'+
+  (LB.help?help:'')+(limited||LB.showBreath?breathCard():'')+
+  '<div class="chat-box" id="chatbox">'+chat+(LB.busy?'<div class="bubble a">Thinking...</div>':'')+'</div>'+
+  '<div style="display:flex;gap:8px;margin-bottom:12px"><input id="lbask" placeholder="'+(limited?'Resting until tomorrow':'Write what is on your mind...')+'" value="'+esc(LB.q)+'" maxlength="400"'+(LB.busy?' disabled':'')+'><button id="lbsend"'+(LB.busy||limited?' disabled':'')+'>Send</button></div>'+
+  (limited?'<button class="ghost" id="lbjournal" style="width:100%;margin-bottom:8px">Write in my journal instead</button>':'')+
+  '<button class="ghost" id="lbclear" style="width:100%">Clear chat</button>'}
+function lbPushBye(){const last=LB.chat[LB.chat.length-1];if(!last||!last.limit)LB.chat.push({role:'a',text:LB_BYE,limit:true,x:true})}
+async function askLifeBuddy(){
+  const inp=$('#lbask'),q=(inp?inp.value:LB.q).trim();
+  if(!q||LB.busy)return;
+  // Crisis wording is handled here, before any AI call. It works offline and after the daily limit.
+  if(isCrisis(q)){LB.chat.push({role:'u',text:q},{role:'a',text:CRISIS_MSG,crisis:true,x:true});LB.q='';lbSave();render();return}
+  if(lbLeft()<=0){render();banner('Life Buddy is resting until tomorrow. The breathing exercise can help right now.');return}
+  const hist=LB.chat.filter(m=>!m.x).slice(-8).map(m=>({role:m.role==='u'?'user':'model',text:m.text.slice(0,600)}));
+  LB.chat.push({role:'u',text:q});LB.q='';LB.busy=true;lbSave();render();
+  try{
+    const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),50000);
+    const res=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'life',question:q,history:hist,device:DEVID}),signal:ctrl.signal});
+    clearTimeout(tid);
+    if(res.status===429){S.lb.used=MAX_LIFE_DAILY;save();lbPushBye()}
+    else if(!res.ok){const ed=await res.json().catch(()=>({}));throw new Error((ed.error&&ed.error.message)||('Server error '+res.status))}
+    else{
+      const data=await res.json();
+      if(data.crisis){LB.chat.push({role:'a',text:CRISIS_MSG,crisis:true,x:true})}
+      else{
+        const parts=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
+        const tp=parts.find(p=>p.text&&!p.thought)||parts[0];
+        const reply=(tp&&tp.text||'').trim();
+        if(reply){S.lb.used=(S.lb.used||0)+1;save();LB.chat.push({role:'a',text:reply})}
+        else LB.chat.push({role:'a',text:'I could not find the right words just now. Could you tell me a little more, or say it a different way?',x:true});
+        if(lbLeft()<=0)lbPushBye();
+      }
+    }
+  }catch(e){
+    LB.chat.push({role:'a',text:'I could not reach the server just now, so I could not answer. That message did not count toward today\u2019s limit. Try again in a moment, or try the breathing exercise.',x:true});
+  }
+  LB.busy=false;lbSave();render();
+}
+let BR=null;
+function breatheStop(){if(BR){clearInterval(BR);BR=null}}
+function breatheStart(){
+  breatheStop();
+  const ph=[['Breathe in',4,1],['Hold',4,1],['Breathe out',6,.6]];let p=0,n=0;
+  const step=()=>{
+    const c=$('#brcircle'),t=$('#brtext');
+    if(!c||!t){breatheStop();return}
+    const x=ph[p];t.textContent=x[0]+' '+(x[1]-n);
+    if(n===0){c.style.transitionDuration=x[1]+'s';c.style.transform='scale('+x[2]+')'}
+    n++;if(n>=x[1]){n=0;p=(p+1)%3}
+  };
+  step();BR=setInterval(step,1000);
+}
+function exportData(){try{S.lastBackup=Date.now();save();const o=Object.assign({},S);delete o.ai;delete o.lb;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download='studyspace-backup-'+todayStr()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}catch(e){banner('Could not create the backup.')}}
+function importData(f){
+  if(!f)return;
+  if(f.size>5*1048576){banner('That file is too big to be a StudySpace backup.');return}
+  f.text().then(t=>{
+    const o=JSON.parse(t);
+    if(!o||typeof o!=='object'||Array.isArray(o)||!Array.isArray(o.subjects)||!Array.isArray(o.tasks))throw new Error('bad');
+    if(!confirm('Replace everything in StudySpace with this backup?'))return;
+    o.ai=S.ai;o.lb=S.lb;
+    localStorage.setItem('studyspace1',JSON.stringify(o));
+    S=load();save();applyTheme();curSub=null;hv=null;render();banner('Backup restored.');
+  }).catch(()=>banner('That file is not a valid StudySpace backup.'));
+}
+
+/* FLASHCARDS FROM FILES + AI */
+let F={src:'',text:'',file:null,fileName:'',cards:[],sum:[],name:'',msg:'',loading:false};
+
+function loadPdfJs(){return new Promise((ok,no)=>{if(window.pdfjsLib)return ok();const el=document.createElement('script');el.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';el.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok()};el.onerror=()=>no(new Error('net'));document.head.appendChild(el)})}
+async function pdfText(f){await loadPdfJs();const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let t='';for(let i=1;i<=Math.min(pdf.numPages,40);i++){const c=await(await pdf.getPage(i)).getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n'}return t}
+async function fileText(f){
+  if(f.size>MAX_AI_BYTES)throw new Error('size');
+  const n=(f.name||'').toLowerCase();
+  if(n.endsWith('.pdf'))return pdfText(f);
+  if(/\.(txt|md|csv|json|html)$/.test(n)||(f.type||'').startsWith('text/'))return f.text();
+  try{
+    const txt=await f.text();
+    const clean=txt.replace(/[^\x20-\x7E\n\r\t]/g,' ').replace(/\s+/g,' ').trim();
+    if(clean.length>60)return clean;
+  }catch(e){}
+  throw new Error('type');
+}
+function buildCards(t){
+  const cards=makeCards(t),seen=new Set(cards.map(c=>c.q.toLowerCase()));
+  splitSents(t.replace(/\s+/g,' ')).forEach(x=>{const m=x.match(/^([A-Z][\w\s'()-]{2,50}?)\s+(is|are|refers to|means)\s+(.{15,})$/);if(m&&!seen.has(m[1].toLowerCase())){seen.add(m[1].toLowerCase());cards.push({q:'What '+(m[2]==='are'?'are ':'is ')+m[1]+'?',a:m[3]})}});
+  const f={};(t.toLowerCase().match(/[a-z]{4,}/g)||[]).forEach(w=>f[w]=(f[w]||0)+1);
+  summarize(t,14).filter(x=>x.length<=220).forEach(x=>{const ws=(x.match(/[A-Za-z]{5,}/g)||[]).sort((a,b)=>(f[b.toLowerCase()]||0)-(f[a.toLowerCase()]||0)||b.length-a.length);if(!ws.length)return;const w=ws[0],q='Fill in the blank: '+x.replace(new RegExp('\\b'+w+'\\b','i'),'_____');if(!seen.has(q)){seen.add(q);cards.push({q,a:w})}});
+  const pool=[...new Set(cards.map(c=>c.a))];
+  if(pool.length>=4){
+    cards.forEach(c=>{
+      const al=c.a.toLowerCase(),len=c.a.length;
+      const others=pool.filter(a=>a.toLowerCase()!==al).map(a=>({a,k:Math.abs(a.length-len)+Math.random()*25})).sort((x,y)=>x.k-y.k).slice(0,3).map(o=>o.a);
+      if(others.length===3)c.choices=[c.a,...others].sort(()=>Math.random()-.5);
+    });
+  }
+  return cards.slice(0,30);
+}
+
+function captureFlashInputs(){
+  if($('#fsrc'))F.src=$('#fsrc').value;
+  if($('#ftext'))F.text=$('#ftext').value;
+  const fEl=$('#ffile');
+  if(fEl&&fEl.files&&fEl.files[0]){
+    F.file=fEl.files[0];
+    F.fileName=F.file.name;
+  }
+}
+
+async function readFlashSource(){
+  let t='';
+  if(F.file){
+    if(F.file.size>MAX_AI_BYTES)throw new Error('size');
+    t=await fileText(F.file);
+    F.name=F.file.name.replace(/\.[^.]+$/,'');
+  }else if(F.text.trim()){
+    if(new Blob([F.text]).size>MAX_AI_BYTES)throw new Error('size');
+    t=F.text;
+    F.name='Pasted text';
+  }else if(F.src.startsWith('n:')){
+    const n=S.notes.find(x=>x.id===F.src.slice(2));
+    t=n?n.body:'';
+    F.name=n?noteTitle(n):'';
+  }else if(F.src.startsWith('r:')){
+    const r=S.res.find(x=>x.id===F.src.slice(2));
+    if(r&&r.size>MAX_AI_BYTES)throw new Error('size');
+    const b=r&&await fget(r.id);
+    if(b){
+      if(b.size>MAX_AI_BYTES)throw new Error('size');
+      t=await fileText(new File([b],r.name,{type:b.type}));
+      F.name=r.name.replace(/\.[^.]+$/,'');
+    }
+  }
+  return t;
+}
+
+async function fmake(){
+  captureFlashInputs();
+  F.loading=true;F.msg='Reading study material...';F.cards=[];F.sum=[];render();
+  try{
+    const t=await readFlashSource();
+    if(t.trim().length<30)F.msg='Not enough text found. Pick a file, select a note, or paste at least a couple of sentences.';
+    else{
+      F.cards=buildCards(t);
+      F.sum=summarize(t,5);
+      F.msg=F.cards.length?'✓ Built '+F.cards.length+' flashcards & summary offline (0 AI credits used)!':'Summary ready! Add more sentences or Term: Definition lines to generate cards.';
+    }
+  }catch(e){
+    F.msg=e.message==='size'?'File exceeds the 10 MB maximum limit.':e.message==='net'?'Reading a PDF needs an internet connection the first time.':'Could not read that file format. Please use a .pdf or .txt file, or paste the text directly.';
+  }
+  F.loading=false;render();
+}
+
+function parseAIJson(raw){
+  if(!raw)throw new Error('Empty response from AI');
+  let clean=String(raw).trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+  const first=clean.indexOf('{'),last=clean.lastIndexOf('}');
+  if(first!==-1&&last>first)clean=clean.slice(first,last+1);
+  return JSON.parse(clean);
+}
+
+async function fmakeAI(){
+  if(aiLeft()<=0){
+    banner('Daily AI limit reached (2/2 used today). Use Offline mode below!');
+    return;
+  }
+  captureFlashInputs();
+  F.loading=true;F.msg='AI is reading, summarizing, and writing multiple-choice flashcards...';F.cards=[];F.sum=[];render();
+  try{
+    const t=await readFlashSource();
+    if(t.trim().length<30){
+      F.loading=false;F.msg='Not enough text found. Select a file, pick a note, or paste text first.';render();return;
+    }
+    const promptText=t.slice(0,20000);
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),70000);
+    const res=await fetch(AI_WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:promptText,device:DEVID}),
+      signal:ctrl.signal
+    });
+    clearTimeout(tid);
+    if(!res.ok){
+      const errData=await res.json().catch(()=>({}));
+      throw new Error((errData.error&&errData.error.message)||('Server Error '+res.status));
+    }
+    const data=await res.json();
+    const parts=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
+    const textPart=parts.find(p=>p.text&&!p.thought)||parts[0];
+    const raw=textPart&&textPart.text;
+    const parsed=parseAIJson(raw);
+    F.sum=Array.isArray(parsed.summary)?parsed.summary:[];
+    F.cards=(Array.isArray(parsed.cards)?parsed.cards:[]).map(c=>{
+      let ch=Array.isArray(c.choices)?c.choices.slice(0,4):[];
+      if(!ch.includes(c.a))ch[0]=c.a;
+      ch.sort(()=>Math.random()-.5);
+      return {q:c.q,a:c.a,choices:ch};
+    });
+    S.ai.used=(S.ai.used||0)+1;
+    S.ai.date=todayStr();
+    save();
+    F.msg='AI generated '+F.cards.length+' multiple-choice cards & summary! ('+aiLeft()+'/2 AI uses left today)';
+  }catch(e){
+    if(e.message==='size')F.msg='File exceeds the 10 MB maximum limit.';
+    else if(e.message==='net')F.msg='Internet connection required to read PDF or reach AI.';
+    else{
+      try{
+        const t=await readFlashSource();
+        if(t.trim().length>=30){
+          F.cards=buildCards(t);
+          F.sum=summarize(t,5);
+        }
+      }catch(err){}
+      F.msg='Cloud AI notice ('+(e.name==='AbortError'?'Request timed out':e.message)+'). Built offline summary & cards instead so you can keep studying! (No AI credit used)';
+    }
+  }
+  F.loading=false;
+  render();
+}
+
+function flashView(){
+const files=S.res.filter(r=>r.type==='file'&&/\.(txt|md|pdf)$/i.test(r.name));
+const left=aiLeft();
+const decks=S.decks.map(d=>'<div class="row"><div class="t"><div>'+esc(d.name)+'</div><small>'+d.cards.length+' cards'+(d.cards.some(c=>c.choices)?' · Multiple Choice':'')+'</small></div><button data-study="'+d.id+'">Study</button><button class="x" data-deldeck="'+d.id+'" aria-label="Delete">×</button></div>').join('');
+return'<button class="ghost" id="lback">‹ Techniques</button><h1 style="margin-top:14px">Flashcards</h1><p class="sub">Max 10 MB per file. Use AI to summarize & write multiple-choice questions (<b>'+left+' of '+MAX_AI_DAILY+' daily AI uses left</b>), or build offline for free.</p>'+
+'<div class="form"><select id="fsrc"><option value="">Pick a note or saved file</option><optgroup label="Notes">'+S.notes.map(n=>'<option value="n:'+n.id+'"'+(F.src==='n:'+n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</optgroup><optgroup label="Library files">'+files.map(r=>'<option value="r:'+r.id+'"'+(F.src==='r:'+r.id?' selected':'')+'>'+esc(r.name)+' ('+fmtSize(r.size)+')</option>').join('')+'</optgroup></select>'+
+'<label>Or choose a file (.pdf, .txt, .md — max 10 MB)<input id="ffile" type="file" accept=".txt,.md,.pdf,text/plain,application/pdf"></label>'+
+(F.file?'<div class="card" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center"><small>Selected: <b>'+esc(F.fileName)+'</b> ('+fmtSize(F.file.size)+')</small><button class="x" id="fclearfile" aria-label="Remove file">×</button></div>':'')+
+'<textarea id="ftext" placeholder="Or paste text here" style="min-height:18vh">'+esc(F.text)+'</textarea>'+
+'<button id="fmakeai"'+(left<=0||F.loading?' disabled':'')+'>'+(F.loading?'Working...':'AI Summarize & Make Choices ('+left+'/'+MAX_AI_DAILY+' left)')+'</button>'+
+'<button class="ghost" id="fmake"'+(F.loading?' disabled':'')+'>Make basic cards & summary offline (Free)</button></div>'+
+(F.msg?'<p class="sub" style="margin-top:10px;color:var(--ink);font-weight:500">'+esc(F.msg)+'</p>':'')+
+(F.sum.length?'<h2>Key points summary</h2><div class="card">'+F.sum.map(x=>'<div class="row"><div class="t"><div>• '+esc(x)+'</div></div></div>').join('')+'</div>':'')+
+(F.cards.length?'<h2>'+F.cards.length+' cards ready</h2><div class="card">'+F.cards.slice(0,6).map(c=>'<div class="row"><div class="t"><div><b>Q:</b> '+esc(c.q)+'</div><small><b>Ans:</b> '+esc(c.a)+(c.choices?'<br><b>Choices:</b> '+c.choices.map(esc).join(' · '):'')+'</small></div></div>').join('')+'</div>':'')+
+((F.cards.length||F.sum.length)?'<div class="form" style="margin-top:10px"><input id="fname" value="'+esc(F.name)+'" placeholder="Deck / Summary name" maxlength="50"><button id="fsave">Save deck & summary</button></div>':'')+
+'<h2>Your decks</h2><div class="card">'+(decks||'<div class="empty">No decks yet.</div>')+'</div>'}
+
+/* EXAMS AND NOTES */
+const examAt=x=>new Date(x.date+'T'+(x.time||'08:00')).getTime();
+const examDays=x=>(examAt(x)-Date.now())/864e5;
+const p2=n=>String(n).padStart(2,'0');
+function cdText(ms){if(ms<=0)return'Passed';const s=Math.floor(ms/1000);return Math.floor(s/86400)+'d '+p2(Math.floor(s%86400/3600))+'h '+p2(Math.floor(s%3600/60))+'m '+p2(s%60)+'s'}
+setInterval(()=>{document.querySelectorAll('.cd').forEach(e=>{e.textContent=cdText(e.dataset.at-Date.now())})},1000);
+const examsSorted=()=>S.exams.slice().sort((a,b)=>((examDays(a)<0)-(examDays(b)<0))||(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+function examRow(x,home){const n=examDays(x),s=subj(x.subj);return'<div class="row'+(n<0?' past':'')+'"><div class="t"><div>'+esc(x.title)+'</div><small>'+(s?esc(s.name)+' · ':'')+x.date+(x.time?', '+fmtT(x.time):'')+(x.cover?' · '+esc(x.cover):'')+'</small></div><b class="cd'+(n>=0&&n<3?' late':'')+'" data-at="'+examAt(x)+'">'+cdText(examAt(x)-Date.now())+'</b>'+(home?'':'<button class="x" data-delexam="'+x.id+'" aria-label="Delete exam">×</button>')+'</div>'}
+function subjOpts(sel){return'<option value="">No subject</option>'+S.subjects.map(s=>'<option value="'+s.id+'"'+(sel===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')}
+function examsView(){return BK_ACAD+'<h1 style="margin-top:14px">Exam countdown</h1><p class="sub">Add your exams and see how many days are left</p><div class="form"><input id="etitle" placeholder="Exam name, e.g. Midterm Mathematics" maxlength="60"><div class="two"><label>Date<input id="edate" type="date"></label><label>Time (optional)<input id="etime" type="time"></label></div><div class="two"><label>Subject<select id="esubj">'+subjOpts('')+'</select></label><label>Coverage (optional)<input id="ecover" placeholder="Chapters 1 to 4" maxlength="80"></label></div><button id="addexam">Add exam</button></div><div class="card" style="margin-top:14px">'+(S.exams.length?examsSorted().map(x=>examRow(x)).join(''):'<div class="empty">No exams yet.</div>')+'</div>'}
+const noteTitle=n=>(n&&n.title&&n.title.trim())||'Untitled note';
+function noteBtn(n){const s=subj(n.subj);return'<button class="subcard" data-note="'+n.id+'"><span class="t"><b>'+esc(noteTitle(n))+'</b><br><small>'+(n.pinned?'Pinned · ':'')+(s?esc(s.name)+' · ':'')+esc((n.body||'').replace(/\s+/g,' ').slice(0,50))+'</small></span><span aria-hidden="true">›</span></button>'}
+const notesSorted=q=>S.notes.filter(n=>!q||((n.title||'')+' '+(n.body||'')).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||b.updated-a.updated);
+const nlist=q=>{const l=notesSorted(q);return l.length?l.map(noteBtn).join(''):'<div class="empty">'+(S.notes.length?'No matching notes.':'No notes yet. Tap New note.')+'</div>'};
+function notesView(){return BK_ACAD+'<h1 style="margin-top:14px">Notes</h1><div style="display:flex;gap:8px;margin:12px 0"><input id="nsearch" type="search" placeholder="Search notes"><button id="newnote" style="white-space:nowrap">New note</button></div><div id="nlist">'+nlist('')+'</div>'}
+function noteEditor(id){const n=S.notes.find(x=>x.id===id);if(!n){hv='notes';return notesView()}
+return'<button class="ghost" id="nback2">‹ Notes</button><div class="form" style="margin-top:14px"><input id="ntitle" placeholder="Title" maxlength="80" value="'+esc(n.title)+'" style="font-size:20px;font-weight:600"><select id="nsubj">'+subjOpts(n.subj)+'</select><textarea id="nbody" placeholder="Write your notes here">'+esc(n.body)+'</textarea></div><div style="display:flex;gap:8px;align-items:center;margin-top:10px"><small id="nsaved" style="flex:1">Saves automatically</small><button class="ghost" id="pinnote">'+(n.pinned?'Unpin':'Pin')+'</button><button class="ghost" id="delnote">Delete</button></div>'}
+
+/* ALERTS & TIMER */
+let AC;
+function audio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
+function beep(){audio();if(!AC)return;[0,.35,.7].forEach(o=>{const os=AC.createOscillator(),g=AC.createGain();os.frequency.value=880;g.gain.value=.25;os.connect(g);g.connect(AC.destination);os.start(AC.currentTime+o);os.stop(AC.currentTime+o+.2)})}
+function banner(msg){let b=$('#bn');if(!b){b=document.createElement('div');b.id='bn';b.className='banner';b.setAttribute('role','alert');b.onclick=()=>b.remove();document.body.appendChild(b)}b.textContent=msg+' (tap to dismiss)'}
+function alertNow(title,body){beep();try{navigator.vibrate&&navigator.vibrate([200,100,200,100,200])}catch(e){}banner(title+': '+body);
+if(window.Notification&&Notification.permission==='granted'&&navigator.serviceWorker){navigator.serviceWorker.ready.then(r=>r.showNotification(title,{body,icon:'icon-192.png',tag:title+body})).catch(()=>{})}}
+function check(){
+if(!S.alerts)return;
+const now=Date.now(),lead=S.lead*60000;
+Object.keys(S.fired).forEach(k=>{if(now-S.fired[k]>7*864e5)delete S.fired[k]});
+const fire=(key,when,title,body)=>{if(S.fired[key])return;if(now>=when-lead&&now<=when+5*60000){S.fired[key]=now;save();alertNow(title,body)}};
+S.tasks.forEach(t=>{if(!t.done&&t.due)fire('t'+t.id,at(t),'Assignment due',t.title+' at '+fmtT(t.time||'23:59'))});
+S.exams.forEach(x=>fire('e'+x.id,new Date(x.date+'T'+(x.time||'08:00')).getTime(),'Exam today',x.title+' at '+fmtT(x.time||'08:00')));
+const d=new Date().getDay();
+S.subjects.forEach(s=>s.classes.forEach(c=>{if(c.day===d)fire('c'+c.id+todayStr(),new Date(todayStr()+'T'+c.start).getTime(),'Class starting',s.name+' at '+fmtT(c.start)+(c.room?' · '+c.room:''))}));
+}
+setInterval(check,15000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
+
+function setMode(m){T.mode=m;if(PRESETS[m]){T.f=PRESETS[m][0];T.b=PRESETS[m][1]}resetTimer()}
+function resetTimer(){T.running=false;T.phase='focus';T.left=T.f*60}
+function nextPhase(logIt){if(T.phase==='focus'&&logIt){S.sessions.push({date:todayStr(),min:T.f,subj:T.subj||''});save()}T.phase=T.phase==='focus'?'break':'focus';T.left=total();T.running=false}
+setInterval(()=>{
+if(!T.running)return;
+T.left=(T.end-Date.now())/1000;
+if(T.left<=0){beep();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}const wasFocus=T.phase==='focus';nextPhase(true);if(tab==='focus')render();if(wasFocus)celebrate();return}
+if(tab==='focus'&&$('#clock')){$('#clock').textContent=mmss(T.left);$('#arc').setAttribute('stroke-dashoffset',C*(1-T.left/total()))}
+},250);
+function readCustom(){if(T.mode==='c'&&$('#cf')){T.f=Math.min(180,Math.max(1,+$('#cf').value||25));T.b=Math.min(60,Math.max(1,+$('#cb').value||5))}}
+
+document.addEventListener('click',e=>{
+audio();
+const t=e.target.closest('button');if(!t)return;
+const d=t.dataset;
+if(t.id==='hardrepair'){ssBackup();localStorage.removeItem('studyspace1');location.reload();return}
+if(d.t){tab=d.t;curSub=null;hv=null;mv=null;L=null;render();$('#view').scrollTop=0;return}
+if(d.go){tab=d.go;render();return}
+if(d.open){curSub=d.open;render();$('#view').scrollTop=0;return}
+if(d.mode){setMode(d.mode);render();return}
+if(d.aimode){S.ai.mode=d.aimode;save();render();return}
+if(d.study){const dk=S.decks.find(x=>x.id===d.study);if(dk){B.cards=dk.cards.slice().sort(()=>Math.random()-.5);B.i=0;B.show=false;B.picked=null;B.ok=0;B.miss=[];B.mode='quiz';B.back='flash';tab='acad';hv='buddy';L=null;render()}return}
+if(d.pick!==undefined){
+  const idx=+d.pick,c=B.cards[B.i];
+  if(c&&!B.show){
+    B.picked=idx;B.show=true;
+    if(c.choices[idx]===c.a)B.ok++;
+    else B.miss.push(c);
+    render();
+  }
+  return;
+}
+if(d.deldeck){if(sure(t,'Delete?')){S.decks=S.decks.filter(x=>x.id!==d.deldeck);save();render()}return}
+if(d.mod){
+  if(['wallet','journal','lifetracker','lifebuddy'].includes(d.mod)){tab='life';hv=d.mod;}
+  else{tab='acad';hv=d.mod;}
+  L=null;render();$('#view').scrollTop=0;return;
+}
+if(d.mood){jent(jd||todayStr()).mood=d.mood;save();render();return}
+if(d.jday){jd=d.jday;render();$('#view').scrollTop=0;return}
+if(d.gdel){S.grades[gs].items=S.grades[gs].items.filter(i=>i.id!==d.gdel);save();render();return}
+if(d.gadd){const v=+$('#gin-'+d.gadd).value,g=S.wallet.goals.find(x=>x.id===d.gadd);if(g&&v>0){g.saved+=v;save();render()}return}
+if(d.delgoal){S.wallet.goals=S.wallet.goals.filter(x=>x.id!==d.delgoal);save();render();return}
+if(d.deltx){S.wallet.tx=S.wallet.tx.filter(x=>x.id!==d.deltx);save();render();return}
+if(d.dhabit){S.habits=S.habits.filter(x=>x.id!==d.dhabit);save();render();return}
+if(d.mv){hv=d.mv;L=null;render();$('#view').scrollTop=0;return}
+if(d.tech){L={k:d.tech,i:0,data:{}};render();$('#view').scrollTop=0;return}
+if(d.revok||d.revno){const r=S.reviews.find(x=>x.id===(d.revok||d.revno));if(r){if(d.revok){r.step=Math.min(r.step+1,4);r.next=addDays(INT[r.step])}else{r.step=0;r.next=addDays(1)}save();render()}return}
+if(d.delrev){S.reviews=S.reviews.filter(x=>x.id!==d.delrev);save();render();return}
+if(d.resfav){const r=S.res.find(x=>x.id===d.resfav);if(r){r.fav=!r.fav;save();render()}return}
+if(d.delres){if(sure(t,'Delete?')){S.res=S.res.filter(x=>x.id!==d.delres);fdel(d.delres).catch(()=>{});save();render()}return}
+if(d.resopen){const r=S.res.find(x=>x.id===d.resopen);if(!r)return;if(r.type==='link'){window.open(r.url,'_blank','noopener')}else{fget(r.id).then(b=>{if(!b){banner('File not found on this phone.');return}const u=URL.createObjectURL(b);if(!window.open(u,'_blank')){const a=document.createElement('a');a.href=u;a.download=r.name;a.click()}}).catch(()=>banner('Could not open this file.'))}return}
+if(d.note){hv='n:'+d.note;render();$('#view').scrollTop=0;return}
+if(d.delexam){S.exams=S.exams.filter(x=>x.id!==d.delexam);save();render();return}
+if(d.delclass){const s=subj(curSub);s.classes=s.classes.filter(c=>c.id!==d.delclass);save();render();return}
+if(d.deltask){S.tasks=S.tasks.filter(x=>x.id!==d.deltask);save();render();return}
+switch(t.id){
+case'back':curSub=null;render();break;
+case'fmake':fmake();break;
+case'fmakeai':fmakeAI();break;
+case'fclearfile':F.file=null;F.fileName='';render();break;
+case'bsend':askStudyBuddy();break;
+case'devload':devLoad();break;
+case'devcheck':devCheckPhone();break;
+case'devunload':{(async()=>{try{if(ENG)await ENG.unload()}catch(e){}ENG=null;DEV.state='idle';render()})();break}
+case'devdelete':{if(sure(t,'Tap again to delete')){(async()=>{try{if(ENG){await ENG.unload();ENG=null}const w=await wlib();await w.deleteModelAllInfoInCache(DEV.id||await pickModelId(S.ai.dev||'small'))}catch(e){}DEV.state='idle';S.ai.devCached='';save();render()})()}break}
+case'aitest':testOnline();break;
+case'lbok':S.lb.noted=true;save();render();break;
+case'lbsend':askLifeBuddy();break;
+case'lbhelp':LB.help=!LB.help;render();break;
+case'lbbreath':LB.showBreath=!LB.showBreath;if(!LB.showBreath)LB.breath=false;render();break;
+case'brstart':LB.breath=true;render();break;
+case'brstop':LB.breath=false;render();break;
+case'lbjournal':tab='life';hv='journal';LB.breath=false;render();$('#view').scrollTop=0;break;
+case'lbclear':if(sure(t,'Tap again to clear chat')){LB.chat=[];lbSave();render()}break;
+case'expdata':exportData();break;
+case'impdata':{const f=$('#impfile');if(f)f.click();break}
+case'fsave':{
+  const dname=($('#fname')&&$('#fname').value.trim())||F.name||'Untitled deck';
+  if(F.cards&&F.cards.length){
+    S.decks.push({id:uid(),name:dname,cards:F.cards});
+  }
+  if(F.sum&&F.sum.length){
+    S.notes.push({id:uid(),title:'Summary: '+dname,body:F.sum.map(s=>'• '+s).join('\n\n'),subj:'',pinned:false,updated:Date.now()});
+  }
+  save();F.cards=[];F.sum=[];F.file=null;F.fileName='';F.msg='Saved to your Decks & Notes!';render();break;
+}
+case'addgrade':{const n=$('#gname').value.trim(),sc=+$('#gscore').value,tt=+$('#gtotal').value,w=+$('#gweight').value;if(!n||$('#gscore').value===''||!(tt>0)||!(w>0)){banner('Fill in the name, score, out of, and weight.');return}(S.grades[gs]=S.grades[gs]||{target:90,items:[]}).items.push({id:uid(),name:n,score:sc,total:tt,w});save();render();break}
+case'addtx':{const amt=+$('#wamt').value,cat=$('#wcat').value;if(!(amt>0)){$('#wamt').focus();return}S.wallet.tx.push({id:uid(),type:'out',amt,cat,note:$('#wnote').value.trim(),date:todayStr()});save();render();break}
+case'addgoal':{const n=$('#goalname').value.trim(),tg=+$('#goaltarget').value;if(!n||!(tg>0)){$('#goalname').focus();return}S.wallet.goals.push({id:uid(),name:n,target:tg,saved:0});save();render();break}
+case'addhabit':{const n=$('#hname').value.trim();if(!n){$('#hname').focus();return}S.habits.push({id:uid(),name:n,cat:$('#hcat').value,days:{}});save();render();break}
+case'bsum':{const tx=bsrc();if(tx.length<30){banner('Select a note or paste some text first.');return}B.nid=$('#bnote').value;B.text=$('#btext').value;B.sum=summarize(tx,5);render();break}
+case'bcards':{const tx=bsrc();const c=buildCards(tx);if(c.length<2){banner('Add a longer note or write Term: definition lines.');return}B.nid=$('#bnote').value;B.text=$('#btext').value;B.cards=c.sort(()=>Math.random()-.5);B.i=0;B.show=false;B.picked=null;B.ok=0;B.miss=[];B.mode='quiz';render();break}
+case'bsave':{S.notes.push({id:uid(),title:'Summary',body:B.sum.map(s=>'• '+s).join('\n\n'),subj:'',pinned:false,updated:Date.now()});save();banner('Saved to Notes');break}
+case'bshow':B.show=true;render();break;
+case'bnext':B.i++;B.show=false;B.picked=null;render();break;
+case'bgot':B.ok++;B.i++;B.show=false;B.picked=null;render();break;
+case'bmiss':B.miss.push(B.cards[B.i]);B.i++;B.show=false;B.picked=null;render();break;
+case'bretry':B.cards=B.miss;B.miss=[];B.i=0;B.ok=0;B.show=false;B.picked=null;render();break;
+case'bdone':B.mode='';if(B.back){tab='acad';hv='learn';L={k:'flash',i:0,data:{}};B.back=''}render();break;
+case'mvback':hv=null;L=null;render();break;
+case'lback':L=null;hv='learn';render();break;
+case'ldone':L=null;render();break;
+case'gorev':tab='acad';hv='learn';L={k:'spaced',i:0,data:{}};render();break;
+case'lnext':case'lprev':{const st=TECH[L.k].s[L.i],el=$('#lin');if(el){const v=el.value.trim();if(t.id==='lnext'&&st[1]==='text'&&!v){el.focus();return}L.data[st[0]]=v}L.i+=t.id==='lnext'?1:-1;render();$('#view').scrollTop=0;break}
+case'lsave':{const tt=TECH[L.k];let b='';tt.s.forEach(st=>{if(st[0]&&st[0]!=='topic')b+=fill(st[2])+'\n'+(L.data[st[0]]||'Skipped')+'\n\n'});S.notes.push({id:uid(),title:tt.n+': '+L.data.topic,body:b.trim(),subj:'',pinned:false,updated:Date.now()});save();L.saved=true;render();break}
+case'addrev':{const n=$('#rvtopic').value.trim();if(!n){$('#rvtopic').focus();return}S.reviews.push({id:uid(),topic:n,subj:$('#rvsubj').value,step:0,next:addDays(1)});save();render();break}
+case'addfile':$('#resfile').click();break;
+case'addlink':{let u=$('#rlurl').value.trim();if(!u){$('#rlurl').focus();return}if(!/^https?:\/\//i.test(u))u='https://'+u;let host=u;try{host=new URL(u).hostname}catch(e){}S.res.push({id:uid(),type:'link',name:$('#rlname').value.trim()||host,url:u,subj:$('#rsubj').value,fav:false,added:Date.now()});save();render();break}
+case'nback':hv=null;L=null;B.mode='';render();break;
+case'nback2':{const n=S.notes.find(x=>x.id===hv.slice(2));if(n&&!n.title.trim()&&!n.body.trim())S.notes=S.notes.filter(x=>x!==n);save();hv='notes';render();break}
+case'allnotes':hv='notes';render();break;
+case'newnote':{const n={id:uid(),title:'',body:'',subj:'',pinned:false,updated:Date.now()};S.notes.push(n);save();hv='n:'+n.id;render();$('#ntitle').focus();break}
+case'pinnote':{const n=S.notes.find(x=>x.id===hv.slice(2));n.pinned=!n.pinned;save();render();break}
+case'delnote':{if(sure(t,'Tap again to delete')){S.notes=S.notes.filter(x=>x.id!==hv.slice(2));save();hv='notes';render()}break}
+case'openexams':tab='acad';hv='exams';render();break;
+case'addexam':{const n=$('#etitle').value.trim(),dt=$('#edate').value;if(!n){$('#etitle').focus();return}if(!dt){$('#edate').focus();return}S.exams.push({id:uid(),title:n,date:dt,time:$('#etime').value,subj:$('#esubj').value,cover:$('#ecover').value.trim()});save();render();break}
+case'addsub':{const n=$('#subname').value.trim();if(!n){$('#subname').focus();return}const s={id:uid(),name:n,color:COLORS[S.subjects.length%COLORS.length],classes:[]};S.subjects.push(s);save();curSub=s.id;render();break}
+case'delsubj':{if(sure(t,'Tap again to delete')){[S.exams,S.notes,S.res,S.reviews].forEach(a=>a.forEach(x=>{if(x.subj===curSub)x.subj=''}));S.tasks=S.tasks.filter(x=>x.subj!==curSub);S.subjects=S.subjects.filter(x=>x.id!==curSub);curSub=null;save();render()}break}
+case'addclass':{const st=$('#cstart').value;if(!st){$('#cstart').focus();return}subj(curSub).classes.push({id:uid(),day:+$('#cday').value,start:st,end:$('#cend').value,room:$('#croom').value.trim()});save();render();break}
+case'addtask':{const n=$('#ttitle').value.trim();if(!n){$('#ttitle').focus();return}S.tasks.push({id:uid(),title:n,subj:curSub,due:$('#tdue').value,time:$('#ttime').value||'23:59',done:false});save();render();break}
+case'alerton':{S.alerts=!S.alerts;if(S.alerts){beep();if(window.Notification&&Notification.permission==='default')Notification.requestPermission()}save();render();break}
+case'testalert':alertNow('StudySpace','Alerts are working');break;
+case'tgo':{readCustom();if(!T.running&&T.left>total())T.left=total();if(T.running){T.running=false}else{T.running=true;T.end=Date.now()+T.left*1000}render();break}
+case'treset':{readCustom();resetTimer();render();break}
+case'tskip':{nextPhase(false);render();break}
+case'reset':{if(sure(t,'Tap again to erase everything')){const th=S.theme;S=blank();S.theme=th;save();curSub=null;hv=null;try{indexedDB.deleteDatabase('studyspace-files')}catch(e){}LB.chat=[];try{localStorage.removeItem('studyspace-lb')}catch(e){}render()}break}
+}});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target&&e.target.id==='bask'){e.preventDefault();askStudyBuddy();}
+  if(e.key==='Enter'&&e.target&&e.target.id==='lbask'){e.preventDefault();askLifeBuddy();}
+});
+
+document.addEventListener('input',e=>{const el=e.target;
+if(el.id==='bask'){B.q=el.value;return}
+if(el.id==='lbask'){LB.q=el.value;return}
+if(el.id==='ftext'){F.text=el.value;return}
+if(el.id==='jtext'||el.id==='jgoal'){jent(jd||todayStr())[el.id==='jtext'?'text':'goals']=el.value;save();return}
+if(el.id==='rsearch'){rq=el.value;$('#rlist').innerHTML=rlist();return}
+if(el.id==='nsearch'){$('#nlist').innerHTML=nlist(el.value);return}
+if(el.id==='ntitle'||el.id==='nbody'){const n=S.notes.find(x=>x.id===hv.slice(2));if(n){n[el.id==='ntitle'?'title':'body']=el.value;n.updated=Date.now();save();$('#nsaved').textContent='Saved'}}});
+
+document.addEventListener('change',e=>{
+const el=e.target;
+if(el.id==='fsrc'){F.src=el.value;return}
+if(el.id==='ffile'){
+  const f=el.files&&el.files[0];
+  if(!f)return;
+  if(f.size>MAX_AI_BYTES){banner('That file is over 10 MB. Please pick a smaller file.');el.value='';F.file=null;F.fileName='';return;}
+  F.file=f;F.fileName=f.name;F.name=f.name.replace(/\.[^.]+$/,'');F.msg='File loaded and ready! Tap Summarize below.';render();return;
+}
+if(el.dataset.habit){const h=S.habits.find(x=>x.id===el.dataset.habit);if(h){if(el.checked)h.days[todayStr()]=1;else delete h.days[todayStr()];save();render()}}
+if(el.id==='gsubj'){gs=el.value;render()}
+if(el.id==='gtarget'){(S.grades[gs]=S.grades[gs]||{target:90,items:[]}).target=Math.min(100,Math.max(1,+el.value||90));save();render()}
+if(el.id==='wavail'){S.wallet.avail=Math.max(0,+el.value||0);save();render()}
+if(el.id==='jdate'&&el.value){jd=el.value;render()}
+if((el.id==='sbed'||el.id==='swake')&&el.value){S.sleep[el.id==='sbed'?'bed':'wake']=el.value;save();render()}
+if(el.id==='rfilter'){rf=el.value;$('#rlist').innerHTML=rlist()}
+if(el.id==='resfile'){addFiles(Array.from(el.files));el.value=''}
+if(el.id==='impfile'){importData(el.files&&el.files[0]);el.value=''}
+if(el.id==='nsubj'){const n=S.notes.find(x=>x.id===hv.slice(2));if(n){n.subj=el.value;save()}}
+if(el.dataset.done){const x=S.tasks.find(t=>t.id===el.dataset.done);if(x){x.done=el.checked;save();render();if(el.checked&&S.tasks.length&&S.tasks.every(t=>t.done))celebrate()}}
+if(el.id==='theme'){S.theme=el.value;save();applyTheme()}
+if(el.id==='lead'){S.lead=+el.value;save()}
+if(el.id==='devsize'){S.ai.dev=el.value;DEV.state='idle';DEV.check='';save();render()}
+});
+render();onboard();
+window.__booted=true;
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
