@@ -145,6 +145,11 @@ nav{display:none!important}
 @keyframes cdb{50%{opacity:.25}}
 @media (max-width:360px){.tm b{font-size:24px}.tm .sg{min-width:46px}}
 @media (prefers-reduced-motion:reduce){.tm i{animation:none}}
+.bud .zz{display:none;font-size:12px;font-weight:700;fill:var(--bc)}
+.bud.sleepy .zz{display:block;animation:zz 2.6s ease-in-out infinite}
+.bud.sleepy .ey{animation:none;transform:scaleY(.15)}.bud.sleepy .wv{animation:none}
+@keyframes zz{0%{opacity:0;transform:translateY(6px)}50%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.bud.sleepy .zz{animation:none}}
 </style>
 <script>
 // Safety net. If the app fails to start, show a recovery card. Once it is running, a stray error only shows a small banner and never wipes the screen or your data.
@@ -265,7 +270,7 @@ function applyTheme(){if(S.theme)document.documentElement.setAttribute('data-the
 applyTheme();
 
 /* PERSONALIZATION + PROFILE */
-const THEMES={Sage:['#f1f5ef','#1e2b24','#3d7a5a'],Cream:['#faf5ec','#2e2a24','#b0733a'],Slate:['#eef1f5','#1f2733','#4a6fa5'],Rose:['#f9f1f1','#33262a','#a8566e'],Midnight:['#0f141b','#e6eaf0','#7da7d9']};
+const THEMES={Sage:['#f1f5ef','#1e2b24','#3d7a5a'],Cream:['#faf5ec','#2e2a24','#b0733a'],Slate:['#eef1f5','#1f2733','#4a6fa5'],Rose:['#f9f1f1','#33262a','#a8566e'],Midnight:['#0f141b','#e6eaf0','#7da7d9'],Rainy:['#e9eef2','#1d2a33','#56829e'],Sunset:['#fbefe6','#3a2a26','#d9693f'],Sakura:['#fcf1f4','#3a2a30','#d56a8c']};
 const FONTS={System:'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif',Serif:'Georgia,"Times New Roman",serif',Rounded:'"Trebuchet MS","Segoe UI",sans-serif',Clean:'Verdana,Geneva,sans-serif',Mono:'"Courier New",ui-monospace,monospace'};
 const hx=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 const mixc=(a,b,t)=>{const x=hx(a),y=hx(b);return'#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('')};
@@ -334,7 +339,7 @@ document.addEventListener('change',e=>{
 function budSVG(kind){
   const cap=kind==='s'?'<path class="ac" d="M20 17 32 11 44 17 32 23Z"/><path d="M44 17v7" stroke="var(--bc)" stroke-width="2" stroke-linecap="round"/>':'';
   const cheeks=kind==='l'?'<ellipse class="ck" cx="21" cy="40" rx="3.5" ry="2.4"/><ellipse class="ck" cx="43" cy="40" rx="3.5" ry="2.4"/>':'';
-  return'<svg class="bud" viewBox="0 0 64 64" aria-hidden="true"><circle class="bd" cx="32" cy="36" r="19"/>'+cap+cheeks+'<ellipse class="ey" cx="25" cy="34" rx="2.4" ry="3.2"/><ellipse class="ey b" cx="39" cy="34" rx="2.4" ry="3.2"/><path class="mo" d="M27 42Q32 46.5 37 42"/><g class="wv"><ellipse cx="53" cy="36" rx="4" ry="7"/></g></svg>'}
+  return'<svg class="bud'+(new Date().getHours()>=22||new Date().getHours()<5?' sleepy':'')+'" viewBox="0 0 64 64" aria-hidden="true"><circle class="bd" cx="32" cy="36" r="19"/>'+cap+cheeks+'<ellipse class="ey" cx="25" cy="34" rx="2.4" ry="3.2"/><ellipse class="ey b" cx="39" cy="34" rx="2.4" ry="3.2"/><path class="mo" d="M27 42Q32 46.5 37 42"/><g class="wv"><ellipse cx="53" cy="36" rx="4" ry="7"/></g><text class="zz" x="44" y="16">z</text></svg>'}
 function buddyBoxes(){
   return'<div class="buddies"><button class="bcard" data-mod="buddy" style="--bc:var(--accent)">'+budSVG('s')+'<b>StudyBuddy</b><small>Ask me anything</small></button><button class="bcard" data-mod="lifebuddy" style="--bc:#c0793b">'+budSVG('l')+'<b>Life Buddy</b><small>I’m here to listen</small></button></div>'}
 const KATE_MSG='Jaja loves you, always cares for you, and will never stop loving you &lt;3';
@@ -361,6 +366,47 @@ function cdBox(x){
   const s=subj(x.subj),v=tmVals(examAt(x)),L=['days','hrs','min','sec'];
   return'<div class="cdc"><div class="cdt"><span>'+esc(x.title)+'</span><small>'+(s?esc(s.name)+' \u00b7 ':'')+x.date+(x.time?', '+fmtT(x.time):'')+'</small></div><div class="tm" data-at="'+examAt(x)+'">'+v.map((n,i)=>(i?'<i>:</i>':'')+'<div class="sg"><b>'+n+'</b><small>'+L[i]+'</small></div>').join('')+'</div></div>'}
 setInterval(()=>{document.querySelectorAll('.tm').forEach(e=>{const v=tmVals(+e.dataset.at),b=e.querySelectorAll('b');v.forEach((n,i)=>{if(b[i]&&b[i].textContent!==n)b[i].textContent=n})})},1000);
+const MOODL=['Rough','Low','Okay','Good','Great'];
+function moodCard(){
+  const mv=d=>MOODL.indexOf((S.journal[d]||{}).mood)+1,cur=mv(todayStr());let bars='';
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=mv(ymd(d));bars+='<span style="flex:1;height:'+(v?6+v*5:4)+'px;border-radius:3px;background:'+(v?'var(--accent)':'var(--line)')+';opacity:'+(v?.35+v*.13:1)+'"></span>'}
+  return'<div class="lbl">How are you today?</div><div class="card"><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">'+MOODL.map((m,i)=>'<button class="'+(cur===i+1?'':'ghost')+'" data-hmood="'+m+'" style="padding:8px 2px;font-size:12px">'+m+'</button>').join('')+'</div><div style="display:flex;align-items:flex-end;gap:4px;height:36px;margin-top:12px">'+bars+'</div><small>Last 7 days</small></div>'}
+function weekWrap(){
+  const f=(()=>{const d=new Date();d.setDate(d.getDate()-6);return ymd(d)})(),ss=S.sessions.filter(x=>x.date>=f);
+  if(!ss.length)return'';
+  const tot=ss.reduce((a,x)=>a+x.min,0),byD={},byS={};
+  ss.forEach(x=>{byD[x.date]=(byD[x.date]||0)+x.min;if(x.subj)byS[x.subj]=(byS[x.subj]||0)+x.min});
+  const bd=Object.keys(byD).sort((a,b)=>byD[b]-byD[a])[0],bs=Object.keys(byS).sort((a,b)=>byS[b]-byS[a])[0],sb=S.subjects.find(z=>z.id===bs);
+  const day=new Date(bd+'T12:00').toLocaleDateString(undefined,{weekday:'long'}),hrs=(tot/60).toFixed(1);
+  window.__wrapTxt='My StudySpace week: '+hrs+' h focused, best day '+day+' ('+byD[bd]+' min)'+(sb?', top subject '+sb.name:'')+', '+streak()+'-day streak.';
+  return'<div class="lbl">Your week</div><div class="card"><b style="font-size:22px">'+hrs+' hours</b> focused<br><small>Best day: '+day+' \u00b7 '+byD[bd]+' min'+(sb?' \u00b7 Top subject: '+esc(sb.name):'')+' \u00b7 '+streak()+'-day streak</small><button class="ghost" id="wrapshare" style="width:100%;margin-top:10px">Share</button></div>'}
+function backupCard(){
+  if(!S.lastBackup){S.lastBackup=Date.now();save();return''}
+  if(Date.now()-S.lastBackup<14*864e5)return'';
+  return'<div class="card" style="margin-top:14px">It has been a while since your last backup. <button class="ghost" id="bkup" style="margin-top:8px">Back up now</button></div>'}
+let SND={ctx:null,src:null,g:null,kind:'off'};
+function sndSel(){return'<label style="display:block;margin:0 0 12px">Sound<select id="tsnd">'+[['off','Off'],['rain','Rain'],['brown','Brown noise'],['white','White noise']].map(o=>'<option value="'+o[0]+'"'+(SND.kind===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></label>'}
+function sndSet(k){
+  try{
+    if(SND.src){SND.src.stop();SND.src.disconnect();SND.src=null}
+    SND.kind=k;if(k==='off')return;
+    const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+    const c=SND.ctx=SND.ctx||new C();if(c.resume)c.resume();
+    const n=c.sampleRate*3,buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);let l=0;
+    for(let i=0;i<n;i++){const w=Math.random()*2-1;if(k==='brown'){l=(l+.02*w)/1.02;d[i]=l*3.5}else d[i]=w*.5}
+    const s=c.createBufferSource(),f=c.createBiquadFilter();s.buffer=buf;s.loop=true;
+    if(k==='rain'){f.type='bandpass';f.frequency.value=1800;f.Q.value=.5}else{f.type='lowpass';f.frequency.value=k==='white'?9000:1200}
+    SND.g=SND.g||c.createGain();SND.g.gain.value=.4;s.connect(f);f.connect(SND.g);SND.g.connect(c.destination);s.start();SND.src=s;
+  }catch(e){banner('Sound is not available on this device.')}
+}
+document.addEventListener('change',e=>{if(e.target.id==='tsnd')sndSet(e.target.value)});
+document.addEventListener('click',e=>{
+  const m=e.target.closest('[data-hmood]');
+  if(m){jent(todayStr()).mood=m.dataset.hmood;save();render();return}
+  const b=e.target.closest('button');if(!b)return;
+  if(b.id==='bkup'){exportData();render()}
+  else if(b.id==='wrapshare'){const t=window.__wrapTxt||'';try{if(navigator.share)navigator.share({text:t}).catch(()=>{});else navigator.clipboard.writeText(t).then(()=>banner('Copied to clipboard.'))}catch(x){banner('Could not share.')}}
+});
 function onboard(){
   if(!S.prof||S.prof.done)return;
   const o=document.createElement('div');o.id='onb';let lv='';
@@ -410,7 +456,7 @@ function home(){
   (next?'<div class="card nx"><small>Next up</small><br><b>'+next+'</b></div>':'')+
   '<div class="stats"><div class="card"><b>'+focusToday()+'</b><span>min focused</span></div><div class="card"><b>'+streak()+'</b><span>day streak</span></div><div class="card"><b>'+open.length+'</b><span>tasks open</span></div></div>'+
   lb('Exam countdown')+(ups.length?ups.slice(0,2).map(cdBox).join(''):'<div class="card empty">No upcoming exams.</div>')+
-  buddyBoxes()+lb('Explore')+
+  buddyBoxes()+moodCard()+lb('Explore')+
   '<div class="hg">'+ht('acad','Subjects',S.subjects.length+' added','data-t="acad"')+ht('notes','Notes',S.notes.length+' saved','data-mod="notes"')+ht('learn','Learn',due?due+' to review':'Flashcards','data-mod="learn"')+
   ht('lib','Library',S.res.length+' saved','data-mod="lib"')+ht('grades','Grades','Scores','data-mod="grades"')+ht('exams','Exams',ups.length+' upcoming','data-mod="exams"')+
   ht('focus','Focus',focusToday()+' min today','data-t="focus"')+ht('wallet','Wallet',money(walletBal()),'data-mod="wallet"')+ht('journal','Journal',je&&je.text?'Written':'Write today','data-mod="journal"')+
@@ -418,7 +464,7 @@ function home(){
   (due?'<button class="subcard" id="gorev" style="margin-top:12px"><span class="t"><b>Topics to review</b><br><small>'+due+' due in Spaced Repetition</small></span><span aria-hidden="true">\u203a</span></button>':'')+
   lb('Today\u2019s classes')+'<div class="card">'+(tc.length?tc.map(x=>'<div class="row"><b style="width:66px;font-size:14px">'+fmtT(x.c.start)+'</b><span class="dot" style="background:'+x.s.color+'"></span><div class="t"><div>'+esc(x.s.name)+'</div>'+(x.c.room?'<small>'+esc(x.c.room)+'</small>':'')+'</div></div>').join(''):'<div class="empty">No classes today.</div>')+'</div>'+
   lb('Due soon')+'<div class="card">'+(open.length?open.slice(0,4).map(t=>taskRow(t)).join(''):'<div class="empty">Nothing due.</div>')+'</div>'+
-  (S.alerts?'':'<div class="card" style="margin-top:14px">Get a beep for classes and deadlines. <button class="ghost" data-t="more" style="margin-top:8px">Set up alerts</button></div>')}
+  weekWrap()+backupCard()+(S.alerts?'':'<div class="card" style="margin-top:14px">Get a beep for classes and deadlines. <button class="ghost" data-t="more" style="margin-top:8px">Set up alerts</button></div>')}
 
 /* ACADEMICS TAB */
 function acad(){
@@ -480,7 +526,7 @@ function focus(){
 return'<h1>Focus Room</h1><p class="sub">Pick a method and start.</p>'+
 '<div class="modes"><button data-mode="p" class="'+(T.mode==='p'?'on':'')+'">Pomodoro<br><small>25 / 5</small></button><button data-mode="d" class="'+(T.mode==='d'?'on':'')+'">52 / 17</button><button data-mode="c" class="'+(T.mode==='c'?'on':'')+'">Custom</button></div>'+
 (T.mode==='c'?'<div class="two" style="margin-bottom:8px"><label>Focus minutes<input id="cf" type="number" min="1" max="180" value="'+T.f+'"></label><label>Break minutes<input id="cb" type="number" min="1" max="60" value="'+T.b+'"></label></div>':'')+
-'<label style="display:block;margin:12px 0">Studying<select id="tsubj"><option value="">No subject</option>'+S.subjects.map(s=>'<option value="'+s.id+'"'+(T.subj===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></label>'+
+'<label style="display:block;margin:12px 0">Studying<select id="tsubj"><option value="">No subject</option>'+S.subjects.map(s=>'<option value="'+s.id+'"'+(T.subj===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></label>'+sndSel()+
 ringHTML()+
 '<div class="ctrl"><button id="tgo">'+(T.running?'Pause':'Start')+'</button><button class="ghost" id="treset">Reset</button><button class="ghost" id="tskip">Skip</button></div>'+
 '<div class="card"><b>'+focusToday()+' minutes</b> focused today across '+S.sessions.filter(x=>x.date===todayStr()).length+' sessions.</div>'+weekBySubject()}
@@ -1008,7 +1054,7 @@ function breatheStart(){
   };
   step();BR=setInterval(step,1000);
 }
-function exportData(){try{const o=Object.assign({},S);delete o.ai;delete o.lb;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download='studyspace-backup-'+todayStr()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}catch(e){banner('Could not create the backup.')}}
+function exportData(){try{S.lastBackup=Date.now();save();const o=Object.assign({},S);delete o.ai;delete o.lb;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download='studyspace-backup-'+todayStr()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}catch(e){banner('Could not create the backup.')}}
 function importData(f){
   if(!f)return;
   if(f.size>5*1048576){banner('That file is too big to be a StudySpace backup.');return}
