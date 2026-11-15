@@ -337,7 +337,7 @@ function budSVG(kind){
   return'<svg class="bud" viewBox="0 0 64 64" aria-hidden="true"><circle class="bd" cx="32" cy="36" r="19"/>'+cap+cheeks+'<ellipse class="ey" cx="25" cy="34" rx="2.4" ry="3.2"/><ellipse class="ey b" cx="39" cy="34" rx="2.4" ry="3.2"/><path class="mo" d="M27 42Q32 46.5 37 42"/><g class="wv"><ellipse cx="53" cy="36" rx="4" ry="7"/></g></svg>'}
 function buddyBoxes(){
   return'<div class="buddies"><button class="bcard" data-mod="buddy" style="--bc:var(--accent)">'+budSVG('s')+'<b>StudyBuddy</b><small>Ask me anything</small></button><button class="bcard" data-mod="lifebuddy" style="--bc:#c0793b">'+budSVG('l')+'<b>Life Buddy</b><small>I’m here to listen</small></button></div>'}
-const KATE_MSG='Jaja loves u, he cares for u everytime &lt;3, he’ll never stop loving you ^^';
+const KATE_MSG='Jaja loves you, always cares for you, and will never stop loving you &lt;3';
 const isKate=()=>/^kate$/i.test((S.prof&&S.prof.name||'').trim());
 function kateCard(){
   if(!isKate())return'';
