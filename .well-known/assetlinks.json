@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.workers.jasper_esclamado02.studyspace_app.twa",
+      "sha256_cert_fingerprints": [
+        "7B:57:5E:98:A4:17:B8:83:E9:D1:82:5A:D0:0E:2B:B9:DA:D2:B2:92:B9:D0:BB:AD:6A:5F:99:07:47:D4:79:7A"
+      ]
+    }
+  }
+]
