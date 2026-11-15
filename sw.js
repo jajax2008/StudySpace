@@ -58,7 +58,7 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Pinned library files (AI engine, PDF reader): save once, reuse offline.
+  // Pinned library files (AI engine, PDF reader, DOCX reader): save once, reuse offline.
   if (u.hostname === "cdn.jsdelivr.net" || u.hostname === "cdnjs.cloudflare.com") {
     e.respondWith(
       caches.match(r).then(
