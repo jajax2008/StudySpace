@@ -1,8 +1,12 @@
-const CACHE = "studyspace-v13";
+const CACHE = "studyspace-v14";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+const NET_WAIT_MS = 4000; // on a slow connection, use the saved copy after this long
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
+  // Save each file on its own, so one missing file never stops the rest from being saved.
+  e.waitUntil(
+    caches.open(CACHE).then((c) => Promise.allSettled(SHELL.map((u) => c.add(u))))
+  );
   self.skipWaiting();
 });
 
@@ -23,18 +27,33 @@ self.addEventListener("fetch", (e) => {
   if (r.method !== "GET") return;
   const u = new URL(r.url);
 
-  // The app itself: newest version when online, saved copy when offline.
+  // The app itself: newest version when online, saved copy when offline or very slow.
   if (u.origin === location.origin) {
+    const fallback = () =>
+      caches.match(r, { ignoreSearch: true }).then(
+        (hit) =>
+          hit ||
+          // Only page loads fall back to the app page. Other files must not receive HTML.
+          (r.mode === "navigate" ? caches.match("./index.html") : undefined) ||
+          Response.error()
+      );
+
+    const net = fetch(r).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(r, copy));
+      }
+      return res;
+    });
+    const slow = new Promise((ok) => setTimeout(() => ok(null), NET_WAIT_MS));
+
     e.respondWith(
-      fetch(r)
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(r, copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match(r).then((hit) => hit || caches.match("./index.html")))
+      Promise.race([net, slow])
+        .then((res) =>
+          res ||
+          caches.match(r, { ignoreSearch: true }).then((hit) => hit || net) // nothing saved: keep waiting for the network
+        )
+        .catch(fallback)
     );
     return;
   }
@@ -56,4 +75,15 @@ self.addEventListener("fetch", (e) => {
     );
   }
   // Everything else (the AI server, model downloads) passes straight through.
+});
+
+// Tapping an alert opens (or returns to) the app.
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) if ("focus" in c) return c.focus();
+      return self.clients.openWindow("./");
+    })
+  );
 });
