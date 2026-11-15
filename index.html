@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>StudySpace</title>
-<meta name="theme-color" content="#f3f3f3">
+<meta id="themecolor" name="theme-color" content="#f1f5ef">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -15,7 +15,7 @@
 :root[data-theme="dark"]{--bg:#111915;--ink:#e5eee8;--muted:#92a69a;--accent:#7cc29e;--card:#1a251f;--line:#29372e;--on:#0f1a14;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.45}
+body{background:var(--bg);color:var(--ink);font-family:var(--font,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif);font-size:var(--fs,16px);line-height:1.45}
 #app{max-width:520px;margin:0 auto;height:100%;display:flex;flex-direction:column}
 main{flex:1;overflow-y:auto;padding:20px 18px 24px}
 h1{font-size:28px;font-weight:800;margin:0 0 2px;letter-spacing:-.5px}
@@ -54,7 +54,7 @@ button.x{background:none;color:var(--muted);padding:4px 8px;font-size:20px;line-
 .ctrl button{min-width:96px}
 .empty{color:var(--muted);padding:8px 0}
 .banner{position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));max-width:496px;margin:0 auto;background:var(--accent);color:var(--on);padding:14px;border-radius:12px;z-index:9;font-weight:600}
-nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card)}
 nav button{flex:1;background:none;color:var(--muted);border-radius:0;padding:12px 2px;font-size:12px}
 nav button.on{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
 textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%;min-height:48vh;resize:vertical}
@@ -93,18 +93,56 @@ nav button.on{box-shadow:none}
 .bubble:last-child{animation:rise .45s var(--ease) both}
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
 .confetti i{position:absolute;top:0;left:0;border-radius:3px;will-change:transform,opacity}
+.breath{display:flex;flex-direction:column;align-items:center;gap:12px;padding:10px 0 4px}
+#brcircle{width:120px;height:120px;border-radius:50%;background:var(--accent);opacity:.85;transform:scale(.6);transition:transform 4s ease-in-out}
+.hot a{display:inline-block;margin:6px 6px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:10px;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px;background:var(--bg)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;transition-duration:.001ms!important}}
+button,textarea{font-family:inherit}
+#onb{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.obc{width:100%;max-width:400px}.obc label{display:block;margin-bottom:14px}
+.lv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sw{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}.sw i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.cols input{height:42px;padding:3px}
+.buddies{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px}
+.bcard{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:4px;transition:transform .15s}
+.bcard:active{transform:scale(.97)}.bcard small{color:var(--muted)}
+.bud{width:58px;height:58px;overflow:visible;animation:bob 3.4s ease-in-out infinite}
+.bud .bd{fill:color-mix(in srgb,var(--bc) 24%,var(--card));stroke:var(--bc);stroke-width:2}
+.bud .ey{fill:var(--ink);transform-box:fill-box;transform-origin:center;animation:blink 4.2s infinite}
+.bud .ey.b{animation-delay:.04s}
+.bud .mo{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+.bud .ac{fill:var(--bc)}.bud .ck{fill:var(--bc);opacity:.35}
+.bud .wv{fill:color-mix(in srgb,var(--bc) 24%,var(--card));stroke:var(--bc);stroke-width:2;transform-origin:49px 44px;animation:wave 3s ease-in-out infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes wave{0%,55%,100%{transform:rotate(0)}65%{transform:rotate(-24deg)}75%{transform:rotate(8deg)}85%{transform:rotate(-20deg)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@media (prefers-reduced-motion:reduce){.bud,.bud .ey,.bud .wv{animation:none!important}}
+.kate{display:flex;align-items:center;gap:12px;position:relative;background:color-mix(in srgb,#d9667a 12%,var(--card));border:1px solid color-mix(in srgb,#d9667a 35%,var(--line));border-radius:14px;padding:14px;margin-bottom:14px}
+.kate p{margin:0;line-height:1.4}
+.kh{flex:none;width:38px;height:38px;padding:0;background:none;border:0;cursor:pointer;color:#d9667a;display:grid;place-items:center}
+.kh svg{width:34px;height:34px;fill:currentColor;animation:khb 2.6s ease-in-out infinite}
+.kh.pop svg{animation:khp .7s cubic-bezier(.3,1.6,.5,1)}
+.kf{position:absolute;left:30px;top:22px;color:#d9667a;font-size:14px;pointer-events:none;opacity:0;animation:kfl 1.5s ease-out forwards}
+@keyframes khb{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+@keyframes khp{0%{transform:scale(1)}35%{transform:scale(1.45) rotate(-8deg)}70%{transform:scale(.92) rotate(4deg)}100%{transform:scale(1)}}
+@keyframes kfl{0%{opacity:0;transform:translate(0,0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-70px) scale(1.1)}}
+@media (prefers-reduced-motion:reduce){.kh svg,.kh.pop svg,.kf{animation:none!important}}
 </style>
 <script>
-// Independent Error Trap: catches any syntax/copy-paste error even if the main script fails
-window.addEventListener('error', function(e) {
-  var v = document.getElementById('view');
-  if (v) {
-    v.innerHTML = '<div class="card"><h2>Script Error Detected</h2><p><small>' +
-      (e.message || 'Unknown error') + ' (Line ' + (e.lineno || '?') + ')</small></p>' +
-      '<button onclick="localStorage.clear();if(navigator.serviceWorker){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister()})})};setTimeout(function(){location.reload(true)},300)">Force Reset & Reload</button></div>';
+// Safety net. If the app fails to start, show a recovery card. Once it is running, a stray error only shows a small banner and never wipes the screen or your data.
+window.ssBackup=function(){try{var raw=localStorage.getItem('studyspace1')||'{}';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([raw],{type:'application/json'}));a.download='studyspace-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove()}catch(e){}};
+window.ssReload=function(){try{if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister()})});if(window.caches)caches.keys().then(function(k){k.forEach(function(c){if(c.indexOf('studyspace-')===0)caches.delete(c)})})}catch(e){}setTimeout(function(){location.href=location.pathname+'?fresh='+Date.now()},400)};
+function ssFail(msg,line){
+  if(!window.__booted){
+    var v=document.getElementById('view');
+    if(v){v.innerHTML='<div class="card"><h2>The app could not start</h2><p><small>'+String(msg).replace(/[<>&]/g,' ')+(line?' (Line '+line+')':'')+'</small></p><p><small>Your data has not been touched.</small></p><div class="two"><button onclick="ssReload()">Reload app</button><button class="ghost" onclick="ssBackup()">Download my data</button></div></div>';return}
   }
-});
+  var b=document.getElementById('errbn');
+  if(!b){b=document.createElement('div');b.id='errbn';b.className='banner';b.setAttribute('role','alert');b.onclick=function(){b.remove()};document.body.appendChild(b)}
+  b.textContent='Something went wrong ('+String(msg).slice(0,80)+'). Your data is safe. Tap to dismiss.';
+}
+window.addEventListener('error',function(e){ssFail(e.message||'Unknown error',e.lineno)});
+window.addEventListener('unhandledrejection',function(e){ssFail((e.reason&&e.reason.message)||'A request failed')});
 </script>
 </head>
 <body>
@@ -114,7 +152,7 @@ window.addEventListener('error', function(e) {
     <p class="sub">Starting up...</p>
     <div class="card">
       <p style="margin:0 0 10px">If this screen does not update automatically, tap below to clear old cached files:</p>
-      <button onclick="if(navigator.serviceWorker){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister()})})};caches.keys().then(function(k){k.forEach(function(c){caches.delete(c)})});setTimeout(function(){location.href=location.pathname+'?fresh='+Date.now()},300)">Clear Cache & Open App</button>
+      <button onclick="ssReload()">Clear Cache &amp; Open App</button>
     </div>
   </main>
   <nav>
@@ -132,7 +170,9 @@ const AI_WORKER_URL='https://studyspace-ai.jasper-esclamado02.workers.dev';
 const MAX_AI_MB=10;
 const MAX_AI_BYTES=MAX_AI_MB*1024*1024;
 const MAX_AI_DAILY=2;
-const MAX_BUDDY_DAILY=20;
+const MAX_BUDDY_DAILY=30;
+const MAX_LIFE_DAILY=40;
+let DEVID='';try{DEVID=localStorage.getItem('studyspace-dev')||'';if(!DEVID){DEVID=(Date.now().toString(36)+Math.random().toString(36).slice(2,10)).slice(0,24);localStorage.setItem('studyspace-dev',DEVID)}}catch(e){}
 
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const todayStr=()=>ymd(new Date());
@@ -146,7 +186,9 @@ const blank=()=>({
   subjects:[],tasks:[],sessions:[],exams:[],notes:[],decks:[],res:[],reviews:[],grades:{},
   wallet:{tx:[],avail:0,goals:[]},journal:{},habits:[],sleep:{bed:'22:30',wake:'06:00'},
   theme:'',alerts:false,lead:10,fired:{},
-  ai:{date:todayStr(),used:0,onlineUsed:0,offlineUsed:0,mode:'online'}
+  ai:{date:todayStr(),used:0,onlineUsed:0,offlineUsed:0,mode:'online'},
+  lb:{date:todayStr(),used:0,noted:false},
+  prof:{name:'',age:'',level:'',done:false},ui:{}
 });
 
 function load(){
@@ -179,6 +221,9 @@ function load(){
     d.ai.offlineUsed=0;
   }
   if(!d.ai.mode)d.ai.mode='online';
+  if(!d.lb||typeof d.lb!=='object')d.lb={date:todayStr(),used:0,noted:false};
+  if(d.lb.date!==todayStr()){d.lb.date=todayStr();d.lb.used=0}
+  Object.keys(d.fired).forEach(k=>{if(d.fired[k]===1)d.fired[k]=Date.now()});
   return d;
 }
 
@@ -197,8 +242,130 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmtT=t=>{const[h,m]=String(t||'08:00').split(':').map(Number);return((h+11)%12+1)+':'+String(m||0).padStart(2,'0')+' '+(h<12?'AM':'PM')};
-function applyTheme(){if(S.theme)document.documentElement.setAttribute('data-theme',S.theme);else document.documentElement.removeAttribute('data-theme')}
+function applyTheme(){if(S.theme)document.documentElement.setAttribute('data-theme',S.theme);else document.documentElement.removeAttribute('data-theme');
+  try{const dk=S.theme==='dark'||(!S.theme&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);const m=document.getElementById('themecolor');if(m)m.setAttribute('content',dk?'#111915':'#f1f5ef')}catch(e){}}
 applyTheme();
+
+/* PERSONALIZATION + PROFILE */
+const THEMES={Sage:['#f1f5ef','#1e2b24','#3d7a5a'],Cream:['#faf5ec','#2e2a24','#b0733a'],Slate:['#eef1f5','#1f2733','#4a6fa5'],Rose:['#f9f1f1','#33262a','#a8566e'],Midnight:['#0f141b','#e6eaf0','#7da7d9']};
+const FONTS={System:'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif',Serif:'Georgia,"Times New Roman",serif',Rounded:'"Trebuchet MS","Segoe UI",sans-serif',Clean:'Verdana,Geneva,sans-serif',Mono:'"Courier New",ui-monospace,monospace'};
+const hx=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mixc=(a,b,t)=>{const x=hx(a),y=hx(b);return'#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('')};
+const lumi=h=>{const c=hx(h);return(.299*c[0]+.587*c[1]+.114*c[2])/255};
+const okc=c=>/^#[0-9a-f]{6}$/i.test(c||'');
+function ud(){return S.ui&&typeof S.ui==='object'?S.ui:(S.ui={})}
+function st(id,css){let e=document.getElementById(id);if(!e){e=document.createElement('style');e.id=id;document.head.appendChild(e)}e.textContent=css}
+function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return''}}
+function applyUI(){
+  const r=document.documentElement.style,u=ud();
+  ['--bg','--ink','--muted','--accent','--card','--line','--on','--font','--fs'].forEach(k=>r.removeProperty(k));
+  const bg=okc(u.bg)?u.bg:'',ac=okc(u.accent)?u.accent:'';
+  const w=bg&&lumi(bg)<.5?'#ffffff':'#000000';
+  const ink=okc(u.ink)?u.ink:(bg?(w==='#ffffff'?'#f2f2f2':'#1c1c1c'):'');
+  if(bg){r.setProperty('--bg',bg);r.setProperty('--card',mixc(bg,w,.07));r.setProperty('--line',mixc(bg,w,.16));const m=document.getElementById('themecolor');if(m)m.setAttribute('content',bg)}
+  if(ink){r.setProperty('--ink',ink);r.setProperty('--muted',mixc(ink,bg||(lumi(ink)<.5?'#ffffff':'#000000'),.4))}
+  if(ac){r.setProperty('--accent',ac);r.setProperty('--on',lumi(ac)>.6?'#111111':'#ffffff')}
+  let f=FONTS[u.font];
+  const fd=u.font==='Custom'?lsGet('studyspace-font'):'';
+  st('ufont',fd?'@font-face{font-family:"UserFont";src:url('+fd+')}':'');
+  if(fd)f='"UserFont",system-ui,sans-serif';
+  if(f)r.setProperty('--font',f);
+  const fs={S:'15px',L:'18px'}[u.fs];if(fs)r.setProperty('--fs',fs);
+  const img=u.bgimg?lsGet('studyspace-bgimg'):'';
+  st('ubg',img?'body{background-image:linear-gradient(color-mix(in srgb,var(--bg) 82%,transparent),color-mix(in srgb,var(--bg) 82%,transparent)),url('+img+');background-size:cover;background-position:center;background-attachment:fixed}':'');
+}
+{const _at=applyTheme;applyTheme=function(){_at();applyUI()}}
+applyUI();
+
+function personalizeHTML(){
+  const u=ud(),p=S.prof||{},cs=getComputedStyle(document.documentElement);
+  const cv=(k,d)=>{const v=(cs.getPropertyValue(k)||'').trim();return okc(v)?v:d};
+  const fonts=Object.keys(FONTS).concat(lsGet('studyspace-font')?['Custom']:[]);
+  const opt=(a,v,l)=>'<option value="'+a+'"'+(a===v?' selected':'')+'>'+(l||a)+'</option>';
+  return'<h2>Profile</h2><div class="card"><label>Name<input id="pfname" maxlength="30" value="'+esc(p.name||'')+'"></label><div class="two" style="margin-top:10px"><label>Age<input id="pfage" type="number" inputmode="numeric" min="5" max="99" value="'+esc(String(p.age||''))+'"></label><label>Level<select id="pflevel">'+['JHS','SHS','College'].map(l=>opt(l,p.level)).join('')+'</select></label></div></div>'+
+  '<h2>Personalize</h2><div class="card"><b>Color presets</b><div class="sw">'+Object.keys(THEMES).map(n=>'<button class="ghost" data-preset="'+n+'"><i style="background:'+THEMES[n][2]+'"></i>'+n+'</button>').join('')+'</div>'+
+  '<b>Your colors</b><div class="cols"><label><small>Background</small><input id="uibg" type="color" value="'+cv('--bg','#f1f5ef')+'"></label><label><small>Text</small><input id="uiink" type="color" value="'+cv('--ink','#1e2b24')+'"></label><label><small>Accent</small><input id="uiac" type="color" value="'+cv('--accent','#3d7a5a')+'"></label></div>'+
+  '<div class="two" style="margin-bottom:14px"><label>Font<select id="uifont">'+fonts.map(f=>opt(f,u.font||'System')).join('')+'</select></label><label>Text size<select id="uifs">'+opt('S',u.fs,'Small')+opt('M',u.fs||'M','Normal')+opt('L',u.fs,'Large')+'</select></label></div>'+
+  '<div class="two"><button class="ghost" id="uifontbtn">Upload font</button><button class="ghost" id="uibgbtn">Background photo</button></div>'+
+  (u.bgimg?'<button class="ghost" id="uibgrm" style="width:100%;margin-top:8px">Remove background photo</button>':'')+
+  '<input id="uifontf" type="file" accept=".ttf,.otf,.woff,.woff2" hidden><input id="uibgf" type="file" accept="image/*" hidden>'+
+  '<button class="ghost" id="uireset" style="width:100%;margin-top:8px">Reset to default look</button><small style="display:block;margin-top:8px">Fonts and photos stay on this device only.</small></div>'}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const u=ud();
+  if(b.dataset.preset){const p=THEMES[b.dataset.preset];u.bg=p[0];u.ink=p[1];u.accent=p[2];save();applyUI();render()}
+  else if(b.id==='uifontbtn')$('#uifontf').click();
+  else if(b.id==='uibgbtn')$('#uibgf').click();
+  else if(b.id==='uibgrm'){u.bgimg=false;try{localStorage.removeItem('studyspace-bgimg')}catch(x){}save();applyUI();render()}
+  else if(b.id==='uireset'){S.ui={};try{localStorage.removeItem('studyspace-font');localStorage.removeItem('studyspace-bgimg')}catch(x){}save();applyUI();render()}
+});
+document.addEventListener('input',e=>{const el=e.target,k={uibg:'bg',uiink:'ink',uiac:'accent'}[el.id];if(k){ud()[k]=el.value;save();applyUI()}});
+document.addEventListener('change',e=>{
+  const el=e.target,u=ud(),p=S.prof;
+  if(el.id==='pfname'){p.name=el.value.trim().slice(0,30);save()}
+  else if(el.id==='pfage'){p.age=Math.max(5,Math.min(99,+el.value||0))||'';save()}
+  else if(el.id==='pflevel'){p.level=el.value;save()}
+  else if(el.id==='uifont'){u.font=el.value;save();applyUI()}
+  else if(el.id==='uifs'){u.fs=el.value;save();applyUI()}
+  else if(el.id==='uifontf'&&el.files[0]){const f=el.files[0];if(f.size>2*1048576){banner('That font is too big (max 2 MB).');return}const r=new FileReader();r.onload=()=>{try{localStorage.setItem('studyspace-font',r.result);u.font='Custom';save();applyUI();render()}catch(x){banner('Could not save that font.')}};r.readAsDataURL(f)}
+  else if(el.id==='uibgf'&&el.files[0]){const img=new Image(),url=URL.createObjectURL(el.files[0]);img.onload=()=>{const k=Math.min(1,1100/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);try{localStorage.setItem('studyspace-bgimg',c.toDataURL('image/jpeg',.7));u.bgimg=true;save();applyUI();render()}catch(x){banner('Could not save that photo.')}URL.revokeObjectURL(url)};img.onerror=()=>banner('That image could not be read.');img.src=url}
+});
+
+function budSVG(kind){
+  const cap=kind==='s'?'<path class="ac" d="M20 17 32 11 44 17 32 23Z"/><path d="M44 17v7" stroke="var(--bc)" stroke-width="2" stroke-linecap="round"/>':'';
+  const cheeks=kind==='l'?'<ellipse class="ck" cx="21" cy="40" rx="3.5" ry="2.4"/><ellipse class="ck" cx="43" cy="40" rx="3.5" ry="2.4"/>':'';
+  return'<svg class="bud" viewBox="0 0 64 64" aria-hidden="true"><circle class="bd" cx="32" cy="36" r="19"/>'+cap+cheeks+'<ellipse class="ey" cx="25" cy="34" rx="2.4" ry="3.2"/><ellipse class="ey b" cx="39" cy="34" rx="2.4" ry="3.2"/><path class="mo" d="M27 42Q32 46.5 37 42"/><g class="wv"><ellipse cx="53" cy="36" rx="4" ry="7"/></g></svg>'}
+function buddyBoxes(){
+  return'<div class="buddies"><button class="bcard" data-mod="buddy" style="--bc:var(--accent)">'+budSVG('s')+'<b>StudyBuddy</b><small>Ask me anything</small></button><button class="bcard" data-mod="lifebuddy" style="--bc:#c0793b">'+budSVG('l')+'<b>Life Buddy</b><small>I’m here to listen</small></button></div>'}
+const KATE_MSG='Jaja loves u, he cares for u everytime &lt;3, he’ll never stop loving you ^^';
+const isKate=()=>/^kate$/i.test((S.prof&&S.prof.name||'').trim());
+function kateCard(){
+  if(!isKate())return'';
+  return'<div class="kate"><button class="kh" id="kheart" aria-label="A message for you"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.8 6.2 4.8c2.1 0 3.5 1.1 4.3 2.4l1.5 2 1.5-2c.8-1.3 2.2-2.4 4.3-2.4 3.5 0 5.3 3.6 3.8 7C19.5 16.4 12 21 12 21z"/></svg></button><p>'+KATE_MSG+'</p></div>'}
+document.addEventListener('click',e=>{
+  const h=e.target.closest('#kheart');if(!h)return;
+  h.classList.remove('pop');void h.offsetWidth;h.classList.add('pop');
+  const c=h.parentNode;
+  for(let i=0;i<6;i++){const f=document.createElement('span');f.className='kf';f.textContent='\u2665';f.style.setProperty('--dx',(Math.random()*70-35)+'px');f.style.animationDelay=(i*.09)+'s';f.style.left=(22+Math.random()*24)+'px';f.addEventListener('animationend',()=>f.remove());c.appendChild(f)}
+});
+function weekBySubject(){
+  const from=new Date();from.setDate(from.getDate()-6);const f=ymd(from),m={};
+  S.sessions.forEach(x=>{if(x.date>=f){const k=x.subj||'';m[k]=(m[k]||0)+x.min}});
+  const rows=Object.keys(m).map(k=>{const sb=S.subjects.find(z=>z.id===k);return{n:k?(sb?sb.name:'Other'):'No subject',c:sb?sb.color:'var(--muted)',v:m[k]}}).sort((a,b)=>b.v-a.v);
+  if(!rows.length)return'';
+  const mx=rows[0].v;
+  return'<h2>Last 7 days</h2><div class="card">'+rows.map(r=>'<div style="margin:8px 0"><div style="display:flex;justify-content:space-between"><span>'+esc(r.n)+'</span><b>'+r.v+' min</b></div><div style="height:6px;border-radius:4px;background:var(--line);margin-top:4px"><div style="height:6px;border-radius:4px;width:'+Math.round(r.v/mx*100)+'%;background:'+r.c+'"></div></div></div>').join('')+'</div>'}
+function todayCard(){
+  const now=Date.now(),td=todayStr(),hm=new Date().toTimeString().slice(0,5);
+  const left=todayClasses().filter(x=>(x.c.end||x.c.start)>=hm);
+  const late=S.tasks.filter(t=>!t.done&&t.due&&t.due<td).length,dueT=S.tasks.filter(t=>!t.done&&t.due===td).length;
+  const rev=S.reviews.filter(r=>r.next<=td).length,hl=S.habits.filter(h=>!(h.days&&h.days[td])).length;
+  const c=left[0],tk=S.tasks.filter(t=>!t.done&&t.due&&at(t)>now).sort(byDue)[0];
+  const ct=c?new Date(td+'T'+c.c.start).getTime():Infinity,tt=tk?at(tk):Infinity;
+  const next=c&&ct<=tt?esc(c.s.name)+' class at '+fmtT(c.c.start):tk?esc(tk.title)+' due '+(tk.due===td?'today at '+fmtT(tk.time||'23:59'):tk.due):'';
+  const row=(l,n,sub)=>'<div class="row"><div class="t">'+l+(sub?'<br><small>'+sub+'</small>':'')+'</div><b>'+n+'</b></div>';
+  const body=row('Classes left',left.length)+row('Tasks due today',dueT,late?late+' overdue':'')+row('Cards to review',rev)+
+    (S.habits.length?'<button class="subcard" data-mod="lifetracker" style="width:100%;margin-top:6px"><span class="t">Habits left today</span><b>'+hl+'</b></button>':'');
+  return'<h2>Today</h2><div class="card">'+(next?'<div style="margin-bottom:6px"><small>Next up</small><br><b>'+next+'</b></div>':'')+body+'</div>'}
+document.addEventListener('change',e=>{if(e.target.id==='tsubj')T.subj=e.target.value});
+function onboard(){
+  if(!S.prof||S.prof.done)return;
+  const o=document.createElement('div');o.id='onb';let lv='';
+  o.innerHTML='<div class="obc"><h1>Welcome to StudySpace</h1><p class="sub">No account needed. Everything stays on this device.</p><label>What’s your name?<input id="obn" maxlength="30" autocomplete="off"></label><label>How old are you?<input id="oba" type="number" inputmode="numeric" min="5" max="99"></label><div style="margin-bottom:8px">Your level</div><div class="lv"><button type="button" class="ghost" data-lv="JHS">JHS</button><button type="button" class="ghost" data-lv="SHS">SHS</button><button type="button" class="ghost" data-lv="College">College</button></div><p id="obe" class="sub" style="min-height:22px;margin:10px 0">&nbsp;</p><button type="button" id="obgo" style="width:100%">Continue</button></div>';
+  document.body.appendChild(o);
+  o.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.lv){lv=b.dataset.lv;o.querySelectorAll('[data-lv]').forEach(x=>x.classList.toggle('ghost',x!==b))}
+    else if(b.id==='obgo'){
+      const n=o.querySelector('#obn').value.trim(),a=+o.querySelector('#oba').value,m=o.querySelector('#obe');
+      if(!n)m.textContent='Please enter your name.';
+      else if(!(a>=5&&a<=99))m.textContent='Please enter your age (5 to 99).';
+      else if(!lv)m.textContent='Please choose JHS, SHS or College.';
+      else{S.prof={name:n.slice(0,30),age:Math.round(a),level:lv,done:true};save();o.remove();render()}
+    }
+  });
+  setTimeout(()=>{const i=o.querySelector('#obn');if(i)i.focus()},50);
+}
 let tab='home',curSub=null,hv=null,L=null,mv=null;
 const T={mode:'p',f:25,b:5,phase:'focus',left:1500,running:false,end:0};
 const PRESETS={p:[25,5],d:[52,17]};
@@ -217,9 +384,9 @@ function tile(id,t,sub){return'<button class="tile" data-mod="'+id+'"><b>'+t+'</
 function home(){
   const h=new Date().getHours(),g=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
   const open=sortedOpen(),tc=todayClasses(),up=examsSorted().filter(x=>examDays(x)>=0).slice(0,3),due=S.reviews.filter(r=>r.next<=todayStr()).length;
-  return'<h1>'+g+'</h1><p class="sub">'+new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+'</p>'+
-  '<div class="stats"><div class="card"><b>'+focusToday()+'</b><span>minutes focused</span></div><div class="card"><b>'+streak()+'</b><span>day streak</span></div><div class="card"><b>'+open.length+'</b><span>tasks open</span></div></div>'+
-  (S.alerts?'':'<div class="card" style="margin-top:12px">Get a beep for classes and deadlines. <button class="ghost" data-t="more" style="margin-top:8px">Set up alerts</button></div>')+
+  return'<h1>'+g+(S.prof&&S.prof.name?', '+esc(S.prof.name):'')+'</h1><p class="sub">'+new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+'</p>'+
+  kateCard()+'<div class="stats"><div class="card"><b>'+focusToday()+'</b><span>minutes focused</span></div><div class="card"><b>'+streak()+'</b><span>day streak</span></div><div class="card"><b>'+open.length+'</b><span>tasks open</span></div></div>'+
+  buddyBoxes()+todayCard()+(S.alerts?'':'<div class="card" style="margin-top:12px">Get a beep for classes and deadlines. <button class="ghost" data-t="more" style="margin-top:8px">Set up alerts</button></div>')+
   (due?'<button class="subcard" id="gorev" style="margin-top:12px"><span class="t"><b>Topics to review</b><br><small>'+due+' due in Spaced Repetition</small></span><span aria-hidden="true">›</span></button>':'')+
   '<h2>Today\u2019s classes</h2><div class="card">'+(tc.length?tc.map(x=>'<div class="row"><span class="dot" style="background:'+x.s.color+'"></span><div class="t"><div>'+esc(x.s.name)+'</div><small>'+fmtT(x.c.start)+(x.c.end?' – '+fmtT(x.c.end):'')+(x.c.room?' · '+esc(x.c.room):'')+'</small></div></div>').join(''):'<div class="empty">No classes today.</div>')+'</div>'+
   '<h2>Due soon</h2><div class="card">'+(open.length?open.slice(0,5).map(t=>taskRow(t)).join(''):'<div class="empty">Nothing due. Open a subject in Academics to add assignments.</div>')+'</div>'+
@@ -257,12 +424,14 @@ function life(){
   if(hv==='wallet')return walletView();
   if(hv==='journal')return journalView();
   if(hv==='lifetracker')return lifeView();
+  if(hv==='lifebuddy')return lifeBuddyView();
   const hd=S.habits.filter(x=>x.days&&x.days[todayStr()]).length,je=S.journal[todayStr()],gCount=S.wallet.goals.length;
   return'<h1>Money & Life</h1><p class="sub">Manage your balance, daily journal, habits, and savings goals</p>'+
   '<div class="tiles">'+
   tile('wallet','Wallet',money(walletBal()))+
   tile('journal','Daily Journal',je&&je.text?'Written today':'Write today')+
   tile('lifetracker','Life Tracker',(S.habits.length?hd+'/'+S.habits.length+' habits':'Habits')+(gCount?' · '+gCount+' goals':''))+
+  tile('lifebuddy','Life Buddy','Someone to talk to')+
   '</div>';
 }
 
@@ -284,9 +453,10 @@ function focus(){
 return'<h1>Focus Room</h1><p class="sub">Pick a method and start.</p>'+
 '<div class="modes"><button data-mode="p" class="'+(T.mode==='p'?'on':'')+'">Pomodoro<br><small>25 / 5</small></button><button data-mode="d" class="'+(T.mode==='d'?'on':'')+'">52 / 17</button><button data-mode="c" class="'+(T.mode==='c'?'on':'')+'">Custom</button></div>'+
 (T.mode==='c'?'<div class="two" style="margin-bottom:8px"><label>Focus minutes<input id="cf" type="number" min="1" max="180" value="'+T.f+'"></label><label>Break minutes<input id="cb" type="number" min="1" max="60" value="'+T.b+'"></label></div>':'')+
+'<label style="display:block;margin:12px 0">Studying<select id="tsubj"><option value="">No subject</option>'+S.subjects.map(s=>'<option value="'+s.id+'"'+(T.subj===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></label>'+
 ringHTML()+
 '<div class="ctrl"><button id="tgo">'+(T.running?'Pause':'Start')+'</button><button class="ghost" id="treset">Reset</button><button class="ghost" id="tskip">Skip</button></div>'+
-'<div class="card"><b>'+focusToday()+' minutes</b> focused today across '+S.sessions.filter(x=>x.date===todayStr()).length+' sessions.</div>'}
+'<div class="card"><b>'+focusToday()+' minutes</b> focused today across '+S.sessions.filter(x=>x.date===todayStr()).length+' sessions.</div>'+weekBySubject()}
 
 function more(){return moreMain()}
 function moreMain(){
@@ -300,7 +470,9 @@ return'<h1>More</h1><p class="sub">Alerts, AI quotas, and settings</p>'+
 '<div class="row"><div class="t">StudyBuddy Offline AI<br><small>Instant local engine · Zero download</small></div><b>'+buddyOfflineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
 '<div class="row"><div class="t">Test online AI<br><small id="aitestmsg">'+esc(AITEST||'Checks the server, then Gemini')+'</small></div><button class="ghost" id="aitest">Test</button></div>'+
 '</div>'+
-'<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
+personalizeHTML()+'<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
+'<div class="row"><div class="t">Backup<br><small>Notes, tasks, grades, wallet and more. Library files and Life Buddy chats are not included.</small></div><button class="ghost" id="expdata">Export</button></div>'+
+'<div class="row"><div class="t">Restore backup</div><button class="ghost" id="impdata">Import</button><input id="impfile" type="file" accept=".json,application/json" hidden></div>'+
 '<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'}
 
 /* MOTION */
@@ -367,8 +539,9 @@ function render(){
     motionAfterRender();
     if(tab==='more'&&$('#theme')){$('#theme').value=S.theme;$('#lead').value=String(S.lead)}
     const cb=$('#chatbox');if(cb)cb.scrollTop=cb.scrollHeight;
+    if(tab==='life'&&hv==='lifebuddy'&&LB.breath)breatheStart();else breatheStop();
   }catch(err){
-    $('#view').innerHTML='<div class="card"><h2>Display Error</h2><p><small>'+esc(err.message)+'</small></p><button id="hardrepair">Repair & Reload</button></div>';
+    $('#view').innerHTML='<div class="card"><h2>Display Error</h2><p><small>'+esc(err.message)+'</small></p><button id="hardrepair">Download backup &amp; repair</button></div>';
   }
 }
 
@@ -530,7 +703,7 @@ async function askStudyBuddy(){
   if(mode==='device'){await askDevice(q,ctx);return}
 
   if(mode==='online'){
-    if(buddyOnlineLeft()<=0){banner('Daily Online AI limit reached (20/20). Switch to Offline Mode!');return;}
+    if(buddyOnlineLeft()<=0){banner('Daily Online AI limit reached ('+MAX_BUDDY_DAILY+'/'+MAX_BUDDY_DAILY+'). Switch to Offline Mode!');return;}
     B.chat.push({role:'u',text:q});
     B.q='';B.busy=true;render();
     try{
@@ -540,7 +713,7 @@ async function askStudyBuddy(){
       const res=await fetch(AI_WORKER_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({mode:'chat',question:q,context:notesCtx}),
+        body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID}),
         signal:ctrl.signal
       });
       clearTimeout(tid);
@@ -560,7 +733,7 @@ async function askStudyBuddy(){
     }
     B.busy=false;render();
   }else{
-    if(buddyOfflineLeft()<=0){banner('Daily Offline AI limit reached (20/20). Try again tomorrow!');return;}
+    if(buddyOfflineLeft()<=0){banner('Daily Offline AI limit reached ('+MAX_BUDDY_DAILY+'/'+MAX_BUDDY_DAILY+'). Try again tomorrow!');return;}
     B.chat.push({role:'u',text:q});
     B.q='';
     const reply=offlineSmartAnswer(q,ctx);
@@ -594,9 +767,9 @@ const mode=S.ai.mode||'online';
 const onLeft=buddyOnlineLeft(),offLeft=buddyOfflineLeft();
 return BK_ACAD+'<h1 style="margin-top:14px">StudyBuddy AI</h1><p class="sub">Online (cloud AI), Instant (keyword search in your notes), or On-device (a real AI model running on your phone).</p>'+
 '<div class="modes">'+
-'<button data-aimode="online" class="'+(mode==='online'?'on':'')+'">☁️ Online<br><small>'+onLeft+'/'+MAX_BUDDY_DAILY+' left</small></button>'+
-'<button data-aimode="offline" class="'+(mode==='offline'?'on':'')+'">⚡ Instant<br><small>'+offLeft+'/'+MAX_BUDDY_DAILY+' left</small></button>'+
-'<button data-aimode="device" class="'+(mode==='device'?'on':'')+'">📱 On-device<br><small>'+(DEV.state==='ready'?'ready':'free')+'</small></button>'+
+'<button data-aimode="online" class="'+(mode==='online'?'on':'')+'">Online<br><small>'+onLeft+'/'+MAX_BUDDY_DAILY+' left</small></button>'+
+'<button data-aimode="offline" class="'+(mode==='offline'?'on':'')+'">Instant<br><small>'+offLeft+'/'+MAX_BUDDY_DAILY+' left</small></button>'+
+'<button data-aimode="device" class="'+(mode==='device'?'on':'')+'">On-device<br><small>'+(DEV.state==='ready'?'ready':'free')+'</small></button>'+
 '</div>'+(mode==='device'?devCard():'')+
 '<div class="chat-box" id="chatbox">'+
 (B.chat.length?B.chat.map(m=>'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Ask StudyBuddy to explain a concept, summarize, or quiz you! ('+(mode==='online'?'Online Cloud Mode':mode==='device'?'On-device AI. Runs on your phone, no internet needed':'Instant Offline Mode — works with zero internet')+')</div>')+
@@ -711,12 +884,115 @@ async function testOnline(){
   const t1=Date.now();
   try{
     const a=new AbortController(),ta=setTimeout(()=>a.abort(),50000);
-    const r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'chat',question:'Reply with the single word OK.',context:''}),signal:a.signal});
+    const r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'chat',question:'Reply with the single word OK.',context:'',device:DEVID}),signal:a.signal});
     clearTimeout(ta);
     const j=await r.json().catch(()=>({}));
     if(!r.ok)say('Server reached, but Gemini returned an error: '+((j.error&&j.error.message)||('status '+r.status)));
     else say('Online AI works. Gemini answered in '+((Date.now()-t1)/1000).toFixed(1)+'s'+(j.model?' ('+j.model+')':'')+'.');
   }catch(e){say('Server reached, but Gemini did not answer within 50 seconds. The worker or the model is too slow.')}
+}
+
+/* LIFE BUDDY */
+const CRISIS_LINES=[
+ {n:'NCMH Crisis Hotline',d:'Free, 24/7. Tagalog and English.',c:[['1553 (landline)','1553'],['0919-057-1553 (Smart/TNT)','09190571553'],['0917-899-8727 (Globe/TM)','09178998727']]},
+ {n:'Hopeline Philippines',d:'Emotional support.',c:[['2919 (Globe/TM)','2919'],['0917-558-4673','09175584673'],['(02) 8804-4673','0288044673']]},
+ {n:'Emergency',d:'If you are in danger right now.',c:[['911','911']]}
+];
+const CRISIS_RE=[
+ /kill(ing)?\s+my\s?self\b/,/\bsuicid/,/\bend(ing)?\s+(my\s+life|it\s+all)/,/take\s+my\s+(own\s+)?life/,
+ /(want|wanna|wish)\s+(to\s+)?(die|be\s+dead|disappear\s+forever)/,
+ /wish\s+(i|that\s+i)\s+(was|were|could|would)\s+(dead|die|not\s+alive|never\s+born)/,
+ /(don'?t|do\s+not|dont)\s+(want\s+to|wanna)\s+(live|be\s+alive|exist)/,
+ /no\s+(reason|point)\s+(to|in)\s+(live|living|going\s+on)/,/better\s+off\s+(dead|without\s+me)/,
+ /(hurt|harm|cut|cutting|injure)(ing)?\s+(my\s?self)/,/self[\s-]?harm/,/\boverdos/,
+ /magpakamatay|magpapakamatay|nagpakamatay/,
+ /gusto\s+(ko\s+|kong\s+)?(na\s+)?(nang\s+|ng\s+)?mamatay/,
+ /(ayoko|ayaw)\s+(ko\s+)?(na\s+)?(nang\s+|ng\s+)?mabuhay/,
+ /(tapusin|wakasan)\s+(ko\s+)?(na\s+)?(ang\s+)?(buhay|lahat)/,
+ /(saktan|sasaktan|sugatan)\s+(ko\s+)?(na\s+)?(ang\s+)?(sarili|aking\s+sarili)/,
+ /patayin\s+ko\s+(na\s+)?(ang\s+)?sarili/
+];
+const isCrisis=t=>{const x=String(t||'').toLowerCase().replace(/[\u2018\u2019]/g,"'");return CRISIS_RE.some(r=>r.test(x))};
+const CRISIS_MSG="I'm really glad you told me. What you're feeling matters, and you don't have to carry it alone. Please reach out to someone who can help right now. A trained person on a call can do things I can't. If you might act on these thoughts or you're in danger, call 911 or go to the nearest hospital, and try not to stay alone. If someone you trust is nearby, tell them how you're feeling, or ask them to stay with you.";
+const LB_BYE="I've reached my limit for today, buddy, so I have to stop here. I hope you get through it. I'll be back tomorrow. If it feels too heavy, talk to someone you trust.";
+let LB={chat:[],q:'',busy:false,help:false,showBreath:false,breath:false};
+try{const raw=JSON.parse(localStorage.getItem('studyspace-lb')||'[]');if(Array.isArray(raw))LB.chat=raw.filter(m=>m&&(m.role==='u'||m.role==='a')&&typeof m.text==='string').slice(-60)}catch(e){}
+function lbSave(){try{localStorage.setItem('studyspace-lb',JSON.stringify(LB.chat.slice(-60)))}catch(e){}}
+function lbLeft(){if(S.lb.date!==todayStr()){S.lb.date=todayStr();S.lb.used=0;save()}return Math.max(0,MAX_LIFE_DAILY-(S.lb.used||0))}
+function hotlinesHTML(){return'<div class="hot">'+CRISIS_LINES.map(l=>'<div style="margin-top:10px"><b>'+esc(l.n)+'</b><br><small>'+esc(l.d)+'</small><br>'+l.c.map(x=>'<a href="tel:'+x[1]+'">'+esc(x[0])+'</a>').join('')+'</div>').join('')+'</div>'}
+function lbBubble(m){return'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+(m.crisis?hotlinesHTML():'')+'</div>'}
+function breathCard(){return'<div class="card" style="margin-bottom:12px"><b>Breathe with me</b><div class="breath"><div id="brcircle"></div><div id="brtext" style="font-weight:600">Tap Start</div><div class="two" style="width:100%"><button id="brstart">Start</button><button class="ghost" id="brstop">Stop</button></div></div><small>In for 4, hold for 4, out for 6. Do a few rounds.</small></div>'}
+function lifeBuddyView(){
+  const head=BK_LIFE+'<h1 style="margin-top:14px">Life Buddy</h1><p class="sub">A friendly listener. Not a therapist or an emergency service.</p>';
+  const help='<div class="card" style="margin-bottom:12px"><b>Need help now?</b>'+hotlinesHTML()+'</div>';
+  if(!S.lb.noted)return head+help+'<div class="card"><b>Before you start</b><p style="margin:8px 0">Your messages are sent to Google\u2019s Gemini AI through this app\u2019s server. On the free tier, Google may have people review them and use them to improve its products. Please avoid names, addresses, and anything you would not want others to read.</p><p style="margin:8px 0">Your chat history stays only on this phone, and you can clear it any time.</p><button id="lbok" style="width:100%">I understand</button></div>';
+  const limited=lbLeft()<=0;
+  const chat=LB.chat.length?LB.chat.map(lbBubble).join(''):'<div class="empty">Hi, I\u2019m Life Buddy. I\u2019m here to listen. How are you feeling today?</div>';
+  return head+
+  '<div class="two" style="margin-bottom:12px"><button class="ghost" id="lbhelp">'+(LB.help?'Hide help lines':'Need help now?')+'</button><button class="ghost" id="lbbreath">'+(LB.showBreath||limited?'Breathing exercise \u2713':'Breathing exercise')+'</button></div>'+
+  (LB.help?help:'')+(limited||LB.showBreath?breathCard():'')+
+  '<div class="chat-box" id="chatbox">'+chat+(LB.busy?'<div class="bubble a">Thinking...</div>':'')+'</div>'+
+  '<div style="display:flex;gap:8px;margin-bottom:12px"><input id="lbask" placeholder="'+(limited?'Resting until tomorrow':'Write what is on your mind...')+'" value="'+esc(LB.q)+'" maxlength="400"'+(LB.busy?' disabled':'')+'><button id="lbsend"'+(LB.busy||limited?' disabled':'')+'>Send</button></div>'+
+  (limited?'<button class="ghost" id="lbjournal" style="width:100%;margin-bottom:8px">Write in my journal instead</button>':'')+
+  '<button class="ghost" id="lbclear" style="width:100%">Clear chat</button>'}
+function lbPushBye(){const last=LB.chat[LB.chat.length-1];if(!last||!last.limit)LB.chat.push({role:'a',text:LB_BYE,limit:true,x:true})}
+async function askLifeBuddy(){
+  const inp=$('#lbask'),q=(inp?inp.value:LB.q).trim();
+  if(!q||LB.busy)return;
+  // Crisis wording is handled here, before any AI call. It works offline and after the daily limit.
+  if(isCrisis(q)){LB.chat.push({role:'u',text:q},{role:'a',text:CRISIS_MSG,crisis:true,x:true});LB.q='';lbSave();render();return}
+  if(lbLeft()<=0){render();banner('Life Buddy is resting until tomorrow. The breathing exercise can help right now.');return}
+  const hist=LB.chat.filter(m=>!m.x).slice(-8).map(m=>({role:m.role==='u'?'user':'model',text:m.text.slice(0,600)}));
+  LB.chat.push({role:'u',text:q});LB.q='';LB.busy=true;lbSave();render();
+  try{
+    const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),50000);
+    const res=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'life',question:q,history:hist,device:DEVID}),signal:ctrl.signal});
+    clearTimeout(tid);
+    if(res.status===429){S.lb.used=MAX_LIFE_DAILY;save();lbPushBye()}
+    else if(!res.ok){const ed=await res.json().catch(()=>({}));throw new Error((ed.error&&ed.error.message)||('Server error '+res.status))}
+    else{
+      const data=await res.json();
+      if(data.crisis){LB.chat.push({role:'a',text:CRISIS_MSG,crisis:true,x:true})}
+      else{
+        const parts=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
+        const tp=parts.find(p=>p.text&&!p.thought)||parts[0];
+        const reply=(tp&&tp.text||'').trim();
+        if(reply){S.lb.used=(S.lb.used||0)+1;save();LB.chat.push({role:'a',text:reply})}
+        else LB.chat.push({role:'a',text:'I could not find the right words just now. Could you tell me a little more, or say it a different way?',x:true});
+        if(lbLeft()<=0)lbPushBye();
+      }
+    }
+  }catch(e){
+    LB.chat.push({role:'a',text:'I could not reach the server just now, so I could not answer. That message did not count toward today\u2019s limit. Try again in a moment, or try the breathing exercise.',x:true});
+  }
+  LB.busy=false;lbSave();render();
+}
+let BR=null;
+function breatheStop(){if(BR){clearInterval(BR);BR=null}}
+function breatheStart(){
+  breatheStop();
+  const ph=[['Breathe in',4,1],['Hold',4,1],['Breathe out',6,.6]];let p=0,n=0;
+  const step=()=>{
+    const c=$('#brcircle'),t=$('#brtext');
+    if(!c||!t){breatheStop();return}
+    const x=ph[p];t.textContent=x[0]+' '+(x[1]-n);
+    if(n===0){c.style.transitionDuration=x[1]+'s';c.style.transform='scale('+x[2]+')'}
+    n++;if(n>=x[1]){n=0;p=(p+1)%3}
+  };
+  step();BR=setInterval(step,1000);
+}
+function exportData(){try{const o=Object.assign({},S);delete o.ai;delete o.lb;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download='studyspace-backup-'+todayStr()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}catch(e){banner('Could not create the backup.')}}
+function importData(f){
+  if(!f)return;
+  if(f.size>5*1048576){banner('That file is too big to be a StudySpace backup.');return}
+  f.text().then(t=>{
+    const o=JSON.parse(t);
+    if(!o||typeof o!=='object'||Array.isArray(o)||!Array.isArray(o.subjects)||!Array.isArray(o.tasks))throw new Error('bad');
+    if(!confirm('Replace everything in StudySpace with this backup?'))return;
+    o.ai=S.ai;o.lb=S.lb;
+    localStorage.setItem('studyspace1',JSON.stringify(o));
+    S=load();save();applyTheme();curSub=null;hv=null;render();banner('Backup restored.');
+  }).catch(()=>banner('That file is not a valid StudySpace backup.'));
 }
 
 /* FLASHCARDS FROM FILES + AI */
@@ -741,13 +1017,12 @@ function buildCards(t){
   splitSents(t.replace(/\s+/g,' ')).forEach(x=>{const m=x.match(/^([A-Z][\w\s'()-]{2,50}?)\s+(is|are|refers to|means)\s+(.{15,})$/);if(m&&!seen.has(m[1].toLowerCase())){seen.add(m[1].toLowerCase());cards.push({q:'What '+(m[2]==='are'?'are ':'is ')+m[1]+'?',a:m[3]})}});
   const f={};(t.toLowerCase().match(/[a-z]{4,}/g)||[]).forEach(w=>f[w]=(f[w]||0)+1);
   summarize(t,14).filter(x=>x.length<=220).forEach(x=>{const ws=(x.match(/[A-Za-z]{5,}/g)||[]).sort((a,b)=>(f[b.toLowerCase()]||0)-(f[a.toLowerCase()]||0)||b.length-a.length);if(!ws.length)return;const w=ws[0],q='Fill in the blank: '+x.replace(new RegExp('\\b'+w+'\\b','i'),'_____');if(!seen.has(q)){seen.add(q);cards.push({q,a:w})}});
-  const allAnswers=cards.map(c=>c.a);
-  if(allAnswers.length>=4){
+  const pool=[...new Set(cards.map(c=>c.a))];
+  if(pool.length>=4){
     cards.forEach(c=>{
-      const others=allAnswers.filter(a=>a!==c.a).sort(()=>Math.random()-.5).slice(0,3);
-      if(others.length===3){
-        c.choices=[c.a,...others].sort(()=>Math.random()-.5);
-      }
+      const al=c.a.toLowerCase(),len=c.a.length;
+      const others=pool.filter(a=>a.toLowerCase()!==al).map(a=>({a,k:Math.abs(a.length-len)+Math.random()*25})).sort((x,y)=>x.k-y.k).slice(0,3).map(o=>o.a);
+      if(others.length===3)c.choices=[c.a,...others].sort(()=>Math.random()-.5);
     });
   }
   return cards.slice(0,30);
@@ -821,7 +1096,7 @@ async function fmakeAI(){
     return;
   }
   captureFlashInputs();
-  F.loading=true;F.msg='✨ AI is reading, summarizing, and writing multiple-choice flashcards...';F.cards=[];F.sum=[];render();
+  F.loading=true;F.msg='AI is reading, summarizing, and writing multiple-choice flashcards...';F.cards=[];F.sum=[];render();
   try{
     const t=await readFlashSource();
     if(t.trim().length<30){
@@ -833,7 +1108,7 @@ async function fmakeAI(){
     const res=await fetch(AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:promptText}),
+      body:JSON.stringify({text:promptText,device:DEVID}),
       signal:ctrl.signal
     });
     clearTimeout(tid);
@@ -856,7 +1131,7 @@ async function fmakeAI(){
     S.ai.used=(S.ai.used||0)+1;
     S.ai.date=todayStr();
     save();
-    F.msg='✨ AI generated '+F.cards.length+' multiple-choice cards & summary! ('+aiLeft()+'/2 AI uses left today)';
+    F.msg='AI generated '+F.cards.length+' multiple-choice cards & summary! ('+aiLeft()+'/2 AI uses left today)';
   }catch(e){
     if(e.message==='size')F.msg='File exceeds the 10 MB maximum limit.';
     else if(e.message==='net')F.msg='Internet connection required to read PDF or reach AI.';
@@ -882,9 +1157,9 @@ const decks=S.decks.map(d=>'<div class="row"><div class="t"><div>'+esc(d.name)+'
 return'<button class="ghost" id="lback">‹ Techniques</button><h1 style="margin-top:14px">Flashcards</h1><p class="sub">Max 10 MB per file. Use AI to summarize & write multiple-choice questions (<b>'+left+' of '+MAX_AI_DAILY+' daily AI uses left</b>), or build offline for free.</p>'+
 '<div class="form"><select id="fsrc"><option value="">Pick a note or saved file</option><optgroup label="Notes">'+S.notes.map(n=>'<option value="n:'+n.id+'"'+(F.src==='n:'+n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</optgroup><optgroup label="Library files">'+files.map(r=>'<option value="r:'+r.id+'"'+(F.src==='r:'+r.id?' selected':'')+'>'+esc(r.name)+' ('+fmtSize(r.size)+')</option>').join('')+'</optgroup></select>'+
 '<label>Or choose a file (.pdf, .txt, .md — max 10 MB)<input id="ffile" type="file" accept=".txt,.md,.pdf,text/plain,application/pdf"></label>'+
-(F.file?'<div class="card" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center"><small>📄 Selected: <b>'+esc(F.fileName)+'</b> ('+fmtSize(F.file.size)+')</small><button class="x" id="fclearfile" aria-label="Remove file">×</button></div>':'')+
+(F.file?'<div class="card" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center"><small>Selected: <b>'+esc(F.fileName)+'</b> ('+fmtSize(F.file.size)+')</small><button class="x" id="fclearfile" aria-label="Remove file">×</button></div>':'')+
 '<textarea id="ftext" placeholder="Or paste text here" style="min-height:18vh">'+esc(F.text)+'</textarea>'+
-'<button id="fmakeai"'+(left<=0||F.loading?' disabled':'')+'>'+(F.loading?'Working...':'✨ AI Summarize & Make Choices ('+left+'/'+MAX_AI_DAILY+' left)')+'</button>'+
+'<button id="fmakeai"'+(left<=0||F.loading?' disabled':'')+'>'+(F.loading?'Working...':'AI Summarize & Make Choices ('+left+'/'+MAX_AI_DAILY+' left)')+'</button>'+
 '<button class="ghost" id="fmake"'+(F.loading?' disabled':'')+'>Make basic cards & summary offline (Free)</button></div>'+
 (F.msg?'<p class="sub" style="margin-top:10px;color:var(--ink);font-weight:500">'+esc(F.msg)+'</p>':'')+
 (F.sum.length?'<h2>Key points summary</h2><div class="card">'+F.sum.map(x=>'<div class="row"><div class="t"><div>• '+esc(x)+'</div></div></div>').join('')+'</div>':'')+
@@ -920,7 +1195,8 @@ if(window.Notification&&Notification.permission==='granted'&&navigator.serviceWo
 function check(){
 if(!S.alerts)return;
 const now=Date.now(),lead=S.lead*60000;
-const fire=(key,when,title,body)=>{if(S.fired[key])return;if(now>=when-lead&&now<=when+5*60000){S.fired[key]=1;save();alertNow(title,body)}};
+Object.keys(S.fired).forEach(k=>{if(now-S.fired[k]>7*864e5)delete S.fired[k]});
+const fire=(key,when,title,body)=>{if(S.fired[key])return;if(now>=when-lead&&now<=when+5*60000){S.fired[key]=now;save();alertNow(title,body)}};
 S.tasks.forEach(t=>{if(!t.done&&t.due)fire('t'+t.id,at(t),'Assignment due',t.title+' at '+fmtT(t.time||'23:59'))});
 S.exams.forEach(x=>fire('e'+x.id,new Date(x.date+'T'+(x.time||'08:00')).getTime(),'Exam today',x.title+' at '+fmtT(x.time||'08:00')));
 const d=new Date().getDay();
@@ -931,7 +1207,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
 
 function setMode(m){T.mode=m;if(PRESETS[m]){T.f=PRESETS[m][0];T.b=PRESETS[m][1]}resetTimer()}
 function resetTimer(){T.running=false;T.phase='focus';T.left=T.f*60}
-function nextPhase(logIt){if(T.phase==='focus'&&logIt){S.sessions.push({date:todayStr(),min:T.f});save()}T.phase=T.phase==='focus'?'break':'focus';T.left=total();T.running=false}
+function nextPhase(logIt){if(T.phase==='focus'&&logIt){S.sessions.push({date:todayStr(),min:T.f,subj:T.subj||''});save()}T.phase=T.phase==='focus'?'break':'focus';T.left=total();T.running=false}
 setInterval(()=>{
 if(!T.running)return;
 T.left=(T.end-Date.now())/1000;
@@ -944,7 +1220,7 @@ document.addEventListener('click',e=>{
 audio();
 const t=e.target.closest('button');if(!t)return;
 const d=t.dataset;
-if(t.id==='hardrepair'){localStorage.removeItem('studyspace1');location.reload();return}
+if(t.id==='hardrepair'){ssBackup();localStorage.removeItem('studyspace1');location.reload();return}
 if(d.t){tab=d.t;curSub=null;hv=null;mv=null;L=null;render();$('#view').scrollTop=0;return}
 if(d.go){tab=d.go;render();return}
 if(d.open){curSub=d.open;render();$('#view').scrollTop=0;return}
@@ -963,7 +1239,7 @@ if(d.pick!==undefined){
 }
 if(d.deldeck){if(sure(t,'Delete?')){S.decks=S.decks.filter(x=>x.id!==d.deldeck);save();render()}return}
 if(d.mod){
-  if(['wallet','journal','lifetracker'].includes(d.mod)){tab='life';hv=d.mod;}
+  if(['wallet','journal','lifetracker','lifebuddy'].includes(d.mod)){tab='life';hv=d.mod;}
   else{tab='acad';hv=d.mod;}
   L=null;render();$('#view').scrollTop=0;return;
 }
@@ -996,6 +1272,16 @@ case'devcheck':devCheckPhone();break;
 case'devunload':{(async()=>{try{if(ENG)await ENG.unload()}catch(e){}ENG=null;DEV.state='idle';render()})();break}
 case'devdelete':{if(sure(t,'Tap again to delete')){(async()=>{try{if(ENG){await ENG.unload();ENG=null}const w=await wlib();await w.deleteModelAllInfoInCache(DEV.id||await pickModelId(S.ai.dev||'small'))}catch(e){}DEV.state='idle';S.ai.devCached='';save();render()})()}break}
 case'aitest':testOnline();break;
+case'lbok':S.lb.noted=true;save();render();break;
+case'lbsend':askLifeBuddy();break;
+case'lbhelp':LB.help=!LB.help;render();break;
+case'lbbreath':LB.showBreath=!LB.showBreath;if(!LB.showBreath)LB.breath=false;render();break;
+case'brstart':LB.breath=true;render();break;
+case'brstop':LB.breath=false;render();break;
+case'lbjournal':tab='life';hv='journal';LB.breath=false;render();$('#view').scrollTop=0;break;
+case'lbclear':if(sure(t,'Tap again to clear chat')){LB.chat=[];lbSave();render()}break;
+case'expdata':exportData();break;
+case'impdata':{const f=$('#impfile');if(f)f.click();break}
 case'fsave':{
   const dname=($('#fname')&&$('#fname').value.trim())||F.name||'Untitled deck';
   if(F.cards&&F.cards.length){
@@ -1045,15 +1331,17 @@ case'testalert':alertNow('StudySpace','Alerts are working');break;
 case'tgo':{readCustom();if(!T.running&&T.left>total())T.left=total();if(T.running){T.running=false}else{T.running=true;T.end=Date.now()+T.left*1000}render();break}
 case'treset':{readCustom();resetTimer();render();break}
 case'tskip':{nextPhase(false);render();break}
-case'reset':{if(sure(t,'Tap again to erase everything')){const th=S.theme;S=blank();S.theme=th;save();curSub=null;hv=null;try{indexedDB.deleteDatabase('studyspace-files')}catch(e){}render()}break}
+case'reset':{if(sure(t,'Tap again to erase everything')){const th=S.theme;S=blank();S.theme=th;save();curSub=null;hv=null;try{indexedDB.deleteDatabase('studyspace-files')}catch(e){}LB.chat=[];try{localStorage.removeItem('studyspace-lb')}catch(e){}render()}break}
 }});
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target&&e.target.id==='bask'){e.preventDefault();askStudyBuddy();}
+  if(e.key==='Enter'&&e.target&&e.target.id==='lbask'){e.preventDefault();askLifeBuddy();}
 });
 
 document.addEventListener('input',e=>{const el=e.target;
 if(el.id==='bask'){B.q=el.value;return}
+if(el.id==='lbask'){LB.q=el.value;return}
 if(el.id==='ftext'){F.text=el.value;return}
 if(el.id==='jtext'||el.id==='jgoal'){jent(jd||todayStr())[el.id==='jtext'?'text':'goals']=el.value;save();return}
 if(el.id==='rsearch'){rq=el.value;$('#rlist').innerHTML=rlist();return}
@@ -1077,13 +1365,15 @@ if(el.id==='jdate'&&el.value){jd=el.value;render()}
 if((el.id==='sbed'||el.id==='swake')&&el.value){S.sleep[el.id==='sbed'?'bed':'wake']=el.value;save();render()}
 if(el.id==='rfilter'){rf=el.value;$('#rlist').innerHTML=rlist()}
 if(el.id==='resfile'){addFiles(Array.from(el.files));el.value=''}
+if(el.id==='impfile'){importData(el.files&&el.files[0]);el.value=''}
 if(el.id==='nsubj'){const n=S.notes.find(x=>x.id===hv.slice(2));if(n){n.subj=el.value;save()}}
 if(el.dataset.done){const x=S.tasks.find(t=>t.id===el.dataset.done);if(x){x.done=el.checked;save();render();if(el.checked&&S.tasks.length&&S.tasks.every(t=>t.done))celebrate()}}
 if(el.id==='theme'){S.theme=el.value;save();applyTheme()}
 if(el.id==='lead'){S.lead=+el.value;save()}
 if(el.id==='devsize'){S.ai.dev=el.value;DEV.state='idle';DEV.check='';save();render()}
 });
-render();
+render();onboard();
+window.__booted=true;
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
