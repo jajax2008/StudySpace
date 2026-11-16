@@ -1862,5 +1862,208 @@ render();
 <script src="motion.js"></script>
 <script src="cool.js"></script>
 <script src="buddies.js"></script>
+<script>
+/* StudySpace studio layer: flashcard flow, Accounting hub, T-Accounts, Learning tiles */
+(function(){try{
+var css=`
+.ht[data-mod="acct"]{--tc:#a45a7c}
+.tp{border-radius:18px;padding:14px;margin-top:12px;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 11%,var(--card)),var(--card));animation:ssUp .45s var(--spring) both}
+.tp b.t{display:block;font-size:16px;margin-bottom:2px}
+.lvl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.lvl button{display:flex;flex-direction:column;gap:2px;padding:12px 4px;border-radius:14px;background:var(--bg);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.lvl button small{font-weight:500;color:var(--muted)}
+.lvl button.on{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.lvl button.on small{color:inherit;opacity:.85}
+.tsum{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 14px;border-radius:16px;margin-bottom:12px;border:1px solid var(--line);background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card))}
+.tac{position:relative;overflow:hidden;border-radius:18px;padding-bottom:12px;margin-bottom:14px;border:1px solid var(--line);background:var(--card);box-shadow:var(--lift)}
+.tac::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ac)}
+.tah{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 8px 10px 16px}
+.tah b{font-size:16px;letter-spacing:-.2px}
+.chip{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;background:color-mix(in srgb,var(--ac,var(--accent)) 16%,var(--card));color:var(--ac,var(--accent))}
+.tt{margin:0 12px 0 16px;border-top:2px solid var(--ink)}
+.tl{display:grid;grid-template-columns:1fr 1fr 28px;align-items:center}
+.tl>div:first-child{border-right:2px solid var(--ink)}
+.tl.row{padding:0;animation:ssRise .35s var(--spring) both}
+.tcol{padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;min-height:30px}
+.tcol small{display:block;font-size:10px;color:var(--muted)}
+.tdr{color:var(--accent)}.tcr{color:#c0793b}
+.tlab{font-size:10.5px;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+.ttot{border-top:2px solid var(--ink);font-weight:700}
+.tadd{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 12px 0 16px}
+.tadd input{padding:8px 10px;font-size:13px}
+.tadd .full{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:6px}
+`;
+var st=document.createElement('style');st.id='studio-css';st.textContent=css;document.head.appendChild(st);
+
+function ic(p){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+p+'"/></svg>'}
+var ACC='M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM9 8h6M9 12h6M9 16h3';
+function mk(attr,t,s,p,c){return '<button class="tile" '+attr+' style="--tc:'+c+'"><span class="ti">'+ic(p)+'</span><b>'+t+'</b><small>'+s+'</small></button>'}
+
+/* ---------- Accounting tile (Explore + Academics) ---------- */
+var prevTile=tile;
+tile=function(id,t,s){
+  if(id!=='acct')return prevTile(id,t,s);
+  return prevTile(id,'Accounting','Tutor, T-Accounts & more').replace(/<path d="[^"]*"/,'<path d="'+ACC+'"');
+};
+var prevHome=home;
+home=function(){
+  var h=prevHome(),i=h.indexOf('<button class="ht" data-t="more"');
+  if(i<0)return h;
+  return h.slice(0,i)+'<button class="ht" data-mod="acct">'+ic(ACC)+'<span>Accounting</span><small>Tutor &amp; T-accounts</small></button>'+h.slice(i);
+};
+
+/* ---------- Accounting hub + sections ---------- */
+ACCT.tab='hub';
+var NM={chat:'Tutor',tacc:'T-Accounts',calc:'Calculator',doc:'Assessment'};
+var prevAV=acctView;
+acctView=function(){
+  if(!ACCT.tab||ACCT.tab==='hub'){
+    return BK_ACAD+'<h1 style="margin-top:14px">Accounting</h1><p class="sub">Practice, solve and check your work</p><div class="lbl">Tools</div><div class="tiles">'+
+    mk('data-accttab="chat"','Tutor',acctLeft()+'/'+MAX_ACCT_DAILY+' checks left','M4 5h16v11h-9l-5 4v-4H4zM8.5 10h7M8.5 13h4','#3d7a5a')+
+    mk('data-accttab="tacc"','T-Accounts',ACCT.taccounts.length+' accounts','M4 5h16M12 5v14M7 9h3M14 9h3M7 13h3','#a45a7c')+
+    mk('data-accttab="calc"','Calculator','12-digit, with history','M6 3h12v18H6zM9 7h6M9 11h.01M12 11h.01M15 11h.01M9 15h.01M12 15h.01M15 15h.01','#5b7fb5')+
+    mk('data-accttab="doc"','Assessment',esc(ACCT.fileName||'Upload your problem'),'M7 3h8l4 4v14H7zM15 3v4h4M9.5 14l2 2 3.5-4','#c0793b')+'</div>';
+  }
+  return prevAV().replace(/<button class="ghost" id="nback">[^<]*<\/button>/,'<button class="ghost" id="acctback">‹ Accounting</button>')
+    .replace(/<div class="modes m4">[\s\S]*?<\/div>/,'').replace('>Ledger Companion</h1>','>'+(NM[ACCT.tab]||'Accounting')+'</h1>');
+};
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.mod==='acct')ACCT.tab='hub';
+},true);
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.id==='acctback'){ACCT.tab='hub';render();$('#view').scrollTop=0}
+});
+
+/* ---------- T-Accounts ---------- */
+renderTAccounts=function(){
+  var D=0,C=0;
+  var cards=ACCT.taccounts.map(function(t,idx){
+    var dr=0,cr=0;
+    t.rows.forEach(function(r){dr+=Number(r.dr)||0;cr+=Number(r.cr)||0});
+    var df=dr-cr;if(df>0)D+=df;else C-=df;
+    var rows=t.rows.map(function(r,i){
+      return '<div class="tl row"><div class="tcol tdr">'+(r.dr?'₱'+fmtNum(r.dr):'')+(r.dr&&r.memo?'<small>'+esc(r.memo)+'</small>':'')+'</div><div class="tcol tcr">'+(r.cr?'₱'+fmtNum(r.cr):'')+(r.cr&&r.memo?'<small>'+esc(r.memo)+'</small>':'')+'</div><button class="x" data-tdelrow="'+t.id+':'+i+'" aria-label="Delete entry">×</button></div>';
+    }).join('');
+    return '<div class="tac" style="--ac:'+COLORS[idx%COLORS.length]+'"><div class="tah"><b>'+esc(t.name)+'</b><span style="display:flex;align-items:center;gap:4px"><span class="chip">'+(df===0?'Balanced':(df>0?'Dr ':'Cr ')+'₱'+fmtNum(Math.abs(df)))+'</span><button class="x" data-tdelacc="'+t.id+'" aria-label="Delete account">×</button></span></div>'+
+    '<div class="tt"><div class="tl"><div class="tcol tlab">DEBIT</div><div class="tcol tlab">CREDIT</div><span></span></div>'+
+    (rows||'<div class="empty" style="font-size:12px;margin:6px 0">No entries yet</div>')+
+    '<div class="tl ttot"><div class="tcol tdr">₱'+fmtNum(dr)+'</div><div class="tcol tcr">₱'+fmtNum(cr)+'</div><span></span></div></div>'+
+    '<div class="tadd"><input id="tdr-'+t.id+'" type="number" step="any" inputmode="decimal" placeholder="Debit ₱"><input id="tcr-'+t.id+'" type="number" step="any" inputmode="decimal" placeholder="Credit ₱"><div class="full"><input id="tmemo-'+t.id+'" placeholder="Date / note" maxlength="20"><button data-taddrow="'+t.id+'">Add</button></div></div></div>';
+  }).join('');
+  var ok=Math.abs(D-C)<0.005;
+  return '<div class="tsum"><div><b>'+ACCT.taccounts.length+' accounts</b><br><small>Trial balance check</small></div><span class="chip" style="--ac:'+(ok?'#3d7a5a':'#c0793b')+'">'+(ok?'Debits = Credits ✓':'Off by ₱'+fmtNum(Math.abs(D-C)))+'</span></div>'+
+  '<div style="display:flex;gap:8px;margin-bottom:12px"><input id="tnewname" placeholder="New account (e.g. Purchases, Sales)" maxlength="40"><button id="taddacc" style="white-space:nowrap">Add Account</button></div>'+cards;
+};
+
+/* ---------- Learning Techniques as tiles ---------- */
+var TP={recall:['M12 5a4 4 0 0 0-4 4 3 3 0 0 0-1 5.5V17a3 3 0 0 0 5 2M12 5a4 4 0 0 1 4 4 3 3 0 0 1 1 5.5V17a3 3 0 0 1-5 2M12 5v14','#3d7a5a'],
+feynman:['M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z','#c0793b'],
+blurt:['M4 4h16v12H8l-4 4zM8 8h8M8 12h5','#a45a7c'],
+test:['M5 4h14v16H5zM9 11l2 2 4-4M9 16h6','#5b7fb5'],
+flash:['M7 7h12v12H7zM5 17V5h12','#8a8f3a'],
+spaced:['M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v5h-5','#3d7a5a']};
+learnView=function(){
+  var due=S.reviews.filter(function(r){return r.next<=todayStr()}).length;
+  var items=Object.keys(TECH).map(function(k){return [k,TECH[k].n,TECH[k].d]});
+  items.push(['flash','Flashcards',aiLeft()+'/'+MAX_AI_DAILY+' AI left'+(S.decks.length?' · '+S.decks.length+' decks':'')]);
+  items.push(['spaced','Spaced Repetition',due?due+' due now':'Growing gaps']);
+  return '<button class="ghost" id="mvback">‹ Academics</button><h1 style="margin-top:14px">Learning Techniques</h1><p class="sub">Pick a method and it guides you step by step</p><div class="tiles">'+
+    items.map(function(x){return mk('data-tech="'+x[0]+'"',x[1],x[2],TP[x[0]][0],TP[x[0]][1])}).join('')+'</div>';
+};
+
+/* ---------- Flashcards: summary first, then choose cards ---------- */
+F.stage='';F.max=0;F.lvl='med';F.aiText='';
+function calcMax(t){var w=(String(t).match(/\S+/g)||[]).length;return Math.max(6,Math.min(120,Math.round(w/25)))}
+function plan(){var left=aiLeft(),big=F.max>100,extra=(big&&left>=1)?1:0;return{extra:extra,cap:(big&&left<1)?100:F.max}}
+function counts(cap){var lo=Math.min(cap,Math.max(5,Math.round(cap/3))),me=Math.min(cap,Math.max(lo,Math.round(cap*2/3)));return{low:lo,med:me,max:cap}}
+function panel(){
+  var p=plan();
+  if(F.stage==='sum')return '<div class="tp"><b class="t">Summary ready</b><small>Make flashcards from this file too?</small><div class="two" style="margin-top:12px"><button id="fcyes">Make flashcards</button><button class="ghost" id="fcno">No flashcards</button></div></div>';
+  var c=counts(p.cap);
+  var cost=p.extra?'This uses 1 more AI use, so you will be at '+(MAX_AI_DAILY-aiLeft()+1)+'/'+MAX_AI_DAILY+' today.':'No extra AI use. You keep '+aiLeft()+'/'+MAX_AI_DAILY+' left.';
+  return '<div class="tp"><b class="t">Choose how many cards</b><small>This file can make up to <b>'+F.max+'</b> cards'+(p.cap<F.max?' (capped at '+p.cap+' because you have 1 AI use left)':'')+'. '+cost+'</small><div class="lvl">'+
+    [['low','Low'],['med','Medium'],['max','Maximum']].map(function(x){return '<button data-lvl="'+x[0]+'" class="'+(F.lvl===x[0]?'on':'')+'"><span>'+x[1]+'</span><small>'+c[x[0]]+' cards</small></button>'}).join('')+
+    '</div><div class="two"><button id="fcgen"'+(F.loading?' disabled':'')+'>Generate</button><button class="ghost" id="fcback"'+(F.loading?' disabled':'')+'>Back</button></div></div>';
+}
+var prevFV=flashView;
+flashView=function(){
+  var h=prevFV().replace('AI Summarize & Make Choices','AI Summarize');
+  if(!F.stage)return h;
+  var a=h.indexOf('<div class="form" style="margin-top:10px"><input id="fname"'),b=h.indexOf('<h2>Your decks</h2>');
+  return (a>0&&b>a)?h.slice(0,a)+panel()+h.slice(b):h;
+};
+async function callW(payload){
+  var c=new AbortController(),t=setTimeout(function(){c.abort()},payload.stage==='cards'?120000:70000);
+  try{
+    var r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({device:DEVID},payload)),signal:c.signal});
+    if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||('Server Error '+r.status))}
+    var d=await r.json(),ps=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
+    var p=ps.find(function(x){return x.text&&!x.thought})||ps[0];
+    return parseAIJson(p&&p.text);
+  }catch(e){if(e.name==='AbortError')throw new Error('Request timed out');throw e}
+  finally{clearTimeout(t)}
+}
+fmakeAI=async function(){
+  if(aiLeft()<=0){banner('Daily AI limit reached (0 left). Use the free offline option below!');return}
+  captureFlashInputs();
+  F.loading=true;F.stage='';F.msg='AI is reading and summarizing...';F.cards=[];F.sum=[];render();
+  var t='';
+  try{
+    t=await readFlashSource();
+    if(t.trim().length<30){F.loading=false;F.msg='Not enough text found. Select a file, pick a note, or paste text first.';render();return}
+    F.aiText=t.slice(0,20000);
+    var d=await callW({stage:'summary',text:F.aiText});
+    F.sum=Array.isArray(d.summary)?d.summary:[];
+    if(!F.sum.length)throw new Error('The AI sent no summary');
+    S.ai.used=(S.ai.used||0)+1;S.ai.date=todayStr();save();
+    F.max=calcMax(F.aiText);F.lvl='med';F.stage='sum';
+    F.msg='Summary ready. '+aiLeft()+'/'+MAX_AI_DAILY+' AI uses left today.';
+  }catch(e){
+    F.stage='';
+    if(e.message==='size')F.msg='File exceeds the 10 MB maximum limit.';
+    else if(e.message==='net')F.msg='Internet connection required to read PDF/DOCX or reach AI.';
+    else{
+      if(t.trim().length>=30){F.cards=buildCards(t);F.sum=summarize(t,5)}
+      F.msg='Cloud AI notice ('+e.message+'). Built an offline summary & cards instead. (No AI use charged)';
+    }
+  }
+  F.loading=false;render();
+};
+async function fcGen(){
+  var p=plan(),n=counts(p.cap)[F.lvl||'med'];
+  F.loading=true;F.msg='AI is writing '+n+' flashcards. Big sets can take a minute...';render();
+  try{
+    var d=await callW({stage:'cards',text:F.aiText,count:n,big:!!p.extra});
+    var cards=(Array.isArray(d.cards)?d.cards:[]).filter(function(c){return c&&c.q&&c.a}).map(function(c){
+      var ch=Array.isArray(c.choices)?c.choices.slice(0,4):[];
+      if(ch.indexOf(c.a)<0)ch[0]=c.a;
+      ch.sort(function(){return Math.random()-.5});
+      return{q:c.q,a:c.a,choices:ch};
+    });
+    if(!cards.length)throw new Error('The AI sent no cards');
+    if(p.extra){S.ai.used=(S.ai.used||0)+1;save()}
+    F.cards=cards;F.stage='';
+    F.msg='AI made '+cards.length+' flashcards! '+aiLeft()+'/'+MAX_AI_DAILY+' AI uses left today.';
+  }catch(e){F.msg='Could not make the cards ('+e.message+'). No AI use was charged. Try again.'}
+  F.loading=false;render();
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;var d=b.dataset;
+  if(b.id==='fcyes'){F.stage='lvl';F.lvl='med';render()}
+  else if(b.id==='fcback'){F.stage='sum';render()}
+  else if(d.lvl){F.lvl=d.lvl;render()}
+  else if(b.id==='fcgen'){fcGen()}
+  else if(b.id==='fcno'){
+    S.notes.push({id:uid(),title:'Summary: '+(F.name||'Study file'),body:F.sum.map(function(s){return '• '+s}).join('\n\n'),subj:'',pinned:false,updated:Date.now()});
+    save();F.sum=[];F.cards=[];F.stage='';F.max=0;F.file=null;F.fileName='';F.msg='Summary saved to your Notes.';render();
+  }
+});
+
+render();
+}catch(err){try{console.error('studio layer failed',err)}catch(x){}}})();
+
+</script>
 </body>
 </html>
