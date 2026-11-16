@@ -167,13 +167,20 @@ function ssFail(msg,line){
 window.addEventListener('error',function(e){ssFail(e.message||'Unknown error',e.lineno)});
 window.addEventListener('unhandledrejection',function(e){ssFail((e.reason&&e.reason.message)||'A request failed')});
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Sora:wght@400;600;800&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Caveat:wght@500;700&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="motion.css">
 <link rel="stylesheet" href="cool.css">
 <style id="ss-compat">
 button.x,.rmain,.kh,.chrow{box-shadow:none}
 button.x{min-height:30px}
 .kh{min-height:38px}
-.tile>*,.ht>*{position:relative;z-index:1}
+.tile>:not(.ss-ripple),.ht>:not(.ss-ripple){position:relative;z-index:1}
+.tile .ss-ripple,.ht .ss-ripple{background:var(--tc,var(--accent));opacity:.26}
+/* tab bar: fixed icon position + pill centred exactly behind it */
+nav button{justify-content:flex-start;padding-top:8px}
+nav button.on::before{left:calc(50% - 25px);top:3px;width:50px;height:30px;transform:none}
 </style>
 </head>
 <body>
@@ -282,7 +289,7 @@ applyTheme();
 
 /* PERSONALIZATION + PROFILE */
 const THEMES={Sage:['#f1f5ef','#1e2b24','#3d7a5a'],Cream:['#faf5ec','#2e2a24','#b0733a'],Slate:['#eef1f5','#1f2733','#4a6fa5'],Rose:['#f9f1f1','#33262a','#a8566e'],Midnight:['#0f141b','#e6eaf0','#7da7d9'],Rainy:['#e9eef2','#1d2a33','#56829e'],Sunset:['#fbefe6','#3a2a26','#d9693f'],Sakura:['#fcf1f4','#3a2a30','#d56a8c']};
-const FONTS={System:'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif',Serif:'Georgia,"Times Roman",serif',Rounded:'"Trebuchet MS","Segoe UI",sans-serif',Clean:'Verdana,Geneva,sans-serif',Mono:'"Courier New",ui-monospace,monospace'};
+const FONTS={System:'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif',Serif:'Georgia,"Times Roman",serif',Rounded:'"Trebuchet MS","Segoe UI",sans-serif',Clean:'Verdana,Geneva,sans-serif',Mono:'"Courier New",ui-monospace,monospace',Outfit:'"Outfit",system-ui,sans-serif',Sora:'"Sora",system-ui,sans-serif',Grotesk:'"Space Grotesk",system-ui,sans-serif',Jakarta:'"Plus Jakarta Sans",system-ui,sans-serif',Fraunces:'"Fraunces",Georgia,serif',Caveat:'"Caveat","Segoe Print",cursive','Space Mono':'"Space Mono","Courier New",monospace'};
 const hx=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 const mixc=(a,b,t)=>{const x=hx(a),y=hx(b);return'#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('')};
 const lumi=h=>{const c=hx(h);return(.299*c[0]+.587*c[1]+.114*c[2])/255};
