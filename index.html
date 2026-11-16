@@ -167,6 +167,14 @@ function ssFail(msg,line){
 window.addEventListener('error',function(e){ssFail(e.message||'Unknown error',e.lineno)});
 window.addEventListener('unhandledrejection',function(e){ssFail((e.reason&&e.reason.message)||'A request failed')});
 </script>
+<link rel="stylesheet" href="motion.css">
+<link rel="stylesheet" href="cool.css">
+<style id="ss-compat">
+button.x,.rmain,.kh,.chrow{box-shadow:none}
+button.x{min-height:30px}
+.kh{min-height:38px}
+.tile>*,.ht>*{position:relative;z-index:1}
+</style>
 </head>
 <body>
 <div id="app">
@@ -1842,5 +1850,7 @@ render();
 }catch(err){try{console.error('ui-upgrade failed',err)}catch(x){}}})();
 
 </script>
+<script src="motion.js"></script>
+<script src="cool.js"></script>
 </body>
 </html>
