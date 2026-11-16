@@ -1,4 +1,4 @@
-const CACHE = "studyspace-v24";
+const CACHE = "studyspace-v26";
 const SHELL = ["./", "./index.html", "./motion.css", "./motion.js", "./cool.css", "./cool.js", "./buddies.css", "./buddies.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 const NET_WAIT_MS = 4000; // on a slow connection, use the saved copy after this long
 
