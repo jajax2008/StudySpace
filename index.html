@@ -1844,7 +1844,7 @@ devLoad=async function(){
         ENG=await w.CreateMLCEngine(id,{initProgressCallback:function(p){DEV.pct=Math.round((p.progress||0)*100);DEV.msg=(a>1?'Retry '+a+'/3. ':'')+(p.text||'');updDev()}});
       }catch(e){
         lastE=e;ENG=null;
-        if(/memory|OOM|device was lost|webgpu|f16/i.test(String(e&&e.message)))break;
+        if(/memory|OOM|device was lost|webgpu|f16|workgroup/i.test(String(e&&e.message)))break;
         DEV.msg='Connection hiccup, retrying ('+a+'/3)...';updDev();
         await new Promise(function(r){setTimeout(r,1500*a)});
       }
@@ -2070,25 +2070,35 @@ render();
 var prevErr=devErr;
 devErr=function(e){
   var m=String((e&&e.message)||e||'');
+  if(/workgroupstoragesize|workgroup storage/i.test(m))
+    return 'This phone\u2019s GPU is too limited to run the on-device AI models. They need more GPU shared memory per task than the phone allows, so this can\u2019t be fixed in the app. Use Instant or Online mode instead.';
   if(/failed to fetch|networkerror|load failed|network request failed/i.test(m)&&!/^ENGINE_LOAD/.test(m))
     return 'Cannot reach the model download server. This is usually your network blocking huggingface.co or github.com, not the app. Try other wifi or mobile data, turn off Private DNS, ad blockers or VPN, then tap Download again. Tap "Check my phone" to see which server is blocked.';
   return prevErr(e);
 };
-async function reach(url){try{await fetch(url,{method:'HEAD',cache:'no-store'});return true}catch(e){return false}}
+async function reach(url,method){try{await fetch(url,{method:method||'GET',cache:'no-store'});return true}catch(e){return false}}
 devCheckPhone=async function(){
   DEV.check='Checking...';render();
   var out=[];
   try{
     if(!navigator.gpu)out.push('WebGPU: not available in this browser, so on-device AI cannot run');
-    else{var ad=await navigator.gpu.requestAdapter();out.push(!ad?'WebGPU: no GPU found':'WebGPU: OK'+(ad.features.has('shader-f16')?' (fast mode)':' (slower 32-bit mode)'))}
+    else{
+      var ad=await navigator.gpu.requestAdapter();
+      if(!ad)out.push('WebGPU: no GPU found');
+      else{
+        out.push('WebGPU: OK'+(ad.features.has('shader-f16')?' (fast mode)':' (slower 32-bit mode)'));
+        var ws=ad.limits&&ad.limits.maxComputeWorkgroupStorageSize;
+        if(ws)out.push('GPU shared memory: '+ws+(ws<32768?' (TOO LOW: the models need 32768)':' (enough)'));
+      }
+    }
   }catch(e){out.push('WebGPU check failed: '+e.message)}
   try{
     var w=await wlib();out.push('AI engine code: OK');
     var id=await pickModelId(S.ai.dev||'small');
     var m=w.prebuiltAppConfig.model_list.find(function(x){return x.model_id===id});
     if(m){
-      out.push('Model server ('+new URL(m.model).hostname+'): '+((await reach(m.model+'/resolve/main/mlc-chat-config.json'))?'OK':'BLOCKED or unreachable'));
-      out.push('Engine file server ('+new URL(m.model_lib).hostname+'): '+((await reach(m.model_lib))?'OK':'BLOCKED or unreachable'));
+      out.push('Model server ('+new URL(m.model).hostname+'): '+((await reach(m.model+'/resolve/main/mlc-chat-config.json'))?'OK':'unreachable'));
+      out.push('Engine file server ('+new URL(m.model_lib).hostname+'): '+((await reach(m.model_lib,'HEAD'))?'OK':'unreachable'));
     }
   }catch(e){out.push('AI engine code: could not load ('+String(e&&e.message).slice(0,70)+')')}
   DEV.check=out.join(' \u2022 ');render();
