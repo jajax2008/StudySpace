@@ -2106,5 +2106,372 @@ devCheckPhone=async function(){
 }catch(err){try{console.error('diag failed',err)}catch(x){}}})();
 
 </script>
+<script>
+/* StudySpace subjects layer: subject tiles + add form, assignments, assignment AI with images */
+(function(){try{
+var css=`
+.sbtn{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0}
+.sbtn button{aspect-ratio:1;min-height:0;padding:0;display:grid;place-items:center;border-radius:14px;background:var(--bg);border:1px solid var(--line);color:var(--muted);box-shadow:none}
+.sbtn button.on{background:color-mix(in srgb,var(--sc) 18%,var(--card));border-color:var(--sc);color:var(--sc)}
+.sbtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cdots{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
+.cdots button{width:30px;height:30px;min-height:0;padding:0;border-radius:50%;border:2px solid transparent;box-shadow:none}
+.cdots button.on{border-color:var(--ink);transform:scale(1.12)}
+.tile.addt{border:1.5px dashed var(--line);background:transparent;box-shadow:none;color:var(--muted)}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;margin-right:6px;background:color-mix(in srgb,var(--pc,var(--accent)) 16%,var(--card));color:var(--pc,var(--accent))}
+.pris{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pris button{background:var(--bg);color:var(--ink);border:1px solid var(--line);min-height:38px;box-shadow:none}
+.pris button.on{background:var(--pc);color:#fff;border-color:var(--pc)}
+.acd{padding:14px;border-radius:18px;margin-bottom:10px;border-left:4px solid var(--pc,var(--accent))}
+.acd.done{opacity:.55}
+.tt2{display:flex;gap:10px;align-items:flex-start}
+.helpb{width:100%;margin-top:10px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#7a5cff));color:var(--on)}
+.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.thumbs>div{position:relative}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+.thumbs button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;min-height:0;padding:0;border-radius:50%;font-size:14px;line-height:1;background:var(--ink);color:var(--bg);box-shadow:none}
+`;
+var st=document.createElement('style');st.id='subjects-css';st.textContent=css;document.head.appendChild(st);
+
+var SI={book:'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11',
+math:'M6 3h12v18H6zM9 7h6M9 11h.01M12 11h.01M15 11h.01M9 15h.01M12 15h.01M15 15h.01',
+science:'M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-10V3M8 15h8',
+globe:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
+code:'M8 8l-5 4 5 4M16 8l5 4-5 4M14 5l-4 14',
+art:'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 0 0 3-3 9 9 0 0 0-8-11zM7.5 11h.01M10 7h.01M14.5 7h.01',
+music:'M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM19 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z',
+history:'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18',
+leaf:'M5 19c0-9 5-14 14-14 0 9-5 14-14 14zM5 19l7-7',
+ledger:'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM9 8h6M9 12h6M9 16h3',
+lang:'M4 5h16v11H9l-5 4zM8 9h8M8 12h5',
+health:'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z'};
+var SK=Object.keys(SI);
+var PRI={low:['Low','#3d7a5a'],med:['Medium','#c0793b'],high:['High','#c2410c']};
+var MAX_AS=30;
+function svg(p){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+p+'"/></svg>'}
+function ti(p,c){return '<span class="ti" style="--tc:'+c+'">'+svg(p)+'</span>'}
+function mkt(attr,t,s,p,c){return '<button class="tile" '+attr+' style="--tc:'+c+'">'+ti(p,c)+'<b>'+t+'</b><small>'+s+'</small></button>'}
+
+/* ---------- subjects list + add form ---------- */
+var SN={open:false,icon:'book',color:COLORS[0],name:''};
+function stile(s){
+  var n=S.tasks.filter(function(t){return t.subj===s.id&&!t.done}).length;
+  return mkt('data-open="'+s.id+'"',esc(s.name),n+' open · '+s.classes.length+' classes',SI[s.icon]||SI.book,s.color);
+}
+function sform(){
+  if(!(SN.open||!S.subjects.length))return '';
+  return '<div class="card" style="margin-bottom:12px"><b>New subject</b><input id="subname" placeholder="e.g. Mathematics" maxlength="40" value="'+esc(SN.name)+'" style="margin-top:8px"><div class="sbtn" style="--sc:'+SN.color+'">'+
+    SK.map(function(k){return '<button data-sicon="'+k+'" class="'+(SN.icon===k?'on':'')+'" aria-label="'+k+'">'+svg(SI[k])+'</button>'}).join('')+'</div><div class="cdots">'+
+    COLORS.concat(['#d9667a','#7c5cbf']).map(function(c){return '<button data-scol="'+c+'" class="'+(SN.color===c?'on':'')+'" style="background:'+c+'" aria-label="Color"></button>'}).join('')+'</div><button id="addsub2" style="width:100%">Create subject</button></div>';
+}
+var prevAcad=acad;
+acad=function(){
+  var h=prevAcad();
+  if(hv||subj(curSub))return h;
+  var a=h.indexOf('<div style="display:flex;gap:8px;margin-bottom:16px"><input id="subname"'),b=h.indexOf('<h2>Study tools</h2>');
+  if(a<0||b<a)return h;
+  var open=SN.open||!S.subjects.length;
+  return h.slice(0,a)+'<div class="lbl">Subjects</div>'+sform()+'<div class="tiles">'+S.subjects.map(stile).join('')+
+    '<button class="tile addt" data-subnew="1"><span class="ti" style="--tc:var(--muted)">'+svg(open?'M6 6l12 12M18 6L6 18':'M12 5v14M5 12h14')+'</span><b>'+(open?'Close':'Add subject')+'</b></button></div>'+h.slice(b);
+};
+
+/* ---------- inside a subject ---------- */
+var SV={sid:'',v:'',force:''},NP={pri:'med'},AH={id:'',q:'',busy:false},IMG={assign:[]},HAS={};
+try{HAS=JSON.parse(localStorage.getItem('studyspace-assign')||'{}')||{}}catch(e){HAS={}}
+function saveAS(){try{var o={};Object.keys(HAS).forEach(function(k){o[k]=HAS[k].slice(-30)});localStorage.setItem('studyspace-assign',JSON.stringify(o))}catch(e){}}
+function asQ(){try{var q=JSON.parse(localStorage.getItem('studyspace-asq')||'{}');return q.date===todayStr()?q:{date:todayStr(),used:0}}catch(e){return{date:todayStr(),used:0}}}
+function asLeft(){return Math.max(0,MAX_AS-asQ().used)}
+function asUse(){var q=asQ();q.used++;try{localStorage.setItem('studyspace-asq',JSON.stringify(q))}catch(e){}}
+
+function acard(t){
+  var p=PRI[t.pri]||PRI.med;
+  return '<div class="card acd'+(t.done?' done':'')+'" style="--pc:'+p[1]+'"><div class="tt2"><input type="checkbox" style="width:22px;height:22px;flex:none;margin-top:2px" data-done="'+t.id+'"'+(t.done?' checked':'')+' aria-label="Mark done"><div style="flex:1;min-width:0"><b style="overflow-wrap:anywhere'+(t.done?';text-decoration:line-through':'')+'">'+esc(t.title)+'</b><br><span class="pill">'+p[0]+'</span><small>'+dueLabel(t)+'</small></div><button class="x" data-deltask="'+t.id+'" aria-label="Delete">×</button></div>'+
+    (t.done?'':'<button class="helpb" data-ahelp="'+t.id+'">Need help with your assignment?</button>')+'</div>';
+}
+function bub(m){return '<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>'}
+function helpView(s,t){
+  var ch=HAS[t.id]||[],p=PRI[t.pri]||PRI.med;
+  return '<button class="ghost" id="svback">‹ Assignments</button><div class="card" style="margin:12px 0"><b>'+esc(t.title)+'</b><br><span class="pill" style="--pc:'+s.color+'">'+esc(s.name)+'</span><small>'+dueLabel(t)+'</small></div>'+
+  '<div class="chat-box" id="chatbox">'+(ch.length?ch.map(bub).join(''):'<div class="empty">Ask anything about this assignment, or add a photo of it and I will help you work through it.</div>')+(AH.busy?'<div class="bubble a">Thinking...</div>':'')+'</div>'+
+  '<div class="thumbs">'+IMG.assign.map(function(m,i){return '<div><img src="'+m.url+'" alt="Attached image"><button data-imgrm="'+i+'" aria-label="Remove image">×</button></div>'}).join('')+'</div>'+
+  '<div class="two"><button class="ghost" data-imgpick="asCam">Camera</button><button class="ghost" data-imgpick="asFile">Add image</button></div><input id="asCam" type="file" accept="image/*" capture="environment" hidden><input id="asFile" type="file" accept="image/*" multiple hidden>'+
+  '<div style="display:flex;gap:8px;margin-top:10px"><input id="asq" placeholder="Ask about this assignment..." value="'+esc(AH.q)+'" maxlength="500"'+(AH.busy?' disabled':'')+'><button id="assend"'+(AH.busy?' disabled':'')+'>Ask</button></div><small style="display:block;margin-top:6px">'+asLeft()+' of '+MAX_AS+' AI helps left today</small>';
+}
+detail=function(s){
+  if(SV.sid!==s.id){SV.sid=s.id;SV.v=''}
+  if(SV.force){SV.v=SV.force;SV.force=''}
+  var ts=S.tasks.filter(function(t){return t.subj===s.id}),openT=ts.filter(function(t){return !t.done}).sort(byDue),doneT=ts.filter(function(t){return t.done});
+  var head='<h1 style="display:flex;align-items:center;gap:12px;margin:14px 0 4px">'+ti(SI[s.icon]||SI.book,s.color)+'<span style="min-width:0;overflow-wrap:anywhere">'+esc(s.name)+'</span></h1>';
+  if(SV.v==='help'){var t=S.tasks.find(function(x){return x.id===AH.id});if(t)return helpView(s,t);SV.v='assign'}
+  if(SV.v==='assign'){
+    return '<button class="ghost" id="svback">‹ '+esc(s.name)+'</button>'+head+'<p class="sub">Assignments</p>'+
+    '<div class="card"><b>New assignment</b><input id="ttitle" placeholder="What is due?" maxlength="80" style="margin-top:8px"><textarea id="tdesc" placeholder="Details (optional). Paste the instructions so the AI can help." style="min-height:70px;margin-top:8px"></textarea><div class="two" style="margin-top:8px"><label>Due date<input id="tdue" type="date"></label><label>Due time<input id="ttime" type="time" value="23:59"></label></div><div style="margin:10px 0 6px;font-size:13px;color:var(--muted)">Priority</div><div class="pris">'+
+    Object.keys(PRI).map(function(k){return '<button data-npri="'+k+'" class="'+(NP.pri===k?'on':'')+'" style="--pc:'+PRI[k][1]+'">'+PRI[k][0]+'</button>'}).join('')+'</div><button id="addtask2" style="width:100%;margin-top:12px">Add assignment</button></div>'+
+    '<div class="lbl">To do</div>'+(openT.length?openT.map(acard).join(''):'<div class="empty">Nothing due. Add your first assignment above.</div>')+
+    (doneT.length?'<div class="lbl">Completed</div>'+doneT.map(acard).join(''):'');
+  }
+  if(SV.v==='sched'){
+    var cl=s.classes.slice().sort(function(a,b){return((a.day+6)%7-(b.day+6)%7)||a.start.localeCompare(b.start)}).map(function(c){return '<div class="row"><div class="t"><div>'+DAYS[c.day]+' · '+fmtT(c.start)+(c.end?' – '+fmtT(c.end):'')+'</div>'+(c.room?'<small>'+esc(c.room)+'</small>':'')+'</div><button class="x" data-delclass="'+c.id+'" aria-label="Delete class">×</button></div>'}).join('');
+    return '<button class="ghost" id="svback">‹ '+esc(s.name)+'</button>'+head+'<p class="sub">Class times</p><div class="card">'+(cl||'<div class="empty">No class times yet.</div>')+'</div><div class="form" style="margin-top:10px"><div class="two"><label>Day<select id="cday">'+[1,2,3,4,5,6,0].map(function(d){return '<option value="'+d+'">'+DAYS[d]+'</option>'}).join('')+'</select></label><label>Room (optional)<input id="croom" maxlength="30"></label></div><div class="two"><label>Starts<input id="cstart" type="time"></label><label>Ends<input id="cend" type="time"></label></div><button id="addclass">Add class time</button></div>';
+  }
+  var nn=S.notes.filter(function(n){return n.subj===s.id}).length,ne=S.exams.filter(function(x){return x.subj===s.id}).length;
+  return '<button class="ghost" id="back">‹ Academics</button>'+head+'<p class="sub">'+openT.length+' open assignments</p><div class="tiles">'+
+    mkt('data-sv="assign"','Assignments',openT.length+' open','M7 3h8l4 4v14H7zM15 3v4h4M9.5 14l2 2 3.5-4',s.color)+
+    mkt('data-sv="sched"','Class times',s.classes.length+' added','M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2','#5b7fb5')+
+    mkt('data-mod="notes"','Notes',nn+' for this subject','M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h6','#8a8f3a')+
+    mkt('data-mod="exams"','Exams',ne+' scheduled','M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M9 15l2 2 4-4','#a45a7c')+'</div>'+
+    '<button class="ghost" id="delsubj" style="margin-top:24px;width:100%">Delete this subject</button>';
+};
+
+/* ---------- images + AI ---------- */
+function shrink(f){return new Promise(function(ok,no){var u=URL.createObjectURL(f),im=new Image();
+  im.onload=function(){var k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);var d=c.toDataURL('image/jpeg',.8);URL.revokeObjectURL(u);ok({url:d,data:d.split(',')[1]})};
+  im.onerror=function(){URL.revokeObjectURL(u);no(new Error('bad'))};im.src=u})}
+async function addImgs(files){
+  var q=$('#asq');if(q)AH.q=q.value;
+  for(var i=0;i<files.length;i++){
+    if(IMG.assign.length>=3){banner('You can attach up to 3 images.');break}
+    try{IMG.assign.push(await shrink(files[i]))}catch(e){banner('That image could not be read.')}
+  }
+  render();
+}
+async function askAssign(){
+  var t=S.tasks.find(function(x){return x.id===AH.id}),el=$('#asq'),q=(el?el.value:AH.q).trim();
+  if(!t||AH.busy||(!q&&!IMG.assign.length))return;
+  if(asLeft()<=0){banner('Daily limit reached ('+MAX_AS+'/'+MAX_AS+'). It resets tomorrow.');return}
+  q=q||'Please look at the attached image and help me with it.';
+  var ch=HAS[t.id]=HAS[t.id]||[],sb=subj(t.subj);
+  var hist=ch.filter(function(m){return !m.x}).slice(-8).map(function(m){return{role:m.role==='u'?'user':'model',text:m.text.slice(0,600)}});
+  var imgs=IMG.assign.map(function(m){return{mime:'image/jpeg',data:m.data}});
+  ch.push({role:'u',text:q+(imgs.length?'\n[Image attached: '+imgs.length+']':'')});
+  AH.q='';IMG.assign=[];AH.busy=true;saveAS();render();
+  var c=new AbortController(),tm=setTimeout(function(){c.abort()},65000);
+  try{
+    var r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'assign',device:DEVID,question:q,title:t.title,details:t.desc||'',subject:sb?sb.name:'',due:t.due||'',history:hist,images:imgs})});
+    if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||('Server error '+r.status))}
+    var d=await r.json(),ps=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
+    var p=ps.find(function(x){return x.text&&!x.thought})||ps[0],reply=(p&&p.text)||'';
+    if(!reply)throw new Error('The AI sent no answer');
+    asUse();ch.push({role:'a',text:reply});
+  }catch(e){ch.push({role:'a',x:1,text:'Could not get an answer ('+(e.name==='AbortError'?'timed out':e.message)+'). That did not count toward your limit. Try again.'})}
+  clearTimeout(tm);AH.busy=false;saveAS();render();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.open)SV.sid='';
+  if(b.dataset.qa==='task')SV.force='assign';
+},true);
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;var d=b.dataset;
+  if(d.subnew){SN.open=!SN.open;render()}
+  else if(d.sicon){var n=$('#subname');if(n)SN.name=n.value;SN.icon=d.sicon;render()}
+  else if(d.scol){var n2=$('#subname');if(n2)SN.name=n2.value;SN.color=d.scol;render()}
+  else if(b.id==='addsub2'){
+    var nm=($('#subname').value||'').trim();if(!nm){$('#subname').focus();return}
+    var s={id:uid(),name:nm,color:SN.color,icon:SN.icon,classes:[]};
+    S.subjects.push(s);save();SN.name='';SN.open=false;curSub=s.id;render();$('#view').scrollTop=0;
+  }
+  else if(d.sv){SV.v=d.sv;render();$('#view').scrollTop=0}
+  else if(b.id==='svback'){SV.v=SV.v==='help'?'assign':'';render();$('#view').scrollTop=0}
+  else if(d.npri){NP.pri=d.npri;[].forEach.call(b.parentNode.children,function(x){x.classList.toggle('on',x===b)})}
+  else if(b.id==='addtask2'){
+    var ti2=($('#ttitle').value||'').trim();if(!ti2){$('#ttitle').focus();return}
+    S.tasks.push({id:uid(),title:ti2,subj:curSub,due:$('#tdue').value,time:$('#ttime').value||'23:59',done:false,pri:NP.pri,desc:($('#tdesc').value||'').trim().slice(0,1500)});
+    save();NP.pri='med';render();
+  }
+  else if(d.ahelp){AH.id=d.ahelp;AH.q='';IMG.assign=[];SV.v='help';render();$('#view').scrollTop=0}
+  else if(d.imgpick){var q2=$('#asq');if(q2)AH.q=q2.value;var inp=document.getElementById(d.imgpick);if(inp)inp.click()}
+  else if(d.imgrm!==undefined){var q3=$('#asq');if(q3)AH.q=q3.value;IMG.assign.splice(+d.imgrm,1);render()}
+  else if(b.id==='assend')askAssign();
+});
+document.addEventListener('change',function(e){
+  var el=e.target;
+  if((el.id==='asCam'||el.id==='asFile')&&el.files&&el.files.length){addImgs(Array.from(el.files));el.value=''}
+});
+document.addEventListener('input',function(e){
+  if(e.target.id==='subname')SN.name=e.target.value;
+  if(e.target.id==='asq')AH.q=e.target.value;
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&e.target&&e.target.id==='asq'){e.preventDefault();askAssign()}
+});
+
+render();
+}catch(err){try{console.error('subjects layer failed',err)}catch(x){}}})();
+
+</script>
+<script>
+/* StudySpace four-feature layer: StudyBuddy images, tools in Notes, To-Do, alert sounds */
+(function(){try{
+var css=`
+.tdfoot{display:flex;gap:8px;margin-top:10px}
+.tdfoot>*{flex:1}
+`;
+var st=document.createElement('style');st.id='four-css';st.textContent=css;document.head.appendChild(st);
+function svg(p){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+p+'"/></svg>'}
+function mkt(attr,t,s,p,c){return '<button class="tile" '+attr+' style="--tc:'+c+'"><span class="ti" style="--tc:'+c+'">'+svg(p)+'</span><b>'+t+'</b><small>'+s+'</small></button>'}
+
+/* ---------- 1. StudyBuddy: attach images ---------- */
+var IMGB=[];
+function shrink(f){return new Promise(function(ok,no){var u=URL.createObjectURL(f),im=new Image();
+  im.onload=function(){var k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);var d=c.toDataURL('image/jpeg',.8);URL.revokeObjectURL(u);ok({url:d,data:d.split(',')[1]})};
+  im.onerror=function(){URL.revokeObjectURL(u);no(new Error('bad'))};im.src=u})}
+async function addB(files){
+  var q=$('#bask');if(q)B.q=q.value;
+  for(var i=0;i<files.length;i++){
+    if(IMGB.length>=3){banner('You can attach up to 3 images.');break}
+    try{IMGB.push(await shrink(files[i]))}catch(e){banner('That image could not be read.')}
+  }
+  render();
+}
+var prevBV=buddyView;
+buddyView=function(){
+  var h=prevBV();
+  if(B.mode==='quiz')return h;
+  var i=h.indexOf('<h2>Study Material');
+  if(i>0)h=h.slice(0,i);
+  var online=(S.ai.mode||'online')==='online';
+  return h+'<div class="thumbs">'+IMGB.map(function(m,k){return '<div><img src="'+m.url+'" alt="Attached image"><button data-bdrm="'+k+'" aria-label="Remove image">×</button></div>'}).join('')+'</div>'+
+    '<button class="ghost" data-bdpick="1" style="width:100%"'+(B.busy?' disabled':'')+'>Attach image</button><input id="bdFile" type="file" accept="image/*" multiple hidden>'+
+    '<small style="display:block;margin:6px 0 14px">'+(online?'Photos of homework, notes or diagrams. Up to 3.':'Images work in Online mode only.')+'</small>'+
+    '<label>Use a note as context (optional)<select id="bnote"><option value="">No note</option>'+S.notes.map(function(n){return '<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>'}).join('')+'</select></label>';
+};
+var prevAsk=askStudyBuddy;
+askStudyBuddy=async function(){
+  if(!IMGB.length)return prevAsk.apply(this,arguments);
+  if((S.ai.mode||'online')!=='online'){banner('Images work in Online mode. Switch to Online first.');return}
+  if(B.busy)return;
+  if(buddyOnlineLeft()<=0){banner('Daily Online AI limit reached ('+MAX_BUDDY_DAILY+'/'+MAX_BUDDY_DAILY+').');return}
+  var el=$('#bask'),q=((el?el.value:B.q)||'').trim()||'Please look at this image and help me with it.';
+  if($('#bnote'))B.nid=$('#bnote').value;
+  var ctx=bsrc(),imgs=IMGB.map(function(m){return{mime:'image/jpeg',data:m.data}});
+  B.chat.push({role:'u',text:q+'\n[Image attached: '+imgs.length+']'});
+  B.q='';IMGB=[];B.busy=true;render();
+  var c=new AbortController(),tm=setTimeout(function(){c.abort()},55000);
+  try{
+    var notesCtx=ctx||S.notes.slice(0,5).map(function(n){return noteTitle(n)+': '+n.body}).join('\n\n');
+    var r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID,images:imgs})});
+    if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||('Server Error '+r.status))}
+    var d=await r.json(),ps=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
+    var p=ps.find(function(x){return x.text&&!x.thought})||ps[0],reply=(p&&p.text)||'';
+    if(!reply)throw new Error('The AI sent no answer');
+    S.ai.onlineUsed=(S.ai.onlineUsed||0)+1;save();B.chat.push({role:'a',text:reply});
+  }catch(e){B.chat.push({role:'a',text:'Online AI notice ('+(e.name==='AbortError'?'timed out':e.message)+'). Image questions need the online AI, so there is no offline answer for this one.'})}
+  clearTimeout(tm);B.busy=false;render();
+};
+
+/* ---------- 2. Study tools live in Notes ---------- */
+var prevNV=notesView;
+notesView=function(){
+  return prevNV()+'<h2>Study tools</h2><div class="form"><select id="bnote"><option value="">Pick a note</option>'+S.notes.map(function(n){return '<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>'}).join('')+'</select>'+
+    '<textarea id="btext" placeholder="Or paste text here. For quizzes, write one card per line like: Term: definition" style="min-height:18vh">'+esc(B.text)+'</textarea><div class="two"><button class="ghost" id="bsum">Quick Summarize</button><button class="ghost" id="bcards">Quiz me</button></div></div>'+
+    (B.sum?'<h2>Key points</h2><div class="card">'+(B.sum.length?B.sum.map(function(x){return '<div class="row"><div class="t"><div>'+esc(x)+'</div></div></div>'}).join(''):'<div class="empty">Not enough text to summarize.</div>')+'</div>'+(B.sum.length?'<button class="ghost" id="bsave" style="margin-top:10px;width:100%">Save as note</button>':''):'');
+};
+
+/* ---------- 3. To-Do list + checklists (Life) ---------- */
+var TDV={tab:'todo',f:'all',pri:'med'},PR={low:['Low','#3d7a5a'],med:['Medium','#c0793b'],high:['High','#c2410c']},RK={high:0,med:1,low:2};
+function TD(){if(!S.todo||typeof S.todo!=='object')S.todo={};if(!Array.isArray(S.todo.items))S.todo.items=[];if(!Array.isArray(S.todo.lists))S.todo.lists=[];return S.todo}
+function trow(t){var p=PR[t.pri]||PR.med;return '<div class="row'+(t.done?' done':'')+'"><input type="checkbox" style="width:22px;height:22px;flex:none" data-tdchk="'+t.id+'"'+(t.done?' checked':'')+' aria-label="Done"><div class="t"><div>'+esc(t.t)+'</div><small><span class="pill" style="--pc:'+p[1]+'">'+p[0]+'</span>'+(t.due?'Due '+esc(t.due):'')+'</small></div><button class="x" data-tddel="'+t.id+'" aria-label="Delete">×</button></div>'}
+function listsHTML(D){
+  return '<div style="display:flex;gap:8px"><input id="clname" placeholder="New checklist, e.g. Exam day bag" maxlength="40"><button id="cladd" style="white-space:nowrap">Create</button></div>'+
+  (D.lists.length?D.lists.map(function(l){
+    var dn=l.items.filter(function(i){return i.done}).length,p=l.items.length?Math.round(dn/l.items.length*100):0;
+    return '<div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>'+esc(l.name)+'</b><span style="display:flex;align-items:center;gap:4px"><span class="pill">'+dn+'/'+l.items.length+'</span><button class="x" data-cldellist="'+l.id+'" aria-label="Delete list">×</button></span></div><div class="bar"><i style="width:'+p+'%"></i></div>'+
+    l.items.map(function(i){return '<div class="row'+(i.done?' done':'')+'"><input type="checkbox" style="width:22px;height:22px;flex:none" data-clchk="'+l.id+':'+i.id+'"'+(i.done?' checked':'')+' aria-label="Done"><div class="t"><div>'+esc(i.t)+'</div></div><button class="x" data-cldel="'+l.id+':'+i.id+'" aria-label="Delete">×</button></div>'}).join('')+
+    '<div style="display:flex;gap:8px;margin-top:8px"><input id="cli-'+l.id+'" placeholder="Add item" maxlength="60"><button data-cliadd="'+l.id+'">Add</button></div></div>';
+  }).join(''):'<div class="empty" style="margin-top:12px">No checklists yet. Try a packing list or an exam day list.</div>');
+}
+function todoView(){
+  var D=TD(),h=BK_LIFE+'<h1 style="margin-top:14px">To-Do List</h1><div class="modes" style="margin:12px 0"><button data-tdtab="todo" class="'+(TDV.tab==='todo'?'on':'')+'">To-Do</button><button data-tdtab="lists" class="'+(TDV.tab==='lists'?'on':'')+'">Checklists</button></div>';
+  if(TDV.tab==='lists')return h+listsHTML(D);
+  var all=D.items,done=all.filter(function(x){return x.done}).length,pct=all.length?Math.round(done/all.length*100):0;
+  var shown=all.filter(function(x){return TDV.f==='all'||(TDV.f==='done'?x.done:!x.done)}).sort(function(a,b){return(a.done-b.done)||((RK[a.pri]===undefined?1:RK[a.pri])-(RK[b.pri]===undefined?1:RK[b.pri]))||String(a.due||'9999').localeCompare(String(b.due||'9999'))});
+  return h+'<div class="card"><b>'+done+' of '+all.length+' done</b><div class="bar"><i style="width:'+pct+'%"></i></div></div>'+
+    '<div class="card" style="margin-top:12px"><input id="tdnew" placeholder="What do you need to do?" maxlength="80"><div class="two" style="margin-top:8px"><label>Due (optional)<input id="tddue" type="date"></label><div><div style="font-size:13px;color:var(--muted);margin-bottom:4px">Priority</div><div class="pris">'+Object.keys(PR).map(function(k){return '<button data-tdpri="'+k+'" class="'+(TDV.pri===k?'on':'')+'" style="--pc:'+PR[k][1]+';padding:8px 2px;font-size:12px">'+PR[k][0]+'</button>'}).join('')+'</div></div></div><button id="tdadd" style="width:100%;margin-top:10px">Add task</button></div>'+
+    '<div class="modes" style="margin:12px 0 4px">'+[['all','All'],['active','Active'],['done','Done']].map(function(f){return '<button data-tdf="'+f[0]+'" class="'+(TDV.f===f[0]?'on':'')+'">'+f[1]+'</button>'}).join('')+'</div>'+
+    '<div class="card">'+(shown.length?shown.map(trow).join(''):'<div class="empty">'+(all.length?'Nothing here.':'No tasks yet. Add your first one above.')+'</div>')+'</div>'+
+    (done?'<button class="ghost" id="tdclear" style="width:100%;margin-top:10px">Clear completed ('+done+')</button>':'');
+}
+var prevLife=life;
+life=function(){
+  if(hv==='todo')return todoView();
+  var h=prevLife();
+  if(hv)return h;
+  var D=TD(),open=D.items.filter(function(x){return !x.done}).length,j=h.lastIndexOf('</div>');
+  if(j<0)return h;
+  return h.slice(0,j)+mkt('data-mod="todo"','To-Do List',open+' open · '+D.lists.length+' lists','M5 6l2 2 3-3M5 14l2 2 3-3M13 7h6M13 15h6','#5b7fb5')+h.slice(j);
+};
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.mod==='todo'){e.stopPropagation();e.preventDefault();tab='life';hv='todo';L=null;render();$('#view').scrollTop=0}
+  else if(b.dataset.mod==='buddy'){B.text=''}
+},true);
+
+/* ---------- 4. Alert sounds ---------- */
+function tone(f,t0,d,type,vol){
+  var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+t0;
+  o.type=type||'sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||.25,t+.02);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.05);
+}
+var BEEPS={
+  classic:['Classic beeps',function(){[0,.35,.7].forEach(function(o){tone(880,o,.2)})}],
+  chime:['Chime',function(){[523,659,784,1047].forEach(function(f,i){tone(f,i*.16,.5,'sine',.22)})}],
+  bell:['Bell',function(){tone(1200,0,1.2,'sine',.25);tone(2400,0,.8,'sine',.08);tone(1200,.9,1.2,'sine',.2)}],
+  digital:['Digital',function(){for(var i=0;i<4;i++)tone(1500,i*.14,.08,'square',.12)}],
+  soft:['Soft',function(){tone(440,0,.5,'sine',.2);tone(554,.4,.7,'sine',.18)}],
+  urgent:['Urgent',function(){for(var i=0;i<6;i++)tone(i%2?740:990,i*.14,.12,'sawtooth',.14)}]
+};
+beep=function(){audio();if(!AC)return;try{(BEEPS[S.beep]||BEEPS.classic)[1]()}catch(e){}};
+var prevMore=moreMain;
+moreMain=function(){
+  var h=prevMore(),a='<div class="row"><div class="t"><small>Alerts sound while StudySpace',i=h.indexOf(a);
+  if(i<0)return h;
+  return h.slice(0,i)+'<div class="row"><div class="t">Alert sound</div><select id="beepsel" style="width:auto">'+Object.keys(BEEPS).map(function(k){return '<option value="'+k+'"'+((S.beep||'classic')===k?' selected':'')+'>'+BEEPS[k][0]+'</option>'}).join('')+'</select><button class="ghost" id="beepprev">Play</button></div>'+h.slice(i);
+};
+
+/* ---------- events ---------- */
+function addTD(){var el=$('#tdnew'),t=(el&&el.value||'').trim();if(!t){if(el)el.focus();return}TD().items.push({id:uid(),t:t.slice(0,80),done:false,pri:TDV.pri,due:($('#tddue')&&$('#tddue').value)||''});save();render()}
+function addCL(){var el=$('#clname'),n=(el&&el.value||'').trim();if(!n){if(el)el.focus();return}TD().lists.push({id:uid(),name:n.slice(0,40),items:[]});save();render()}
+function addCI(id){var el=document.getElementById('cli-'+id),t=(el&&el.value||'').trim(),l=TD().lists.find(function(x){return x.id===id});if(!l||!t){if(el)el.focus();return}l.items.push({id:uid(),t:t.slice(0,60),done:false});save();render()}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;var d=b.dataset;
+  if(d.bdpick){var f=document.getElementById('bdFile');if(f){var q=$('#bask');if(q)B.q=q.value;f.click()}}
+  else if(d.bdrm!==undefined){var q2=$('#bask');if(q2)B.q=q2.value;IMGB.splice(+d.bdrm,1);render()}
+  else if(b.id==='bcards'&&B.mode==='quiz'){B.fromNotes=true;hv='buddy';render();$('#view').scrollTop=0}
+  else if(b.id==='bdone'&&B.fromNotes){B.fromNotes=false;hv='notes';render()}
+  else if(d.tdtab){TDV.tab=d.tdtab;render()}
+  else if(d.tdf){TDV.f=d.tdf;render()}
+  else if(d.tdpri){TDV.pri=d.tdpri;[].forEach.call(b.parentNode.children,function(x){x.classList.toggle('on',x===b)})}
+  else if(b.id==='tdadd')addTD();
+  else if(d.tddel){TD().items=TD().items.filter(function(x){return x.id!==d.tddel});save();render()}
+  else if(b.id==='tdclear'){TD().items=TD().items.filter(function(x){return !x.done});save();render()}
+  else if(b.id==='cladd')addCL();
+  else if(d.cliadd)addCI(d.cliadd);
+  else if(d.cldel){var p=d.cldel.split(':'),l=TD().lists.find(function(x){return x.id===p[0]});if(l){l.items=l.items.filter(function(i){return i.id!==p[1]});save();render()}}
+  else if(d.cldellist){if(sure(b,'Delete?')){TD().lists=TD().lists.filter(function(x){return x.id!==d.cldellist});save();render()}}
+  else if(b.id==='beepprev'){beep()}
+});
+document.addEventListener('change',function(e){
+  var el=e.target;
+  if(el.id==='bdFile'&&el.files&&el.files.length){addB(Array.from(el.files));el.value=''}
+  else if(el.dataset&&el.dataset.tdchk){var t=TD().items.find(function(x){return x.id===el.dataset.tdchk});if(t){t.done=el.checked;save();render()}}
+  else if(el.dataset&&el.dataset.clchk){var p=el.dataset.clchk.split(':'),l=TD().lists.find(function(x){return x.id===p[0]}),it=l&&l.items.find(function(i){return i.id===p[1]});if(it){it.done=el.checked;save();render()}}
+  else if(el.id==='beepsel'){S.beep=el.value;save();beep()}
+});
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'||!e.target||!e.target.id)return;
+  var id=e.target.id;
+  if(id==='tdnew'){e.preventDefault();addTD()}
+  else if(id==='clname'){e.preventDefault();addCL()}
+  else if(id.indexOf('cli-')===0){e.preventDefault();addCI(id.slice(4))}
+});
+
+render();
+}catch(err){try{console.error('four layer failed',err)}catch(x){}}})();
+
+</script>
 </body>
 </html>
