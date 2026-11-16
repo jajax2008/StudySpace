@@ -1,0 +1,113 @@
+/* StudySpace live buddies.
+   Replaces the static StudyBuddy / Life Buddy faces with reactive avatars:
+   pupils follow the pointer, random blinks, idle look-around, mood states
+   (idle / happy / thinking / talk / sad / sleepy), pettings and sparkles.
+   All colours come from --bc (set on the card / header) so the same avatar
+   works for the green StudyBuddy and the amber Life Buddy, in every theme. */
+
+.sb-av{
+  display:block;width:56px;height:56px;overflow:visible;
+  --lx:0;--ly:0;--bc:var(--accent);
+  color:var(--bc);
+  animation:sbBob 4.6s ease-in-out infinite;
+  transform-origin:50% 80%;
+}
+.sb-av .sb-skin{fill:color-mix(in srgb,var(--bc) 20%,var(--card));stroke:var(--bc);stroke-width:2.4}
+.sb-av .sb-ground{fill:color-mix(in srgb,var(--bc) 16%,transparent)}
+.sb-av .sb-paw ellipse{fill:color-mix(in srgb,var(--bc) 22%,var(--card));stroke:var(--bc);stroke-width:2.2}
+.sb-head .sb-ground{display:none}
+.sb-av .sb-cap{fill:var(--bc);opacity:.92}
+.sb-av .sb-capband{stroke:var(--bc);stroke-width:2.4;fill:none;stroke-linecap:round}
+.sb-av .sb-leaf path{fill:color-mix(in srgb,var(--bc) 52%,var(--card));stroke:var(--bc);stroke-width:1.6;stroke-linejoin:round}
+.sb-av .sb-eye ellipse{fill:var(--ink)}
+.sb-av .sb-glint{fill:var(--card);opacity:.92}
+.sb-av .sb-brow{stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;opacity:.5;transition:transform .3s var(--spring),opacity .3s}
+.sb-av .sb-blush ellipse{fill:color-mix(in srgb,var(--bc) 42%,transparent);opacity:.45;transition:opacity .3s}
+.sb-av .sb-smile,.sb-av .sb-frown{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;transition:opacity .22s var(--out),transform .3s var(--spring)}
+.sb-av .sb-frown{opacity:0}
+.sb-av .sb-omouth{fill:var(--ink);opacity:0;transform-box:fill-box;transform-origin:center}
+.sb-av .sb-zzz{fill:var(--bc);font-size:9px;font-weight:700;opacity:0}
+.sb-av .sb-dots circle{fill:var(--bc);opacity:0}
+
+/* head + eyes follow the pointer (and drift on their own when idle) */
+.sb-av .sb-tilt{transform-origin:36px 58px;transition:transform .4s var(--out);transform:rotate(calc(var(--lx) * 3deg))}
+.sb-av .sb-eyes{transition:transform .16s var(--out);transform:translate(calc(var(--lx) * 1.9px),calc(var(--ly) * 1.5px))}
+.sb-av .sb-paw-r{transform-origin:54.5px 47px;animation:sbWave 5.2s ease-in-out infinite}
+
+/* blink */
+.sb-av .sb-eye{transform-box:fill-box;transform-origin:center;transition:transform .11s ease-out}
+.sb-av.sb-blink .sb-eye{transform:scaleY(.1)}
+
+/* ---------- MOODS ---------- */
+.sb-av[data-mood="happy"] .sb-smile{transform:scaleY(1.45);transform-origin:36px 45px}
+.sb-av[data-mood="happy"] .sb-blush ellipse{opacity:.9}
+.sb-av[data-mood="sad"] .sb-smile{opacity:0}
+.sb-av[data-mood="sad"] .sb-frown{opacity:1}
+.sb-av[data-mood="sad"] .sb-brow{transform:translateY(-1px) rotate(-8deg);opacity:.35}
+.sb-av[data-mood="thinking"] .sb-smile{opacity:0}
+.sb-av[data-mood="thinking"] .sb-omouth{opacity:1}
+.sb-av[data-mood="thinking"] .sb-brow{transform:translateY(-1.4px)}
+.sb-av[data-mood="talk"] .sb-smile{opacity:0}
+.sb-av[data-mood="talk"] .sb-omouth{opacity:1;animation:sbTalk .34s ease-in-out infinite alternate}
+.sb-av[data-mood="sleepy"]{animation-duration:7s}
+.sb-av[data-mood="sleepy"] .sb-eye{transform:scaleY(.12)}
+.sb-av[data-mood="sleepy"] .sb-zzz{opacity:1;animation:sbZ 2.6s ease-in-out infinite}
+.sb-av[data-mood="sleepy"] .sb-paw-r{animation:none}
+.sb-av[data-mood="thinking"] .sb-dots circle{opacity:1;animation:sbDot 1.1s ease-in-out infinite}
+.sb-av[data-mood="thinking"] .sb-dots circle:nth-child(2){animation-delay:.16s}
+.sb-av[data-mood="thinking"] .sb-dots circle:nth-child(3){animation-delay:.32s}
+
+/* petting */
+.sb-av.sb-pet .sb-tilt{animation:sbSquish .55s var(--spring)}
+.sb-av.sb-pet .sb-blush ellipse{opacity:.95}
+.sb-av .sb-fx text{font-size:13px;fill:var(--bc);opacity:0;transform-box:fill-box;transform-origin:center}
+
+/* ---------- HOME CARDS ---------- */
+.bcard .sb-av{width:62px;height:62px;margin-bottom:2px}
+.bcard{--sb-glow:0}
+.bcard:has(.sb-av[data-mood="happy"]){--sb-glow:1}
+.bcard .sb-av::selection{background:transparent}
+
+/* ---------- CHAT HEADER ---------- */
+.sb-head{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;margin:0 0 14px;border-radius:22px;
+  background:linear-gradient(140deg,color-mix(in srgb,var(--bc,var(--accent)) 13%,var(--card)),var(--card));
+  border:1px solid color-mix(in srgb,var(--bc,var(--accent)) 28%,var(--line));
+  box-shadow:var(--lift);
+  animation:ssBuddyIn .5s var(--spring) both;
+  position:relative;overflow:hidden;
+}
+.sb-head::after{
+  content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--bc,var(--accent)) 22%,transparent),transparent 70%);
+  pointer-events:none;
+}
+.sb-head .sb-av{width:86px;height:86px;flex:none;cursor:pointer}
+.sb-head-txt{flex:1;min-width:0;position:relative;z-index:1}
+.sb-head-txt b{display:block;font-size:16px;letter-spacing:-.2px}
+.sb-head-txt small{display:block;margin-top:2px;color:var(--muted);font-size:12.5px;min-height:17px;transition:opacity .2s}
+.sb-head .sb-pill{
+  position:relative;z-index:1;flex:none;align-self:flex-start;margin-top:2px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 8px;border-radius:999px;
+  color:color-mix(in srgb,var(--bc,var(--accent)) 80%,var(--ink));
+  background:color-mix(in srgb,var(--bc,var(--accent)) 16%,var(--card));
+  border:1px solid color-mix(in srgb,var(--bc,var(--accent)) 28%,var(--line));
+}
+.sb-head .sb-pill[hidden]{display:none}
+
+/* ---------- KEYFRAMES ---------- */
+@keyframes sbBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+@keyframes sbWave{0%,72%,100%{transform:rotate(0)}78%{transform:rotate(-22deg)}84%{transform:rotate(7deg)}90%{transform:rotate(-16deg)}}
+@keyframes sbTalk{from{transform:scaleY(.5)}to{transform:scaleY(1.15)}}
+@keyframes sbDot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
+@keyframes sbZ{0%{opacity:0;transform:translate(0,2px)}40%{opacity:1}100%{opacity:0;transform:translate(3px,-6px)}}
+@keyframes sbSquish{0%{transform:rotate(calc(var(--lx) * 3deg)) scale(1,1)}30%{transform:scale(1.14,.86)}60%{transform:scale(.94,1.08)}100%{transform:rotate(calc(var(--lx) * 3deg)) scale(1,1)}}
+@keyframes ssBuddyIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes sbHeart{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-22px) scale(1.15)}}
+
+@media (prefers-reduced-motion:reduce){
+  .sb-av,.sb-av .sb-paw-r,.sb-av[data-mood="talk"] .sb-omouth,.sb-av[data-mood="thinking"] .sb-dots circle,.sb-av[data-mood="sleepy"] .sb-zzz{animation:none!important}
+  .sb-av .sb-tilt,.sb-av .sb-eyes{transition:none!important}
+                         }
