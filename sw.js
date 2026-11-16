@@ -1,4 +1,4 @@
-const CACHE = "studyspace-v18";
+const CACHE = "studyspace-v19";
 const SHELL = ["./", "./index.html", "./motion.css", "./motion.js", "./cool.css", "./cool.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 const NET_WAIT_MS = 4000; // on a slow connection, use the saved copy after this long
 
@@ -59,7 +59,7 @@ self.addEventListener("fetch", (e) => {
   }
 
   // Pinned library files (AI engine, PDF reader, DOCX reader): save once, reuse offline.
-  if (u.hostname === "cdn.jsdelivr.net" || u.hostname === "cdnjs.cloudflare.com") {
+  if (u.hostname === "cdn.jsdelivr.net" || u.hostname === "cdnjs.cloudflare.com" || u.hostname === "fonts.googleapis.com" || u.hostname === "fonts.gstatic.com") {
     e.respondWith(
       caches.match(r).then(
         (hit) =>
