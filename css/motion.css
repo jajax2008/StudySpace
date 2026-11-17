@@ -133,3 +133,29 @@ svg.ss-pop{animation:ssPop .5s var(--spring)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
   }
+
+/* ---------- NATIVE ANDROID FEEL ----------
+   Tap latency, scroll chaining and layout-thrashing are the three things that
+   make a web app feel "webby" on Android. This block fixes all three and is
+   loaded last, so it wins over the styles in index.html. */
+
+/* No 300ms tap delay, no double-tap zoom on controls. */
+button,nav button,.tile,.ht,.subcard,.modes button,.choice-btn,.qa button,
+select,input,textarea,a,label{touch-action:manipulation}
+
+/* An accidental pull-to-refresh must not reload the app mid-study-session. */
+html,body{overscroll-behavior:none}
+#view,main{overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+
+/* Native-feeling taps: no grey flash, no text selection on control labels. */
+button,nav button,.tile,.ht,.subcard,.modes button{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+
+/* Progress bars grow on the GPU. Animating `width` forces layout on every frame;
+   the inline width now lands in one shot and the fill is scaled with transform. */
+.bar i{transition:none;transform-origin:left center;animation:ssBarIn .5s var(--out) both;will-change:transform}
+@keyframes ssBarIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* Promote the surfaces that actually move so Android composites them off the
+   main thread instead of repainting the page behind them. */
+#ssSheet,#ssSheet .sh,#onb,.obc,.banner,#ssBar{will-change:transform,opacity;backface-visibility:hidden}
+#view.ss-pg-fwd,#view.ss-pg-back{will-change:transform,opacity;transform:translateZ(0)}

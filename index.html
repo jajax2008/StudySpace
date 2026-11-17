@@ -547,7 +547,7 @@ function ringHTML(){const off=C*(1-T.left/total());return'<svg class="ring" view
 function focus(){
 return'<h1>Focus Room</h1><p class="sub">Pick a method and start.</p>'+
 '<div class="modes"><button data-mode="p" class="'+(T.mode==='p'?'on':'')+'">Pomodoro<br><small>25 / 5</small></button><button data-mode="d" class="'+(T.mode==='d'?'on':'')+'">52 / 17</button><button data-mode="c" class="'+(T.mode==='c'?'on':'')+'">Custom</button></div>'+
-(T.mode==='c'?'<div class="two" style="margin-bottom:8px"><label>Focus minutes<input id="cf" type="number" min="1" max="180" value="'+T.f+'"></label><label>Break minutes<input id="cb" type="number" min="1" max="60" value="'+T.b+'"></label></div>':'')+
+(T.mode==='c'?'<div class="two" style="margin-bottom:8px"><label>Focus minutes<input id="cf" type="number" inputmode="numeric" min="1" max="180" value="'+T.f+'"></label><label>Break minutes<input id="cb" type="number" inputmode="numeric" min="1" max="60" value="'+T.b+'"></label></div>':'')+
 '<label style="display:block;margin:12px 0">Studying<select id="tsubj"><option value="">No subject</option>'+S.subjects.map(s=>'<option value="'+s.id+'"'+(T.subj===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></label>'+sndSel()+
 ringHTML()+
 '<div class="ctrl"><button id="tgo">'+(T.running?'Pause':'Start')+'</button><button class="ghost" id="treset">Reset</button><button class="ghost" id="tskip">Skip</button></div>'+
@@ -712,25 +712,31 @@ const earned=G.items.reduce((a,i)=>a+i.score/i.total*i.w,0),done=G.items.reduce(
 let msg='Add your scores to see your grade.';
 if(G.items.length){msg='<b>Current grade: '+pct1(earned/done*100)+'</b> on '+pct1(done)+' of the grade so far.';
 if(remain>0){const need=(G.target-earned)/remain*100;msg+='<br>'+(need<=0?'Your target of '+G.target+'% is already secured.':need>100?'A target of '+G.target+'% is out of reach now. The best possible is '+pct1(earned+remain)+'.':'To reach '+G.target+'%, average <b>'+pct1(need)+'</b> on the remaining '+pct1(remain)+'.')}else msg+='<br>Final grade: <b>'+pct1(earned)+'</b>'}
-return BK_ACAD+'<h1 style="margin-top:14px">Grade Calculator</h1><div class="two" style="margin:12px 0"><label>Subject<select id="gsubj">'+S.subjects.map(x=>'<option value="'+x.id+'"'+(x.id===gs?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label><label>Target grade (%)<input id="gtarget" type="number" min="1" max="100" value="'+G.target+'"></label></div><div class="card">'+msg+'</div><h2>Scores</h2><div class="card">'+(G.items.length?G.items.map(i=>'<div class="row"><div class="t"><div>'+esc(i.name)+'</div><small>'+i.score+' / '+i.total+' · '+i.w+'% of grade</small></div><b>'+pct1(i.score/i.total*100)+'</b><button class="x" data-gdel="'+i.id+'" aria-label="Delete">×</button></div>').join(''):'<div class="empty">No scores yet.</div>')+'</div><div class="form" style="margin-top:12px"><input id="gname" placeholder="Quiz, exam, project..." maxlength="40"><div class="two"><label>Score<input id="gscore" type="number" min="0" step="any"></label><label>Out of<input id="gtotal" type="number" min="1" step="any"></label></div><label>Weight (% of final grade)<input id="gweight" type="number" min="1" max="100" step="any"></label><button id="addgrade">Add score</button></div>'}
+return BK_ACAD+'<h1 style="margin-top:14px">Grade Calculator</h1><div class="two" style="margin:12px 0"><label>Subject<select id="gsubj">'+S.subjects.map(x=>'<option value="'+x.id+'"'+(x.id===gs?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label><label>Target grade (%)<input id="gtarget" type="number" inputmode="numeric" min="1" max="100" value="'+G.target+'"></label></div><div class="card">'+msg+'</div><h2>Scores</h2><div class="card">'+(G.items.length?G.items.map(i=>'<div class="row"><div class="t"><div>'+esc(i.name)+'</div><small>'+i.score+' / '+i.total+' · '+i.w+'% of grade</small></div><b>'+pct1(i.score/i.total*100)+'</b><button class="x" data-gdel="'+i.id+'" aria-label="Delete">×</button></div>').join(''):'<div class="empty">No scores yet.</div>')+'</div><div class="form" style="margin-top:12px"><input id="gname" placeholder="Quiz, exam, project..." maxlength="40"><div class="two"><label>Score<input id="gscore" type="number" inputmode="decimal" min="0" step="any"></label><label>Out of<input id="gtotal" type="number" inputmode="decimal" min="1" step="any"></label></div><label>Weight (% of final grade)<input id="gweight" type="number" inputmode="decimal" min="1" max="100" step="any"></label><button id="addgrade">Add score</button></div>'}
 
 const EXP=['Food','Transport','School supplies','Printing','Projects','Personal','Entertainment','Other'];
 const money=n=>'₱'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-const totalSpent=()=>S.wallet.tx.reduce((a,t)=>a+(Number(t.amt)||0),0);
-const walletBal=()=>(Number(S.wallet.avail)||0)-totalSpent();
+/* Money is added in whole centavos, so 0.10 + 0.20 is exactly 0.30 and a trial
+   balance can be checked with === instead of an epsilon guess. */
+const toCents=n=>Math.round((Number(n)||0)*100);
+const fromCents=c=>c/100;
+const cx2=n=>fromCents(toCents(n));
+const sumCents=(rows,key)=>rows.reduce((a,r)=>a+toCents(r&&r[key]),0);
+const totalSpent=()=>fromCents(sumCents(S.wallet.tx,'amt'));
+const walletBal=()=>fromCents(toCents(S.wallet.avail)-sumCents(S.wallet.tx,'amt'));
 
 function walletView(){
 const W=S.wallet,spent=totalSpent(),bal=walletBal(),by={};
-W.tx.forEach(t=>by[t.cat]=(by[t.cat]||0)+t.amt);
+W.tx.forEach(t=>by[t.cat]=(by[t.cat]||0)+toCents(t.amt));
 const p=W.avail>0?spent/W.avail:0;
-const bars=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([c,v])=>'<div class="row"><div class="t"><div>'+esc(c)+'</div><div class="bar"><i style="width:'+Math.round(v/spent*100)+'%"></i></div></div><b>'+money(v)+'</b></div>').join('');
+const bars=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([c,v])=>'<div class="row"><div class="t"><div>'+esc(c)+'</div><div class="bar"><i style="width:'+Math.round(fromCents(v)/spent*100)+'%"></i></div></div><b>'+money(fromCents(v))+'</b></div>').join('');
 const tx=W.tx.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,15).map(t=>'<div class="row"><div class="t"><div>'+esc(t.cat)+(t.note?' · '+esc(t.note):'')+'</div><small>'+t.date+'</small></div><b>-'+money(t.amt)+'</b><button class="x" data-deltx="'+t.id+'" aria-label="Delete">×</button></div>').join('');
 return BK_LIFE+'<h1 style="margin-top:14px">My Wallet</h1>'+
 '<div class="card" style="margin-top:12px"><small>Remaining Balance</small><div style="font-size:32px;font-weight:800'+(bal<0?';color:#c2410c':'')+'">'+money(bal)+'</div>'+
-'<label style="margin-top:12px">Enter Available Balance<input id="wavail" type="number" min="0" step="any" value="'+(W.avail||'')+'" placeholder="0.00"></label>'+
+'<label style="margin-top:12px">Enter Available Balance<input id="wavail" type="number" inputmode="decimal" min="0" step="any" value="'+(W.avail||'')+'" placeholder="0.00"></label>'+
 (W.avail>0?'<div class="bar'+(p>1?' over':'')+'" style="margin-top:10px"><i style="width:'+Math.min(100,Math.round(p*100))+'%"></i></div><p style="margin:8px 0 0;font-size:14px">Spent '+money(spent)+' out of '+money(W.avail)+(p>1?'. <span class="late">Over balance!</span>':'.')+'</p>':'')+
 '</div>'+
-'<h2>Money out</h2><div class="form"><div class="two"><input id="wamt" type="number" min="0" step="any" placeholder="Amount spent"><select id="wcat">'+EXP.map(c=>'<option>'+c+'</option>').join('')+'</select></div><input id="wnote" placeholder="Note (optional)" maxlength="40"><button id="addtx">Record expense</button></div>'+
+'<h2>Money out</h2><div class="form"><div class="two"><input id="wamt" type="number" inputmode="decimal" min="0" step="any" placeholder="Amount spent"><select id="wcat">'+EXP.map(c=>'<option>'+c+'</option>').join('')+'</select></div><input id="wnote" placeholder="Note (optional)" maxlength="40"><button id="addtx">Record expense</button></div>'+
 (bars?'<h2>Where it went</h2><div class="card">'+bars+'</div>':'')+
 '<h2>Recent expenses</h2><div class="card">'+(tx||'<div class="empty">No expenses recorded yet.</div>')+'</div>'}
 
@@ -749,9 +755,9 @@ const t=todayStr(),mins=(a,b)=>{const[x,y]=String(a||'22:30').split(':').map(Num
 const sm=mins(S.sleep.bed,S.sleep.wake);
 const rows=S.habits.slice().sort((a,b)=>HCATS.indexOf(a.cat)-HCATS.indexOf(b.cat)).map(h=>{let dots='';for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);dots+='<span class="dot" style="background:'+(h.days[ymd(d)]?'var(--accent)':'var(--line)')+'"></span>'}
 return'<div class="row"><input type="checkbox" style="width:22px;height:22px;flex:none" data-habit="'+h.id+'"'+(h.days[t]?' checked':'')+' aria-label="Done today"><div class="t"><div>'+esc(h.name)+'</div><small>'+h.cat+' · '+habitStreak(h)+' day streak</small></div><div style="display:flex;gap:3px">'+dots+'</div><button class="x" data-dhabit="'+h.id+'" aria-label="Delete">×</button></div>'}).join('');
-const goals=S.wallet.goals.map(g=>'<div class="row" style="flex-wrap:wrap"><div class="t"><div>'+esc(g.name)+'</div><small>'+money(g.saved)+' of '+money(g.target)+'</small><div class="bar"><i style="width:'+Math.min(100,Math.round(g.saved/g.target*100))+'%"></i></div></div><button class="x" data-delgoal="'+g.id+'" aria-label="Delete">×</button><div style="display:flex;gap:8px;width:100%"><input id="gin-'+g.id+'" type="number" min="0" step="any" placeholder="Amount to add"><button data-gadd="'+g.id+'">Add</button></div></div>').join('');
+const goals=S.wallet.goals.map(g=>'<div class="row" style="flex-wrap:wrap"><div class="t"><div>'+esc(g.name)+'</div><small>'+money(g.saved)+' of '+money(g.target)+'</small><div class="bar"><i style="width:'+Math.min(100,Math.round(g.saved/g.target*100))+'%"></i></div></div><button class="x" data-delgoal="'+g.id+'" aria-label="Delete">×</button><div style="display:flex;gap:8px;width:100%"><input id="gin-'+g.id+'" type="number" inputmode="decimal" min="0" step="any" placeholder="Amount to add"><button data-gadd="'+g.id+'">Add</button></div></div>').join('');
 return BK_LIFE+'<h1 style="margin-top:14px">Life Tracker</h1><p class="sub">Habits, savings goals, and sleep schedule.</p><div class="card">'+(rows||'<div class="empty">No habits yet.</div>')+'</div><div class="form" style="margin-top:12px"><input id="hname" placeholder="New habit, e.g. Drink water" maxlength="40"><select id="hcat">'+HCATS.map(c=>'<option>'+c+'</option>').join('')+'</select><button id="addhabit">Add habit</button></div>'+
-'<h2>Savings goals</h2><div class="card">'+(goals||'<div class="empty">No goals yet.</div>')+'</div><div class="two" style="margin-top:10px"><input id="goalname" placeholder="Goal name" maxlength="40"><input id="goaltarget" type="number" min="1" step="any" placeholder="Target"></div><button id="addgoal" class="ghost" style="margin-top:8px;width:100%">Add goal</button><p class="sub" style="margin-top:8px">Savings goals are tracked separately from your wallet balance.</p>'+
+'<h2>Savings goals</h2><div class="card">'+(goals||'<div class="empty">No goals yet.</div>')+'</div><div class="two" style="margin-top:10px"><input id="goalname" placeholder="Goal name" maxlength="40"><input id="goaltarget" type="number" inputmode="decimal" min="1" step="any" placeholder="Target"></div><button id="addgoal" class="ghost" style="margin-top:8px;width:100%">Add goal</button><p class="sub" style="margin-top:8px">Savings goals are tracked separately from your wallet balance.</p>'+
 '<h2>Sleep schedule</h2><div class="card"><div class="two"><label>Bedtime<input id="sbed" type="time" value="'+S.sleep.bed+'"></label><label>Wake up<input id="swake" type="time" value="'+S.sleep.wake+'"></label></div><p style="margin:10px 0 0">Planned sleep: <b>'+Math.floor(sm/60)+'h '+sm%60+'m</b></p></div>'}
 
 /* STUDYBUDDY DUAL ONLINE / INSTANT OFFLINE AI */
@@ -1305,10 +1311,10 @@ function eval12(expr){
 
 function tAccSummaryText(){
   return ACCT.taccounts.map(t=>{
-    const dr=t.rows.reduce((a,r)=>a+(Number(r.dr)||0),0);
-    const cr=t.rows.reduce((a,r)=>a+(Number(r.cr)||0),0);
-    const bal=dr-cr;
-    return `${t.name}: Total DR ₱${fmtNum(dr)}, Total CR ₱${fmtNum(cr)} -> Ending ${bal>=0?'Debit':'Credit'} Bal: ₱${fmtNum(Math.abs(bal))}`;
+    const drC=sumCents(t.rows,'dr');
+    const crC=sumCents(t.rows,'cr');
+    const balC=drC-crC;
+    return `${t.name}: Total DR ₱${fmtNum(fromCents(drC))}, Total CR ₱${fmtNum(fromCents(crC))} -> Ending ${balC>=0?'Debit':'Credit'} Bal: ₱${fmtNum(fromCents(Math.abs(balC)))}`;
   }).join('\n');
 }
 
@@ -1353,13 +1359,13 @@ async function askAcctBuddy(){
 
 function renderTAccounts(){
   const cards=ACCT.taccounts.map(t=>{
-    const totDr=t.rows.reduce((a,r)=>a+(Number(r.dr)||0),0);
-    const totCr=t.rows.reduce((a,r)=>a+(Number(r.cr)||0),0);
-    const diff=totDr-totCr;
+    const totDrC=sumCents(t.rows,'dr');
+    const totCrC=sumCents(t.rows,'cr');
+    const diffC=totDrC-totCrC;
     const rowsHTML=t.rows.map((r,idx)=>
       '<div style="display:grid;grid-template-columns:1fr 1fr auto;border-bottom:1px solid var(--line);font-size:13px;align-items:center">'+
-      '<div style="padding:6px 8px;border-right:2px solid var(--ink);text-align:right;font-variant-numeric:tabular-nums">'+(r.dr?'₱'+fmtNum(r.dr):'')+(r.dr&&r.memo?' <small style="display:block;font-size:10px">'+esc(r.memo)+'</small>':'')+'</div>'+
-      '<div style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+(r.cr?'₱'+fmtNum(r.cr):'')+(r.cr&&r.memo?' <small style="display:block;font-size:10px">'+esc(r.memo)+'</small>':'')+'</div>'+
+      '<div style="padding:6px 8px;border-right:2px solid var(--ink);text-align:right;font-variant-numeric:tabular-nums">'+(r.dr?'₱'+fmtNum(cx2(r.dr)):'')+(r.dr&&r.memo?' <small style="display:block;font-size:10px">'+esc(r.memo)+'</small>':'')+'</div>'+
+      '<div style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+(r.cr?'₱'+fmtNum(cx2(r.cr)):'')+(r.cr&&r.memo?' <small style="display:block;font-size:10px">'+esc(r.memo)+'</small>':'')+'</div>'+
       '<button class="x" data-tdelrow="'+t.id+':'+idx+'" style="font-size:15px;padding:2px 6px">×</button></div>'
     ).join('');
     return'<div class="card" style="margin-bottom:12px">'+
@@ -1371,13 +1377,13 @@ function renderTAccounts(){
       '<div style="text-align:right;padding-right:8px">CREDIT (CR)</div><div></div></div>'+
       (rowsHTML||'<div class="empty" style="font-size:12px;text-align:center">No entries yet</div>')+
       '<div style="display:grid;grid-template-columns:1fr 1fr 24px;font-size:12px;font-weight:700;padding-top:6px;border-top:2px solid var(--ink);font-variant-numeric:tabular-nums">'+
-      '<div style="text-align:right;padding-right:8px;border-right:2px solid var(--ink)">₱'+fmtNum(totDr)+'</div>'+
-      '<div style="text-align:right;padding-right:8px">₱'+fmtNum(totCr)+'</div><div></div></div>'+
+      '<div style="text-align:right;padding-right:8px;border-right:2px solid var(--ink)">₱'+fmtNum(fromCents(totDrC))+'</div>'+
+      '<div style="text-align:right;padding-right:8px">₱'+fmtNum(fromCents(totCrC))+'</div><div></div></div>'+
       '<div style="margin-top:6px;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,var(--card));font-size:13px;font-weight:700;text-align:center">'+
-      (diff===0?'Balanced (₱0.00)':(diff>0?'Ending DEBIT Balance: ₱'+fmtNum(diff):'Ending CREDIT Balance: ₱'+fmtNum(Math.abs(diff))))+'</div>'+
+      (diffC===0?'Balanced (₱0.00)':(diffC>0?'Ending DEBIT Balance: ₱'+fmtNum(fromCents(diffC)):'Ending CREDIT Balance: ₱'+fmtNum(fromCents(Math.abs(diffC)))))+'</div>'+
       '<div class="form" style="margin-top:10px"><div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px">'+
-      '<input id="tdr-'+t.id+'" type="number" step="any" placeholder="Debit ₱" style="padding:7px 8px;font-size:13px">'+
-      '<input id="tcr-'+t.id+'" type="number" step="any" placeholder="Credit ₱" style="padding:7px 8px;font-size:13px">'+
+      '<input id="tdr-'+t.id+'" type="number" inputmode="decimal" step="any" placeholder="Debit ₱" style="padding:7px 8px;font-size:13px">'+
+      '<input id="tcr-'+t.id+'" type="number" inputmode="decimal" step="any" placeholder="Credit ₱" style="padding:7px 8px;font-size:13px">'+
       '<input id="tmemo-'+t.id+'" placeholder="Date/Note" maxlength="20" style="padding:7px 8px;font-size:13px">'+
       '<button data-taddrow="'+t.id+'" style="padding:7px 10px;font-size:13px">+</button></div></div></div>';
   }).join('');
@@ -1498,7 +1504,7 @@ if(d.mod){
 if(d.mood){jent(jd||todayStr()).mood=d.mood;save();render();return}
 if(d.jday){jd=d.jday;render();$('#view').scrollTop=0;return}
 if(d.gdel){S.grades[gs].items=S.grades[gs].items.filter(i=>i.id!==d.gdel);save();render();return}
-if(d.gadd){const v=+$('#gin-'+d.gadd).value,g=S.wallet.goals.find(x=>x.id===d.gadd);if(g&&v>0){g.saved+=v;save();render()}return}
+if(d.gadd){const v=+$('#gin-'+d.gadd).value,g=S.wallet.goals.find(x=>x.id===d.gadd);if(g&&v>0){g.saved=fromCents(toCents(g.saved)+toCents(v));save();render()}return}
 if(d.delgoal){S.wallet.goals=S.wallet.goals.filter(x=>x.id!==d.delgoal);save();render();return}
 if(d.deltx){S.wallet.tx=S.wallet.tx.filter(x=>x.id!==d.deltx);save();render();return}
 if(d.dhabit){S.habits=S.habits.filter(x=>x.id!==d.dhabit);save();render();return}
@@ -1572,7 +1578,7 @@ case'fsave':{
   save();F.cards=[];F.sum=[];F.file=null;F.fileName='';F.msg='Saved to your Decks & Notes!';render();break;
 }
 case'addgrade':{const n=$('#gname').value.trim(),sc=+$('#gscore').value,tt=+$('#gtotal').value,w=+$('#gweight').value;if(!n||$('#gscore').value===''||!(tt>0)||!(w>0)){banner('Fill in the name, score, out of, and weight.');return}(S.grades[gs]=S.grades[gs]||{target:90,items:[]}).items.push({id:uid(),name:n,score:sc,total:tt,w});save();render();break}
-case'addtx':{const amt=+$('#wamt').value,cat=$('#wcat').value;if(!(amt>0)){$('#wamt').focus();return}S.wallet.tx.push({id:uid(),type:'out',amt,cat,note:$('#wnote').value.trim(),date:todayStr()});save();render();break}
+case'addtx':{const amt=cx2($('#wamt').value),cat=$('#wcat').value;if(!(amt>0)){$('#wamt').focus();return}S.wallet.tx.push({id:uid(),type:'out',amt,cat,note:$('#wnote').value.trim(),date:todayStr()});save();render();break}
 case'addgoal':{const n=$('#goalname').value.trim(),tg=+$('#goaltarget').value;if(!n||!(tg>0)){$('#goalname').focus();return}S.wallet.goals.push({id:uid(),name:n,target:tg,saved:0});save();render();break}
 case'addhabit':{const n=$('#hname').value.trim();if(!n){$('#hname').focus();return}S.habits.push({id:uid(),name:n,cat:$('#hcat').value,days:{}});save();render();break}
 case'bsum':{const tx=bsrc();if(tx.length<30){banner('Select a note or paste some text first.');return}B.nid=$('#bnote').value;B.text=$('#btext').value;B.sum=summarize(tx,5);render();break}
@@ -1620,6 +1626,12 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target&&e.target.id==='calcinp'){e.preventDefault();ACCT.calcExpr=e.target.value;ACCT.calcAns=eval12(ACCT.calcExpr);render();}
 });
 
+/* Typing must never wait on a full list rebuild: filters settle after the burst. */
+const ssDebounce=(fn,ms)=>{let t;return function(){const a=arguments,c=this;clearTimeout(t);t=setTimeout(function(){fn.apply(c,a)},ms)}};
+const ssRList=ssDebounce(function(){$('#rlist').innerHTML=rlist()},140);
+const ssNList=ssDebounce(function(v){$('#nlist').innerHTML=nlist(v)},140);
+const ssNoteSave=ssDebounce(function(){save()},350);
+
 document.addEventListener('input',e=>{const el=e.target;
 if(el.id==='bask'){B.q=el.value;return}
 if(el.id==='lbask'){LB.q=el.value;return}
@@ -1629,9 +1641,9 @@ if(el.id==='acctctx'){ACCT.ctx=el.value;return}
 if(el.id==='calcinp'){ACCT.calcExpr=el.value;return}
 if(el.id==='ftext'){F.text=el.value;return}
 if(el.id==='jtext'||el.id==='jgoal'){jent(jd||todayStr())[el.id==='jtext'?'text':'goals']=el.value;save();return}
-if(el.id==='rsearch'){rq=el.value;$('#rlist').innerHTML=rlist();return}
-if(el.id==='nsearch'){$('#nlist').innerHTML=nlist(el.value);return}
-if(el.id==='ntitle'||el.id==='nbody'){const n=S.notes.find(x=>x.id===hv.slice(2));if(n){n[el.id==='ntitle'?'title':'body']=el.value;n.updated=Date.now();save();$('#nsaved').textContent='Saved'}}});
+if(el.id==='rsearch'){rq=el.value;ssRList();return}
+if(el.id==='nsearch'){ssNList(el.value);return}
+if(el.id==='ntitle'||el.id==='nbody'){const n=S.notes.find(x=>x.id===hv.slice(2));if(n){n[el.id==='ntitle'?'title':'body']=el.value;n.updated=Date.now();ssNoteSave();$('#nsaved').textContent='Saved'}}});
 
 document.addEventListener('change',e=>{
 const el=e.target;
@@ -1653,7 +1665,7 @@ if(el.id==='acctfile'){
 if(el.dataset.habit){const h=S.habits.find(x=>x.id===el.dataset.habit);if(h){if(el.checked)h.days[todayStr()]=1;else delete h.days[todayStr()];save();render()}}
 if(el.id==='gsubj'){gs=el.value;render()}
 if(el.id==='gtarget'){(S.grades[gs]=S.grades[gs]||{target:90,items:[]}).target=Math.min(100,Math.max(1,+el.value||90));save();render()}
-if(el.id==='wavail'){S.wallet.avail=Math.max(0,+el.value||0);save();render()}
+if(el.id==='wavail'){S.wallet.avail=cx2(Math.max(0,+el.value||0));save();render()}
 if(el.id==='jdate'&&el.value){jd=el.value;render()}
 if((el.id==='sbed'||el.id==='swake')&&el.value){S.sleep[el.id==='sbed'?'bed':'wake']=el.value;save();render()}
 if(el.id==='rfilter'){rf=el.value;$('#rlist').innerHTML=rlist()}
@@ -1940,20 +1952,19 @@ document.addEventListener('click',function(e){
 renderTAccounts=function(){
   var D=0,C=0;
   var cards=ACCT.taccounts.map(function(t,idx){
-    var dr=0,cr=0;
-    t.rows.forEach(function(r){dr+=Number(r.dr)||0;cr+=Number(r.cr)||0});
-    var df=dr-cr;if(df>0)D+=df;else C-=df;
+    var drC=sumCents(t.rows,'dr'),crC=sumCents(t.rows,'cr');
+    var dfC=drC-crC;if(dfC>0)D+=dfC;else C-=dfC;
     var rows=t.rows.map(function(r,i){
-      return '<div class="tl row"><div class="tcol tdr">'+(r.dr?'₱'+fmtNum(r.dr):'')+(r.dr&&r.memo?'<small>'+esc(r.memo)+'</small>':'')+'</div><div class="tcol tcr">'+(r.cr?'₱'+fmtNum(r.cr):'')+(r.cr&&r.memo?'<small>'+esc(r.memo)+'</small>':'')+'</div><button class="x" data-tdelrow="'+t.id+':'+i+'" aria-label="Delete entry">×</button></div>';
+      return '<div class="tl row"><div class="tcol tdr">'+(r.dr?'₱'+fmtNum(cx2(r.dr)):'')+(r.dr&&r.memo?'<small>'+esc(r.memo)+'</small>':'')+'</div><div class="tcol tcr">'+(r.cr?'₱'+fmtNum(cx2(r.cr)):'')+(r.cr&&r.memo?'<small>'+esc(r.memo)+'</small>':'')+'</div><button class="x" data-tdelrow="'+t.id+':'+i+'" aria-label="Delete entry">×</button></div>';
     }).join('');
-    return '<div class="tac" style="--ac:'+COLORS[idx%COLORS.length]+'"><div class="tah"><b>'+esc(t.name)+'</b><span style="display:flex;align-items:center;gap:4px"><span class="chip">'+(df===0?'Balanced':(df>0?'Dr ':'Cr ')+'₱'+fmtNum(Math.abs(df)))+'</span><button class="x" data-tdelacc="'+t.id+'" aria-label="Delete account">×</button></span></div>'+
+    return '<div class="tac" style="--ac:'+COLORS[idx%COLORS.length]+'"><div class="tah"><b>'+esc(t.name)+'</b><span style="display:flex;align-items:center;gap:4px"><span class="chip">'+(dfC===0?'Balanced':(dfC>0?'Dr ':'Cr ')+'₱'+fmtNum(fromCents(Math.abs(dfC))))+'</span><button class="x" data-tdelacc="'+t.id+'" aria-label="Delete account">×</button></span></div>'+
     '<div class="tt"><div class="tl"><div class="tcol tlab">DEBIT</div><div class="tcol tlab">CREDIT</div><span></span></div>'+
     (rows||'<div class="empty" style="font-size:12px;margin:6px 0">No entries yet</div>')+
-    '<div class="tl ttot"><div class="tcol tdr">₱'+fmtNum(dr)+'</div><div class="tcol tcr">₱'+fmtNum(cr)+'</div><span></span></div></div>'+
+    '<div class="tl ttot"><div class="tcol tdr">₱'+fmtNum(fromCents(drC))+'</div><div class="tcol tcr">₱'+fmtNum(fromCents(crC))+'</div><span></span></div></div>'+
     '<div class="tadd"><input id="tdr-'+t.id+'" type="number" step="any" inputmode="decimal" placeholder="Debit ₱"><input id="tcr-'+t.id+'" type="number" step="any" inputmode="decimal" placeholder="Credit ₱"><div class="full"><input id="tmemo-'+t.id+'" placeholder="Date / note" maxlength="20"><button data-taddrow="'+t.id+'">Add</button></div></div></div>';
   }).join('');
-  var ok=Math.abs(D-C)<0.005;
-  return '<div class="tsum"><div><b>'+ACCT.taccounts.length+' accounts</b><br><small>Trial balance check</small></div><span class="chip" style="--ac:'+(ok?'#3d7a5a':'#c0793b')+'">'+(ok?'Debits = Credits ✓':'Off by ₱'+fmtNum(Math.abs(D-C)))+'</span></div>'+
+  var ok=D===C;
+  return '<div class="tsum"><div><b>'+ACCT.taccounts.length+' accounts</b><br><small>Trial balance check</small></div><span class="chip" style="--ac:'+(ok?'#3d7a5a':'#c0793b')+'">'+(ok?'Debits = Credits ✓':'Off by ₱'+fmtNum(fromCents(Math.abs(D-C))))+'</span></div>'+
   '<div style="display:flex;gap:8px;margin-bottom:12px"><input id="tnewname" placeholder="New account (e.g. Purchases, Sales)" maxlength="40"><button id="taddacc" style="white-space:nowrap">Add Account</button></div>'+cards;
 };
 
