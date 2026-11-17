@@ -7,8 +7,8 @@
 <meta id="themecolor" name="theme-color" content="#f1f5ef">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
 :root{--bg:#f1f5ef;--ink:#1e2b24;--muted:#5d6e64;--accent:#3d7a5a;--card:#fff;--line:#d9e3da;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111915;--ink:#e5eee8;--muted:#92a69a;--accent:#7cc29e;--card:#1a251f;--line:#29372e;--on:#0f1a14;color-scheme:dark}}
@@ -170,9 +170,9 @@ window.addEventListener('unhandledrejection',function(e){ssFail((e.reason&&e.rea
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Sora:wght@400;600;800&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Caveat:wght@500;700&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="motion.css">
-<link rel="stylesheet" href="cool.css">
-<link rel="stylesheet" href="buddies.css">
+<link rel="stylesheet" href="css/motion.css">
+<link rel="stylesheet" href="css/cool.css">
+<link rel="stylesheet" href="css/buddies.css">
 <style id="ss-compat">
 button.x,.rmain,.kh,.chrow{box-shadow:none}
 button.x{min-height:30px}
@@ -1443,7 +1443,7 @@ function audio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)(
 function beep(){audio();if(!AC)return;[0,.35,.7].forEach(o=>{const os=AC.createOscillator(),g=AC.createGain();os.frequency.value=880;g.gain.value=.25;os.connect(g);g.connect(AC.destination);os.start(AC.currentTime+o);os.stop(AC.currentTime+o+.2)})}
 function banner(msg){let b=$('#bn');if(!b){b=document.createElement('div');b.id='bn';b.className='banner';b.setAttribute('role','alert');b.onclick=()=>b.remove();document.body.appendChild(b)}b.textContent=msg+' (tap to dismiss)'}
 function alertNow(title,body){beep();try{navigator.vibrate&&navigator.vibrate([200,100,200,100,200])}catch(e){}banner(title+': '+body);
-if(window.Notification&&Notification.permission==='granted'&&navigator.serviceWorker){navigator.serviceWorker.ready.then(r=>r.showNotification(title,{body,icon:'icon-192.png',tag:title+body})).catch(()=>{})}}
+if(window.Notification&&Notification.permission==='granted'&&navigator.serviceWorker){navigator.serviceWorker.ready.then(r=>r.showNotification(title,{body,icon:'icons/icon-192.png',tag:title+body})).catch(()=>{})}}
 function check(){
 if(!S.alerts)return;
 const now=Date.now(),lead=S.lead*60000;
@@ -1859,9 +1859,9 @@ render();
 }catch(err){try{console.error('ui-upgrade failed',err)}catch(x){}}})();
 
 </script>
-<script src="motion.js"></script>
-<script src="cool.js"></script>
-<script src="buddies.js"></script>
+<script src="js/motion.js"></script>
+<script src="js/cool.js"></script>
+<script src="js/buddies.js"></script>
 <script>
 /* StudySpace studio layer: flashcard flow, Accounting hub, T-Accounts, Learning tiles */
 (function(){try{

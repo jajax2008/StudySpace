@@ -1,5 +1,5 @@
-const CACHE = "studyspace-v26";
-const SHELL = ["./", "./index.html", "./motion.css", "./motion.js", "./cool.css", "./cool.js", "./buddies.css", "./buddies.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+const CACHE = "studyspace-v27";
+const SHELL = ["./", "./index.html", "./css/motion.css", "./js/motion.js", "./css/cool.css", "./js/cool.js", "./css/buddies.css", "./js/buddies.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
 const NET_WAIT_MS = 4000; // on a slow connection, use the saved copy after this long
 
 self.addEventListener("install", (e) => {
