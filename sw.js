@@ -57,7 +57,8 @@ function networkFirst(request, pageLoad) {
     return Promise.race([net, slow])
       .then((res) => res || saved())
       // Nothing saved yet: keep waiting for the network instead of failing straight away.
-      .then((res) => res || net || Response.error())
+      .then((res) => res || net)
+      .then((res) => res || Response.error())
       .catch(() => saved().then((hit) => hit || Response.error()));
   });
 }
