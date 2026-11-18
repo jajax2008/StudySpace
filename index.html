@@ -207,6 +207,32 @@ nav button.on::before{left:calc(50% - 25px);top:3px;width:50px;height:30px;trans
 const COLORS=['#3d7a5a','#c0793b','#5b7fb5','#a45a7c','#8a8f3a'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const AI_WORKER_URL='https://studyspace-ai.jasper-esclamado02.workers.dev';
+/* In the installed Android app, send AI requests through Capacitor's native HTTP.
+   In a normal browser (or if native is missing) it uses plain fetch. */
+async function aiFetch(url,opts){
+  opts=opts||{};
+  const C=window.Capacitor,H=C&&C.Plugins&&C.Plugins.CapacitorHttp;
+  const native=!!(H&&C.isNativePlatform&&C.isNativePlatform());
+  if(!native)return fetch(url,opts);
+  const sig=opts.signal;
+  const abortErr=()=>{try{return new DOMException('Aborted','AbortError')}catch(e){const x=new Error('Aborted');x.name='AbortError';return x}};
+  if(sig&&sig.aborted)throw abortErr();
+  try{
+    let data;
+    if(opts.body){try{data=JSON.parse(opts.body)}catch(e){data=opts.body}}
+    const req=H.request({url:url,method:opts.method||'GET',headers:opts.headers||{},data:data,connectTimeout:30000,readTimeout:120000}).then(function(r){
+      return new Response(typeof r.data==='string'?r.data:JSON.stringify(r.data),{status:r.status,headers:{'Content-Type':'application/json'}});
+    });
+    if(!sig)return await req;
+    return await new Promise(function(ok,no){
+      sig.addEventListener('abort',function(){no(abortErr())});
+      req.then(ok,no);
+    });
+  }catch(e){
+    if(e&&e.name==='AbortError')throw e;
+    return fetch(url,opts);
+  }
+}
 const MAX_AI_MB=10;
 const MAX_AI_BYTES=MAX_AI_MB*1024*1024;
 const MAX_AI_DAILY=2;
@@ -812,7 +838,7 @@ async function askStudyBuddy(){
       const notesCtx=ctx||S.notes.slice(0,5).map(n=>noteTitle(n)+': '+n.body).join('\n\n');
       const ctrl=new AbortController();
       const tid=setTimeout(()=>ctrl.abort(),50000);
-      const res=await fetch(AI_WORKER_URL,{
+      const res=await aiFetch(AI_WORKER_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID}),
@@ -980,13 +1006,13 @@ async function testOnline(){
   const t0=Date.now();
   try{
     const a=new AbortController(),ta=setTimeout(()=>a.abort(),10000);
-    await fetch(AI_WORKER_URL,{signal:a.signal});clearTimeout(ta);
-  }catch(e){say('Cannot reach the AI server (no answer in 10 seconds). Check your connection or try another network.');return}
+    await aiFetch(AI_WORKER_URL,{signal:a.signal});clearTimeout(ta);
+  }catch(e){say('Cannot reach the AI server ['+((e&&e.name)||'error')+': '+((e&&e.message)||'no details')+']. Check your connection or try another network.');return}
   say('Server reached in '+((Date.now()-t0)/1000).toFixed(1)+'s. Asking Gemini...');
   const t1=Date.now();
   try{
     const a=new AbortController(),ta=setTimeout(()=>a.abort(),50000);
-    const r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'chat',question:'Reply with the single word OK.',context:'',device:DEVID}),signal:a.signal});
+    const r=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'chat',question:'Reply with the single word OK.',context:'',device:DEVID}),signal:a.signal});
     clearTimeout(ta);
     const j=await r.json().catch(()=>({}));
     if(!r.ok)say('Server reached, but Gemini returned an error: '+((j.error&&j.error.message)||('status '+r.status)));
@@ -1047,7 +1073,7 @@ async function askLifeBuddy(){
   LB.chat.push({role:'u',text:q});LB.q='';LB.busy=true;lbSave();render();
   try{
     const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),50000);
-    const res=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'life',question:q,history:hist,device:DEVID}),signal:ctrl.signal});
+    const res=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'life',question:q,history:hist,device:DEVID}),signal:ctrl.signal});
     clearTimeout(tid);
     if(res.status===429){S.lb.used=MAX_LIFE_DAILY;save();lbPushBye()}
     else if(!res.ok){const ed=await res.json().catch(()=>({}));throw new Error((ed.error&&ed.error.message)||('Server error '+res.status))}
@@ -1209,7 +1235,7 @@ async function fmakeAI(){
     const promptText=t.slice(0,20000);
     const ctrl=new AbortController();
     const tid=setTimeout(()=>ctrl.abort(),70000);
-    const res=await fetch(AI_WORKER_URL,{
+    const res=await aiFetch(AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({text:promptText,device:DEVID}),
@@ -1334,7 +1360,7 @@ async function askAcctBuddy(){
     const hist=ACCT.chat.slice(-7,-1).map(m=>({role:m.role==='u'?'user':'model',text:m.text.slice(0,600)}));
     const fullCtx=(ACCT.ctx?ACCT.ctx.slice(0,28000)+'\n\n':'')+'[Student Current T-Account Scratchpad]:\n'+tAccSummaryText();
     const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),50000);
-    const res=await fetch(AI_WORKER_URL,{
+    const res=await aiFetch(AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({mode:'acct',question:q,attempt:att,context:fullCtx,history:hist,device:DEVID}),
@@ -2008,7 +2034,7 @@ flashView=function(){
 async function callW(payload){
   var c=new AbortController(),t=setTimeout(function(){c.abort()},payload.stage==='cards'?120000:70000);
   try{
-    var r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({device:DEVID},payload)),signal:c.signal});
+    var r=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({device:DEVID},payload)),signal:c.signal});
     if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||('Server Error '+r.status))}
     var d=await r.json(),ps=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
     var p=ps.find(function(x){return x.text&&!x.thought})||ps[0];
@@ -2258,7 +2284,7 @@ async function askAssign(){
   AH.q='';IMG.assign=[];AH.busy=true;saveAS();render();
   var c=new AbortController(),tm=setTimeout(function(){c.abort()},65000);
   try{
-    var r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'assign',device:DEVID,question:q,title:t.title,details:t.desc||'',subject:sb?sb.name:'',due:t.due||'',history:hist,images:imgs})});
+    var r=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'assign',device:DEVID,question:q,title:t.title,details:t.desc||'',subject:sb?sb.name:'',due:t.due||'',history:hist,images:imgs})});
     if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||('Server error '+r.status))}
     var d=await r.json(),ps=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
     var p=ps.find(function(x){return x.text&&!x.thought})||ps[0],reply=(p&&p.text)||'';
@@ -2363,7 +2389,7 @@ askStudyBuddy=async function(){
   var c=new AbortController(),tm=setTimeout(function(){c.abort()},55000);
   try{
     var notesCtx=ctx||S.notes.slice(0,5).map(function(n){return noteTitle(n)+': '+n.body}).join('\n\n');
-    var r=await fetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID,images:imgs})});
+    var r=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID,images:imgs})});
     if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||('Server Error '+r.status))}
     var d=await r.json(),ps=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
     var p=ps.find(function(x){return x.text&&!x.thought})||ps[0],reply=(p&&p.text)||'';
