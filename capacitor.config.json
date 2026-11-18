@@ -1,5 +1,10 @@
 {
   "appId": "com.jajax.studyspace",
   "appName": "StudySpace",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }
