@@ -26,6 +26,15 @@ fi
 
 cp -R "$SRC_DIR/." "$RES_DIR/"
 
+# Regenerate every density from the single master icon the repo ships, so
+# replacing icons/icon-499.png changes the APK icon (the committed mipmaps are
+# only a fallback for builds without Pillow).
+MASTER_ICON="$HERE/../icons/icon-499.png"
+if [ -f "$MASTER_ICON" ]; then
+  echo "Rendering launcher icons from $MASTER_ICON"
+  python3 "$HERE/make-launcher-icons.py" --icon "$MASTER_ICON" --res "$RES_DIR"
+fi
+
 # Fail the build instead of silently shipping Capacitor's default icon.
 missing=0
 for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do

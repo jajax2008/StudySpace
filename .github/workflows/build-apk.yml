@@ -33,6 +33,9 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      - name: Install icon dependencies
+        run: python3 -m pip install --quiet "pillow>=10,<12"
+
       - name: Apply custom launcher icons
         run: bash scripts/apply-android-icons.sh android
 
