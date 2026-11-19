@@ -2,7 +2,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, root ]
 
 jobs:
   build:
@@ -27,16 +27,23 @@ jobs:
           cp index.html www/
           cp -r css js icons www/ 2>/dev/null || true
 
-      - name: Install Capacitor and build Android
+      - name: Install dependencies and add Android platform
         run: |
           npm install
           npx cap add android
           npx cap sync android
-          cd android && chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Apply custom launcher icons
+        run: bash scripts/apply-android-icons.sh android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: StudySpace-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
