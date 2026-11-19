@@ -590,7 +590,7 @@ return'<h1>More</h1><p class="sub">Alerts, AI quotas, and settings</p>'+
 '<div class="row"><div class="t">StudyBuddy Online AI<br><small>Cloud AI queries left today</small></div><b>'+buddyOnlineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
 '<div class="row"><div class="t">Ledger Companion AI<br><small>Socratic Accounting Tutor</small></div><b>'+acctLeft()+' / '+MAX_ACCT_DAILY+'</b></div>'+
 '<div class="row"><div class="t">StudyBuddy Offline AI<br><small>Instant local engine · Zero download</small></div><b>'+buddyOfflineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
-'<div class="row"><div class="t">Test online AI<br><small id="aitestmsg">'+esc(AITEST||'Checks the server, then Gemini')+'</small></div><button class="ghost" id="aitest">Test</button></div>'+
+'<div class="row"><div class="t">Test online AI<br><small id="aitestmsg">'+esc(AITEST||'Checks the server, then the AI')+'</small></div><button class="ghost" id="aitest">Test</button></div>'+
 '</div>'+
 personalizeHTML()+'<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
 '<div class="row"><div class="t">Backup<br><small>Notes, tasks, grades, wallet and more. Library files and Life Buddy chats are not included.</small></div><button class="ghost" id="expdata">Export</button></div>'+
@@ -841,7 +841,7 @@ async function askStudyBuddy(){
       const res=await aiFetch(AI_WORKER_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID}),
+        body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID,analysis:(B.vision&&B.vision.text)||'',history:B.chat.slice(-9,-1).map(function(m){return{role:m.role==='u'?'user':'model',text:m.text}})}),
         signal:ctrl.signal
       });
       clearTimeout(tid);
@@ -1008,16 +1008,16 @@ async function testOnline(){
     const a=new AbortController(),ta=setTimeout(()=>a.abort(),10000);
     await aiFetch(AI_WORKER_URL,{signal:a.signal});clearTimeout(ta);
   }catch(e){say('Cannot reach the AI server ['+((e&&e.name)||'error')+': '+((e&&e.message)||'no details')+']. Check your connection or try another network.');return}
-  say('Server reached in '+((Date.now()-t0)/1000).toFixed(1)+'s. Asking Gemini...');
+  say('Server reached in '+((Date.now()-t0)/1000).toFixed(1)+'s. Asking the AI...');
   const t1=Date.now();
   try{
     const a=new AbortController(),ta=setTimeout(()=>a.abort(),50000);
     const r=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'chat',question:'Reply with the single word OK.',context:'',device:DEVID}),signal:a.signal});
     clearTimeout(ta);
     const j=await r.json().catch(()=>({}));
-    if(!r.ok)say('Server reached, but Gemini returned an error: '+((j.error&&j.error.message)||('status '+r.status)));
-    else say('Online AI works. Gemini answered in '+((Date.now()-t1)/1000).toFixed(1)+'s'+(j.model?' ('+j.model+')':'')+'.');
-  }catch(e){say('Server reached, but Gemini did not answer within 50 seconds. The worker or the model is too slow.')}
+    if(!r.ok)say('Server reached, but the AI returned an error: '+((j.error&&j.error.message)||('status '+r.status)));
+    else say('Online AI works. The AI answered in '+((Date.now()-t1)/1000).toFixed(1)+'s'+(j.model?' ('+j.model+')':'')+'.');
+  }catch(e){say('Server reached, but the AI did not answer within 50 seconds. The worker or the model is too slow.')}
 }
 
 /* LIFE BUDDY */
@@ -1053,7 +1053,7 @@ function breathCard(){return'<div class="card" style="margin-bottom:12px"><b>Bre
 function lifeBuddyView(){
   const head=BK_LIFE+'<h1 style="margin-top:14px">Life Buddy</h1><p class="sub">A friendly listener. Not a therapist or an emergency service.</p>';
   const help='<div class="card" style="margin-bottom:12px"><b>Need help now?</b>'+hotlinesHTML()+'</div>';
-  if(!S.lb.noted)return head+help+'<div class="card"><b>Before you start</b><p style="margin:8px 0">Your messages are sent to Google\u2019s Gemini AI through this app\u2019s server. On the free tier, Google may have people review them and use them to improve its products. Please avoid names, addresses, and anything you would not want others to read.</p><p style="margin:8px 0">Your chat history stays only on this phone, and you can clear it any time.</p><button id="lbok" style="width:100%">I understand</button></div>';
+  if(!S.lb.noted)return head+help+'<div class="card"><b>Before you start</b><p style="margin:8px 0">Your messages are sent to Groq\u2019s AI through this app\u2019s server (attached files in StudyBuddy go to Google\u2019s Gemini). On their free tiers, these providers may have people review messages and use them to improve their products. Please avoid names, addresses, and anything you would not want others to read.</p><p style="margin:8px 0">Your chat history stays only on this phone, and you can clear it any time.</p><button id="lbok" style="width:100%">I understand</button></div>';
   const limited=lbLeft()<=0;
   const chat=LB.chat.length?LB.chat.map(lbBubble).join(''):'<div class="empty">Hi, I\u2019m Life Buddy. I\u2019m here to listen. How are you feeling today?</div>';
   return head+
@@ -2389,12 +2389,14 @@ askStudyBuddy=async function(){
   var c=new AbortController(),tm=setTimeout(function(){c.abort()},55000);
   try{
     var notesCtx=ctx||S.notes.slice(0,5).map(function(n){return noteTitle(n)+': '+n.body}).join('\n\n');
-    var r=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID,images:imgs})});
+    var r=await aiFetch(AI_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:c.signal,body:JSON.stringify({mode:'chat',question:q,context:notesCtx,device:DEVID,images:imgs,history:B.chat.slice(-9,-1).map(function(m){return{role:m.role==='u'?'user':'model',text:m.text}})})});
     if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||('Server Error '+r.status))}
     var d=await r.json(),ps=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
     var p=ps.find(function(x){return x.text&&!x.thought})||ps[0],reply=(p&&p.text)||'';
     if(!reply)throw new Error('The AI sent no answer');
     S.ai.onlineUsed=(S.ai.onlineUsed||0)+1;save();B.chat.push({role:'a',text:reply});
+    /* Keep the Gemini file analysis so later Groq turns can answer from it. */
+    B.vision={text:reply,at:Date.now()};
   }catch(e){B.chat.push({role:'a',text:'Online AI notice ('+(e.name==='AbortError'?'timed out':e.message)+'). Image questions need the online AI, so there is no offline answer for this one.'})}
   clearTimeout(tm);B.busy=false;render();
 };
