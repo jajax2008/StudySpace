@@ -8,7 +8,7 @@
        -> CACHE FIRST so offline study keeps working.
      - everything else (the AI server, model downloads) -> straight to network.
    Bump CACHE whenever the shell changes; activate() deletes the old versions. */
-const CACHE = "studyspace-v31";
+const CACHE = "studyspace-v32";
 const NET_WAIT_MS = 4000; // on a slow connection, use the saved copy after this long
 
 const SHELL = ["./", "./index.html", "./css/motion.css", "./css/cool.css", "./css/buddies.css", "./js/motion.js", "./js/cool.js", "./js/buddies.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
