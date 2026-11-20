@@ -2522,9 +2522,18 @@ var DV_MIN=32768;
 var DV_TINY_CTX=2048;
 var DV_TINY_REPO='onnx-community/SmolLM2-135M-Instruct-ONNX';
 var DV_TINY_LABEL='SmolLM2-135M-Instruct \u00b7 4-bit \u00b7 CPU';
-var DV_TF_URLS=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/+esm','https://esm.sh/@huggingface/transformers@3'];
+/* The engine ships inside the app (js/vendor), so on-device AI keeps working with
+   no CDN at all — important in the Android app, which has no service worker. */
+var DV_TF_URLS=['./js/vendor/transformers.min.js','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/+esm','https://esm.sh/@huggingface/transformers@3'];
+var DV_VENDOR='./js/vendor/';
+var DV_CACHE='ss-onnx-tiny-v1';
+var DV_REPO='onnx-community/SmolLM2-135M-Instruct-ONNX';
+var DV_FILES=['config.json','generation_config.json','tokenizer.json','tokenizer_config.json','special_tokens_map.json','vocab.json','merges.txt','onnx/model_q4.onnx'];
+var DV_MIRRORS=['https://huggingface.co/','https://hf-mirror.com/'];
+var DV_CHUNK=6*1024*1024;
+var DV_DL={},DV_STOP='';
 var DV_TIER={
-  tiny:{label:'Tiny: works on any phone (CPU)',mb:'about 180 MB',engine:'wasm'},
+  tiny:{label:'Tiny: works on any phone (CPU)',mb:'about 190 MB',engine:'wasm'},
   small:{label:'Small: needs a 32K GPU',mb:'about 400 MB',engine:'webgpu'},
   med:{label:'Medium: needs a 32K GPU',mb:'about 1 GB',engine:'webgpu'}
 };
@@ -2579,12 +2588,166 @@ async function dvTflib(){
   }
   throw new Error('TF_LOAD: '+((last&&last.message)||'could not load the CPU AI engine'));
 }
+/* ---------- resumable model download ----------
+   The phone download was being killed before it finished, and every retry started
+   from zero. Each file is now fetched in 6 MB pieces that are saved as they arrive,
+   so tapping Download again continues from the last saved piece. */
+function dvMB(n){return (Math.round(n/1048576*10)/10)+' MB'}
+function dvFileUrl(f,host){return (host||DV_MIRRORS[0])+DV_REPO+'/resolve/main/'+f}
+function dvKey(u){
+  try{var x=new URL(u,location.href);return location.origin+'/__dv/'+x.pathname.replace(/^\/+/,'')+(x.search||'')}catch(e){return null}
+}
+function dvStreamParts(cache,pk,n,size,mime){
+  var idx=0;
+  var body=new ReadableStream({pull:async function(ctrl){
+    if(idx>=n){ctrl.close();return}
+    var part=await cache.match(pk+(idx++));
+    if(!part){ctrl.error(new Error('a saved part went missing'));return}
+    ctrl.enqueue(new Uint8Array(await part.arrayBuffer()));
+  }});
+  return new Response(body,{status:200,headers:{'content-type':mime||'application/octet-stream','content-length':String(size)}});
+}
+function dvMime(u){return /\.json($|\?)/i.test(u)?'application/json':'application/octet-stream'}
+async function dvOpen(){return await caches.open(DV_CACHE)}
+function dvProgress(){
+  var got=0,tot=0,known=true,cur='';
+  for(var k in DV_DL){var d=DV_DL[k];got+=d.got;if(d.total)tot+=d.total;else known=false;if(!d.done&&!cur)cur=d.label||''}
+  DEV.pct=Math.min(99,Math.round(got/((known&&tot?tot:215*1048576))*100));
+  DEV.msg=(cur?'Downloading '+cur+' \u2014 ':'Downloading \u2014 ')+dvMB(got)+(known&&tot?' of '+dvMB(tot):' saved');
+  try{if($('#devmsg'))updDev();else if(DEV.state==='loading')render()}catch(e){}
+}
+async function dvEnsure(canonUrl,label){
+  var key=dvKey(canonUrl);if(!key)throw new Error('bad model address');
+  var pk=key.replace(/[?#].*$/,'')+'?part=';
+  var cache=await dvOpen();
+  var rec=DV_DL[canonUrl]||(DV_DL[canonUrl]={got:0,total:0,done:false,label:label||''});
+  var meta=await cache.match(key+'?meta');
+  if(meta){
+    var m={};
+    try{m=JSON.parse(await meta.text())}catch(e){m={}}
+    rec.done=true;rec.got=rec.total=m.size||0;
+    return {parts:m.parts||0,size:m.size||0};
+  }
+  var got=0,i=0;
+  for(;;){var p=await cache.match(pk+i);if(!p)break;got+=(await p.blob()).size;i++}
+  rec.got=got;
+  var tries=0,total=0;
+  while(tries<10){
+    var host=DV_MIRRORS[Math.min(DV_MIRRORS.length-1,Math.floor(tries/4))];
+    var url=canonUrl.replace(DV_MIRRORS[0],host);
+    try{
+      var hdr={};
+      if(got>0)hdr.Range='bytes='+got+'-';
+      var res=await fetch(url,{headers:hdr,cache:'no-store',credentials:'same-origin'});
+      var done=(res.status===416&&got>0);
+      if(!res.ok&&res.status!==206&&!done)throw new Error('the server answered '+res.status);
+      if(!done){
+        if(!total){var cl=Number(res.headers.get('content-length')||0);total=cl+(res.status===206?got:0);rec.total=total}
+        if(!res.body||!res.body.getReader)throw new Error('this browser cannot stream the download');
+        var reader=res.body.getReader(),buf=new Uint8Array(DV_CHUNK),fill=0;
+        for(;;){
+          if(total&&got>=total)break;
+          var r=await reader.read();
+          if(r.done)break;
+          var d=r.value,off=0;
+          while(off<d.length){
+            var take=Math.min(DV_CHUNK-fill,d.length-off);
+            buf.set(d.subarray(off,off+take),fill);fill+=take;off+=take;
+            if(fill===DV_CHUNK){
+              var n1=total?Math.min(DV_CHUNK,Math.max(0,total-got)):DV_CHUNK;
+              if(n1>0){var pc=buf.slice(0,n1);await cache.put(pk+(i++),new Response(pc));got+=n1;rec.got=got;dvProgress()}
+              fill=0;
+            }
+          }
+        }
+        try{reader.cancel()}catch(x){}
+        if(fill>0&&(!total||got<total)){var n2=total?Math.min(fill,Math.max(0,total-got)):fill;var tail=buf.slice(0,n2);await cache.put(pk+(i++),new Response(tail));got+=n2;rec.got=got}
+      }
+      if(done||!total||got>=total){
+        if(!i)throw new Error('the server sent no data');
+        var n=i;
+        await cache.put(key+'?meta',new Response(JSON.stringify({parts:n,size:got}),{headers:{'content-type':'application/json'}}));
+        rec.done=true;rec.got=got;rec.total=total||got;dvProgress();
+        return {parts:n,size:got};
+      }
+      DV_STOP='stopped after '+dvMB(got)+(total?' of '+dvMB(total):'');
+      tries++;
+    }catch(e){
+      DV_STOP=String((e&&e.message)||e).slice(0,90);
+      tries++;
+      if(tries>=10)throw e;
+      rec.got=got;
+      await new Promise(function(ok){setTimeout(ok,700*tries)});
+    }
+    dvProgress();
+  }
+  throw new Error(DV_STOP||'the download kept stopping');
+}
+/* One download per file, even if the engine asks for it while it is already running.
+   Every caller gets its own fresh stream over the saved parts. */
+var DV_INFLIGHT={};
+function dvGet(canonUrl,label){
+  var p=DV_INFLIGHT[canonUrl];
+  if(!p){
+    p=DV_INFLIGHT[canonUrl]=dvEnsure(canonUrl,label);
+    p.then(function(){delete DV_INFLIGHT[canonUrl]},function(){delete DV_INFLIGHT[canonUrl]});
+  }
+  return p.then(async function(m){
+    if(m.hit)return m.hit.clone();
+    var cache=await dvOpen();
+    var pk=dvKey(canonUrl).replace(/[?#].*$/,'')+'?part=';
+    return dvStreamParts(cache,pk,m.parts||0,m.size||0,dvMime(canonUrl));
+  });
+}
+var DV_CC={
+  match:async function(k){
+    try{
+      var u=String(k),key=dvKey(u);
+      if(!key)return null;
+      var cache=await dvOpen();
+      var meta=await cache.match(key+'?meta');
+      if(meta){
+        var m={};
+        try{m=JSON.parse(await meta.text())}catch(e){m={}}
+        return dvStreamParts(cache,key.replace(/[?#].*$/,'')+'?part=',m.parts||0,m.size||0,dvMime(u));
+      }
+      return (await cache.match(key))||null;
+    }catch(e){return null}
+  },
+  put:async function(k,v){return v}
+};
+async function dvFetch(url,opts){
+  if(!/^https?:\/\//i.test(url))return fetch(url,opts);
+  if(opts&&opts.method&&String(opts.method).toUpperCase()!=='GET')return fetch(url,opts);
+  return dvGet(url);
+}
+/* The ONNX runtime binary ships with the app and is copied into the app's own cache
+   the first time, so running the model later needs no network at all (the Android
+   app has no service worker to fall back on). */
+var DV_BLOBS={};
+async function dvVendor(name){
+  if(DV_BLOBS[name])return DV_BLOBS[name];
+  var url=new URL(DV_VENDOR+name,location.href).href;
+  var buf=await (await dvGet(url,'onnx-runtime')).arrayBuffer();
+  DV_BLOBS[name]=URL.createObjectURL(new Blob([buf],{type:'application/wasm'}));
+  return DV_BLOBS[name];
+}
+async function dvSeed(){
+  var cache=await dvOpen();
+  for(var i=0;i<DV_FILES.length;i++){
+    var u=dvFileUrl(DV_FILES[i]),n=DV_FILES[i].split('/').pop(),k=dvKey(u);
+    if(await cache.match(k+'?meta')||await cache.match(k))continue;
+    DEV.msg='Preparing '+n+'...';updDev();
+    await dvGet(u,n);
+  }
+}
 function dvTinyErr(e){
   var m=String((e&&e.message)||e||'');
-  if(/^TF_LOAD/.test(m))return 'Could not load the CPU AI engine from the internet ('+m.slice(8,90)+'). Try another network, turn off ad/content blockers, then tap Download again.';
-  if(/fetch|network|load failed|failed to fetch|networkerror/i.test(m))return 'The model download was interrupted. Check your wifi and tap Download again \u2014 the parts already downloaded are kept.';
+  if(/^TF_LOAD/.test(m))return 'Could not load the CPU AI engine ('+m.slice(8,90)+'). Tap Download again.';
+  if(/quota|storage|indexeddb|cache|space/i.test(m)&&!/http/i.test(m))return 'Not enough free storage for the Tiny model (about 190 MB). Free some space on the phone and tap Download again.';
   if(/memory|out of|OOM|allocation|array buffer/i.test(m))return 'The phone ran out of memory while loading the CPU model. Close other apps, then try again.';
-  if(/quota|storage|indexeddb|cache/i.test(m))return 'Not enough storage on this phone for the Tiny model. Free some space and try again.';
+  if(/fetch|network|load failed|failed to fetch|networkerror|server answered|stream|aborted|play interrupted/i.test(m)||DV_STOP)
+    return 'The download stopped'+(DV_STOP?' ('+DV_STOP+')':'')+'. Your saved parts are kept \u2014 tap Download again and it continues from where it stopped, no need to start over.';
   return 'CPU model problem: '+m.slice(0,110);
 }
 function dvTrimMsgs(msgs){
@@ -2626,31 +2789,44 @@ function dvTinyStream(gen,T,opts){
   })()})}}}};
 }
 async function dvTinyLoad(){
-  var files={};
   DEV.state='loading';DEV.pct=0;DEV.msg='Starting the CPU engine...';render();
+  DV_STOP='';DV_DL={};
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(x){}
   try{
     var T=await dvTflib();
-    if(T.env){T.env.allowLocalModels=false;T.env.useBrowserCache=true}
-    DEV.msg='Preparing the model...';updDev();
-    var gen=await T.pipeline('text-generation',DV_TINY_REPO,{device:'wasm',dtype:'q4',progress_callback:function(p){
+    if(T.env){
+      T.env.allowLocalModels=false;
+      T.env.useBrowserCache=false;
+      T.env.useCustomCache=true;
+      T.env.customCache=DV_CC;
+      T.env.fetch=dvFetch;
+      try{
+        var base=new URL(DV_VENDOR,location.href).href;
+        var wasmUrl=await dvVendor('ort-wasm-simd-threaded.jsep.wasm');
+        var be=T.env.backends&&T.env.backends.onnx;
+        if(be&&be.wasm)be.wasm.wasmPaths={wasm:wasmUrl,mjs:base+'ort-wasm-simd-threaded.jsep.mjs'};
+      }catch(x){}
+    }
+    await dvSeed();
+    DEV.msg='Loading the model...';updDev();
+    var gen=await T.pipeline('text-generation',DV_REPO,{device:'wasm',dtype:'q4',progress_callback:function(p){
       if(!p)return;
       if(p.status==='progress'&&p.file){
-        files[p.file]=[p.loaded||0,p.total||0];
-        var l=0,tt=0;for(var k in files){l+=files[k][0];tt+=files[k][1]}
-        if(tt>0)DEV.pct=Math.min(99,Math.round(l/tt*100));
-        DEV.msg=(DEV.pct>0?'Downloading ':'Preparing ')+String(p.file).split('/').pop()+' ('+DEV.pct+'%)';
+        DV_DL[p.file]=DV_DL[p.file]||{got:p.loaded||0,total:p.total||0,done:false,label:String(p.file).split('/').pop()};
+        DV_DL[p.file].got=p.loaded||0;DV_DL[p.file].total=p.total||0;
       }else if(p.status==='done'&&p.file){
         DEV.msg='Prepared '+String(p.file).split('/').pop();
       }else if(p.status==='ready'){
         DEV.msg='Warming up...';
       }
-      updDev();
+      if(p.status==='progress')dvProgress();else updDev();
     }});
     ENG={kind:'wasm',unload:async function(){try{if(gen&&gen.dispose)await gen.dispose()}catch(e){}},chat:{completions:{create:function(opts){return Promise.resolve(dvTinyStream(gen,T,opts))}}}};
     DEV.state='ready';DEV.id=DV_TINY_LABEL;DEV.pct=100;DEV.msg='';
     S.ai.devCached='tiny';save();
   }catch(e){
     ENG=null;DEV.state='error';DEV.msg=dvTinyErr(e);
+    try{window.__dvLastErr=String((e&&e.stack)||e)}catch(x){}
     try{console.error(e)}catch(x){}
   }
   render();
@@ -2740,7 +2916,7 @@ devCard=function(){
   (DEV.state==='error'?'<p class="late" style="margin:8px 0 0">'+esc(DEV.msg)+'</p>':'')+
   '<p style="margin:8px 0 0">'+esc(cap)+'</p>'+
   '<div style="display:flex;gap:8px;margin-top:10px"><button id="devload" style="flex:1">'+(S.ai.devCached===key?'Load model':'Download model')+'</button><button class="ghost" id="devcheck" style="flex:1">Check my phone</button></div>'+
-  '<small>The first download needs wifi ('+m.mb+'). After that it works offline.'+(eng==='wasm'?' Tiny uses a 2048-token context and needs no GPU.':'')+'</small>'+(DEV.check?'<p style="margin:8px 0 0">'+esc(DEV.check)+'</p>':'')+'</div>';
+  '<small>The first download needs wifi ('+m.mb+', and it resumes if it stops). After that it works offline, even in airplane mode.'+(eng==='wasm'?' Tiny uses a 2048-token context and needs no GPU.':'')+'</small>'+(DEV.check?'<p style="margin:8px 0 0">'+esc(DEV.check)+'</p>':'')+'</div>';
 };
 document.addEventListener('click',async function(e){
   var b=e.target&&e.target.closest?e.target.closest('#dvdel'):null;
