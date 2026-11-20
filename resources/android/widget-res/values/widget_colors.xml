@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ss_widget_bg_start">#FF1E2B24</color>
+    <color name="ss_widget_bg_end">#FF14211A</color>
+    <color name="ss_widget_text">#FFFFFFFF</color>
+    <color name="ss_widget_muted">#FFB9E6CC</color>
+    <color name="ss_widget_accent">#FF8FE3B4</color>
+    <color name="ss_widget_warn">#FFF2C48B</color>
+</resources>

@@ -255,6 +255,7 @@ const blank=()=>({
   theme:'',alerts:false,lead:10,fired:{},
   ai:{date:todayStr(),used:0,onlineUsed:0,offlineUsed:0,acctUsed:0,mode:'online'},
   lb:{date:todayStr(),used:0,noted:false},
+  wg:{on:false,size:'medium'},
   prof:{name:'',age:'',level:'',done:false},ui:{}
 });
 
@@ -291,12 +292,17 @@ function load(){
   if(!d.ai.mode)d.ai.mode='online';
   if(!d.lb||typeof d.lb!=='object')d.lb={date:todayStr(),used:0,noted:false};
   if(d.lb.date!==todayStr()){d.lb.date=todayStr();d.lb.used=0}
+  if(!d.wg||typeof d.wg!=='object')d.wg={on:false,size:'medium'};
+  if(d.wg.size!=='small'&&d.wg.size!=='large')d.wg.size='medium';
+  d.wg.on=!!d.wg.on;
   Object.keys(d.fired).forEach(k=>{if(d.fired[k]===1)d.fired[k]=Date.now()});
   return d;
 }
 
 let S=load();
-function save(){try{localStorage.setItem('studyspace1',JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem('studyspace1',JSON.stringify(S))}catch(e){}
+  /* Keep the Android home screen widget in step with every change. */
+  try{wgSyncSoon()}catch(e){}}
 function checkAiDay(){
   if(S.ai.date!==todayStr()){
     S.ai.date=todayStr();S.ai.used=0;S.ai.onlineUsed=0;S.ai.offlineUsed=0;S.ai.acctUsed=0;save();
@@ -595,7 +601,43 @@ return'<h1>More</h1><p class="sub">Alerts, AI quotas, and settings</p>'+
 personalizeHTML()+'<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
 '<div class="row"><div class="t">Backup<br><small>Notes, tasks, grades, wallet and more. Library files and Life Buddy chats are not included.</small></div><button class="ghost" id="expdata">Export</button></div>'+
 '<div class="row"><div class="t">Restore backup</div><button class="ghost" id="impdata">Import</button><input id="impfile" type="file" accept=".json,application/json" hidden></div>'+
-'<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'}
+'<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'+wgHTML()}
+
+/* EXAM COUNTDOWN WIDGET (Android home screen) */
+function wgState(){if(!S.wg||typeof S.wg!=='object')S.wg={on:false,size:'medium'};if(S.wg.size!=='small'&&S.wg.size!=='large')S.wg.size='medium';return S.wg}
+function wgBridge(){return window.StudySpaceWidget||null}
+function wgIsNative(){var n=wgBridge();return !!(n&&typeof n.sync==='function')}
+function wgNext(){var l=S.exams.filter(function(x){return examAt(x)>Date.now()});l.sort(function(a,b){return examAt(a)-examAt(b)});return l[0]||null}
+function wgPayload(){var w=wgState(),x=wgNext(),s=x?subj(x.subj):null;return{enabled:!!w.on,size:w.size,title:x?x.title:'',at:x?examAt(x):0,date:x?x.date:'',time:x?(x.time||'08:00'):'',subj:s?s.name:''}}
+var WG_T=null,WG_LAST='';
+function wgSync(){
+  var n=wgBridge();if(!n||typeof n.sync!=='function')return false;
+  var p;try{p=JSON.stringify(wgPayload())}catch(e){return false}
+  if(p===WG_LAST)return true;
+  try{n.sync(p);WG_LAST=p;return true}catch(e){return false}
+}
+function wgSyncSoon(){if(WG_T)clearTimeout(WG_T);WG_T=setTimeout(function(){try{wgSync()}catch(e){}},300)}
+function wgRoute(){
+  var n=wgBridge();if(!n||typeof n.getPendingRoute!=='function')return;
+  try{if(n.getPendingRoute())window.__ssOpenExams()}catch(e){}
+}
+function wgHTML(){
+  var w=wgState(),x=wgNext(),on=!!w.on;
+  var sizeBtn=function(k,l,d){return'<button data-wgsize="'+k+'" class="'+(w.size===k?'on':'')+'">'+l+'<br><small>'+d+'</small></button>'};
+  var dim={small:'60%',medium:'80%',large:'100%'}[w.size]||'80%';
+  var days=x?Math.max(0,Math.floor((examAt(x)-Date.now())/864e5)):0;
+  var dateTxt=x?(x.date+(x.time?', '+fmtT(x.time):'')):'No exam date yet';
+  return'<h2>Widget</h2><div class="card">'+
+  '<div class="row"><div class="t">Exam countdown widget<br><small>Puts your next exam on your home screen.</small></div><button id="wgtoggle" class="'+(on?'':'ghost')+'">'+(on?'On':'Off')+'</button></div>'+
+  '<div class="row" style="margin-top:12px"><div class="t">Widget size</div></div>'+
+  '<div class="modes">'+sizeBtn('small','Small','2 x 1')+sizeBtn('medium','Medium','3 x 2')+sizeBtn('large','Large','4 x 2')+'</div>'+
+  '<div style="display:flex;justify-content:center;margin:14px 0 6px"><div style="width:'+dim+';min-width:150px;max-width:100%;background:linear-gradient(135deg,#1e2b24,#14211a);border-radius:16px;padding:12px 14px;color:#fff">'+
+  '<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(on?(x?esc(x.title):'No upcoming exam'):'Widget disabled in app settings')+'</div>'+
+  (on&&x?'<div style="display:flex;align-items:flex-end;gap:8px;margin-top:6px"><b style="font-size:26px;line-height:1;color:#8fe3b4">'+days+'</b><span style="font-size:11px;opacity:.85">'+(days===1?'day left':'days left')+'</span></div>':'')+
+  '<div style="font-size:10px;opacity:.7;margin-top:6px">'+(on?esc(dateTxt):'Turn the widget on to show your countdown')+'</div></div></div>'+
+  '<button id="wgpin" style="width:100%"'+(on?'':' disabled')+'>Add to home screen</button>'+
+  '<small style="display:block;margin-top:8px">'+(wgIsNative()?'Places the widget on your home screen. If nothing happens, long-press your home screen, tap Widgets, then choose StudySpace.':'Available inside the StudySpace Android app. Open Settings there and tap Add to home screen.')+'</small></div>';
+}
 
 /* MOTION */
 const REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1542,7 +1584,8 @@ if(d.resfav){const r=S.res.find(x=>x.id===d.resfav);if(r){r.fav=!r.fav;save();re
 if(d.delres){if(sure(t,'Delete?')){S.res=S.res.filter(x=>x.id!==d.delres);fdel(d.delres).catch(()=>{});save();render()}return}
 if(d.resopen){const r=S.res.find(x=>x.id===d.resopen);if(!r)return;if(r.type==='link'){window.open(r.url,'_blank','noopener')}else{fget(r.id).then(b=>{if(!b){banner('File not found on this phone.');return}const u=URL.createObjectURL(b);if(!window.open(u,'_blank')){const a=document.createElement('a');a.href=u;a.download=r.name;a.click()}}).catch(()=>banner('Could not open this file.'))}return}
 if(d.note){hv='n:'+d.note;render();$('#view').scrollTop=0;return}
-if(d.delexam){S.exams=S.exams.filter(x=>x.id!==d.delexam);save();render();return}
+if(d.wgsize){const w=wgState();if(w.size!==d.wgsize){w.size=d.wgsize;save();wgSync();render()}return}
+if(d.delexam){S.exams=S.exams.filter(x=>x.id!==d.delexam);save();wgSync();render();return}
 if(d.delclass){const s=subj(curSub);s.classes=s.classes.filter(c=>c.id!==d.delclass);save();render();return}
 if(d.deltask){S.tasks=S.tasks.filter(x=>x.id!==d.deltask);save();render();return}
 if(d.accttab){ACCT.tab=d.accttab;render();return}
@@ -1632,7 +1675,9 @@ case'newnote':{const n={id:uid(),title:'',body:'',subj:'',pinned:false,updated:D
 case'pinnote':{const n=S.notes.find(x=>x.id===hv.slice(2));n.pinned=!n.pinned;save();render();break}
 case'delnote':{if(sure(t,'Tap again to delete')){S.notes=S.notes.filter(x=>x.id!==hv.slice(2));save();hv='notes';render()}break}
 case'openexams':tab='acad';hv='exams';render();break;
-case'addexam':{const n=$('#etitle').value.trim(),dt=$('#edate').value;if(!n){$('#etitle').focus();return}if(!dt){$('#edate').focus();return}S.exams.push({id:uid(),title:n,date:dt,time:$('#etime').value,subj:$('#esubj').value,cover:$('#ecover').value.trim()});save();render();break}
+case'addexam':{const n=$('#etitle').value.trim(),dt=$('#edate').value;if(!n){$('#etitle').focus();return}if(!dt){$('#edate').focus();return}S.exams.push({id:uid(),title:n,date:dt,time:$('#etime').value,subj:$('#esubj').value,cover:$('#ecover').value.trim()});save();wgSync();render();break}
+case'wgtoggle':{const w=wgState();w.on=!w.on;save();wgSync();if(w.on&&!wgNext())banner('Add an exam date and it will show on the widget.');if(!wgIsNative())banner('The widget works in the StudySpace Android app.');render();break}
+case'wgpin':{const n=wgBridge();if(!n||typeof n.requestPin!=='function'){banner('Open StudySpace on Android, then long-press your home screen, tap Widgets, and choose StudySpace.');break}try{n.requestPin()}catch(e){banner('Long-press your home screen, tap Widgets, then choose StudySpace.')}break}
 case'addsub':{const n=$('#subname').value.trim();if(!n){$('#subname').focus();return}const s={id:uid(),name:n,color:COLORS[S.subjects.length%COLORS.length],classes:[]};S.subjects.push(s);save();curSub=s.id;render();break}
 case'delsubj':{if(sure(t,'Tap again to delete')){[S.exams,S.notes,S.res,S.reviews].forEach(a=>a.forEach(x=>{if(x.subj===curSub)x.subj=''}));S.tasks=S.tasks.filter(x=>x.subj!==curSub);S.subjects=S.subjects.filter(x=>x.id!==curSub);curSub=null;save();render()}break}
 case'addclass':{const st=$('#cstart').value;if(!st){$('#cstart').focus();return}subj(curSub).classes.push({id:uid(),day:+$('#cday').value,start:st,end:$('#cend').value,room:$('#croom').value.trim()});save();render();break}
@@ -1703,7 +1748,11 @@ if(el.id==='theme'){S.theme=el.value;save();applyTheme()}
 if(el.id==='lead'){S.lead=+el.value;save()}
 if(el.id==='devsize'){S.ai.dev=el.value;DEV.state='idle';DEV.check='';save();render()}
 });
+window.__ssOpenExams=function(){tab='acad';hv='exams';curSub=null;render();var v=document.getElementById('view');if(v)v.scrollTop=0};
+window.__ssWidgetPinned=function(ok){banner(ok?'Widget added to your home screen.':'Your launcher cannot add widgets automatically. Long-press the home screen, tap Widgets, then choose StudySpace.')};
+document.addEventListener('visibilitychange',function(){if(!document.hidden){try{wgRoute()}catch(e){}}});
 render();onboard();
+try{wgSync();wgRoute()}catch(e){}
 window.__booted=true;
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
