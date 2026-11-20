@@ -17,8 +17,9 @@ import org.json.JSONObject;
  * Tiny JavaScript bridge for the exam countdown widget.
  *
  * The web app calls window.StudySpaceWidget.sync(json) whenever an exam changes
- * or the widget settings change. The data is stored in SharedPreferences, which
- * the widget provider reads when it renders.
+ * or the widget settings change. It sends the chosen exam and its target instant
+ * as an epoch millisecond timestamp; all countdown maths happens in
+ * {@link ExamCountdownWidgetProvider}, never in the web layer.
  */
 public class WidgetBridge {
 
@@ -61,34 +62,45 @@ public class WidgetBridge {
         return route == null ? "" : route;
     }
 
+    /** Persists the widget state and broadcasts an immediate widget update. */
     @JavascriptInterface
     public void sync(String json) {
         final boolean enabled;
         try {
             JSONObject data = new JSONObject(json == null ? "{}" : json);
+            enabled = data.optBoolean("enabled", false);
             shared().edit()
-                    .putBoolean(ExamCountdownWidgetProvider.KEY_ENABLED, data.optBoolean("enabled", false))
+                    .putBoolean(ExamCountdownWidgetProvider.KEY_ENABLED, enabled)
                     .putString(ExamCountdownWidgetProvider.KEY_SIZE, sanitizeSize(data.optString("size", "medium")))
+                    .putString(ExamCountdownWidgetProvider.KEY_EXAM, data.optString("examId", ""))
                     .putString(ExamCountdownWidgetProvider.KEY_TITLE, data.optString("title", ""))
                     .putLong(ExamCountdownWidgetProvider.KEY_AT, data.optLong("at", 0L))
-                    .putString(ExamCountdownWidgetProvider.KEY_DATE, data.optString("date", ""))
-                    .putString(ExamCountdownWidgetProvider.KEY_TIME, data.optString("time", ""))
                     .putString(ExamCountdownWidgetProvider.KEY_SUBJ, data.optString("subj", ""))
                     .putLong(ExamCountdownWidgetProvider.KEY_SYNCED, System.currentTimeMillis())
-                    .apply();
-            enabled = data.optBoolean("enabled", false);
+                    .commit();
         } catch (Exception e) {
             return;
         }
         main.post(new Runnable() {
             @Override
             public void run() {
-                ExamCountdownWidgetProvider.updateAll(activity);
                 if (enabled) {
-                    ExamCountdownWidgetProvider.scheduleNextRefresh(activity);
+                    ExamCountdownWidgetProvider.refresh(activity);
                 } else {
+                    ExamCountdownWidgetProvider.updateAll(activity);
                     ExamCountdownWidgetProvider.cancelRefresh(activity);
                 }
+            }
+        });
+    }
+
+    /** Forces a redraw, used when the app resumes from the background. */
+    @JavascriptInterface
+    public void refresh() {
+        main.post(new Runnable() {
+            @Override
+            public void run() {
+                ExamCountdownWidgetProvider.refresh(activity);
             }
         });
     }

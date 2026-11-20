@@ -42,6 +42,23 @@ public class MainActivity extends BridgeActivity {
         widgetBridge.pushRouteToWeb();
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        // The user just left the app: recompute the countdown and keep ticking.
+        if (widgetBridge != null) {
+            widgetBridge.refresh();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (widgetBridge != null) {
+            widgetBridge.refresh();
+        }
+    }
+
     private String routeOf(Intent intent) {
         if (intent == null) {
             return null;

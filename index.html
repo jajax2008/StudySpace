@@ -255,7 +255,7 @@ const blank=()=>({
   theme:'',alerts:false,lead:10,fired:{},
   ai:{date:todayStr(),used:0,onlineUsed:0,offlineUsed:0,acctUsed:0,mode:'online'},
   lb:{date:todayStr(),used:0,noted:false},
-  wg:{on:false,size:'medium'},
+  wg:{on:false,size:'medium',exam:''},
   prof:{name:'',age:'',level:'',done:false},ui:{}
 });
 
@@ -292,8 +292,9 @@ function load(){
   if(!d.ai.mode)d.ai.mode='online';
   if(!d.lb||typeof d.lb!=='object')d.lb={date:todayStr(),used:0,noted:false};
   if(d.lb.date!==todayStr()){d.lb.date=todayStr();d.lb.used=0}
-  if(!d.wg||typeof d.wg!=='object')d.wg={on:false,size:'medium'};
+  if(!d.wg||typeof d.wg!=='object')d.wg={on:false,size:'medium',exam:''};
   if(d.wg.size!=='small'&&d.wg.size!=='large')d.wg.size='medium';
+  if(typeof d.wg.exam!=='string')d.wg.exam='';
   d.wg.on=!!d.wg.on;
   Object.keys(d.fired).forEach(k=>{if(d.fired[k]===1)d.fired[k]=Date.now()});
   return d;
@@ -412,7 +413,10 @@ function weekBySubject(){
   if(!rows.length)return'';
   const mx=rows[0].v;
   return'<h2>Last 7 days</h2><div class="card">'+rows.map(r=>'<div style="margin:8px 0"><div style="display:flex;justify-content:space-between"><span>'+esc(r.n)+'</span><b>'+r.v+' min</b></div><div style="height:6px;border-radius:4px;background:var(--line);margin-top:4px"><div style="height:6px;border-radius:4px;width:'+Math.round(r.v/mx*100)+'%;background:'+r.c+'"></div></div></div>').join('')+'</div>'}
-document.addEventListener('change',e=>{if(e.target.id==='tsubj')T.subj=e.target.value});
+document.addEventListener('change',e=>{
+  if(e.target.id==='tsubj'){T.subj=e.target.value;return}
+  if(e.target.id==='wgexam'){const w=wgState();w.exam=e.target.value;save();wgSync(true);render()}
+});
 function tmVals(at){const t=Math.max(0,Math.floor((at-Date.now())/1000));return[Math.floor(t/86400),Math.floor(t%86400/3600),Math.floor(t%3600/60),t%60].map(n=>String(n).padStart(2,'0'))}
 function cdBox(x){
   const s=subj(x.subj),v=tmVals(examAt(x)),L=['days','hrs','min','sec'];
@@ -604,14 +608,37 @@ personalizeHTML()+'<h2>Settings</h2><div class="card"><div class="row"><div clas
 '<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'+wgHTML()}
 
 /* EXAM COUNTDOWN WIDGET (Android home screen) */
-function wgState(){if(!S.wg||typeof S.wg!=='object')S.wg={on:false,size:'medium'};if(S.wg.size!=='small'&&S.wg.size!=='large')S.wg.size='medium';return S.wg}
+function wgState(){
+  if(!S.wg||typeof S.wg!=='object')S.wg={on:false,size:'medium',exam:''};
+  if(S.wg.size!=='small'&&S.wg.size!=='large')S.wg.size='medium';
+  if(typeof S.wg.exam!=='string')S.wg.exam='';
+  return S.wg;
+}
 function wgBridge(){return window.StudySpaceWidget||null}
 function wgIsNative(){var n=wgBridge();return !!(n&&typeof n.sync==='function')}
 function wgNext(){var l=S.exams.filter(function(x){return examAt(x)>Date.now()});l.sort(function(a,b){return examAt(a)-examAt(b)});return l[0]||null}
-function wgPayload(){var w=wgState(),x=wgNext(),s=x?subj(x.subj):null;return{enabled:!!w.on,size:w.size,title:x?x.title:'',at:x?examAt(x):0,date:x?x.date:'',time:x?(x.time||'08:00'):'',subj:s?s.name:''}}
+/* The exam the widget shows: the one picked in Settings, else the nearest upcoming one. */
+function wgPick(){
+  var w=wgState(),i;
+  if(w.exam){for(i=0;i<S.exams.length;i++)if(S.exams[i].id===w.exam)return S.exams[i]}
+  return wgNext();
+}
+function wgExamOpts(){
+  var w=wgState(),list=S.exams.slice().sort(function(a,b){return examAt(a)-examAt(b)});
+  if(!list.length)return '<option value="">No exams saved yet</option>';
+  var has=!!w.exam&&list.some(function(e){return e.id===w.exam});
+  return '<option value=""'+(has?'':' selected')+'>Automatic \u00b7 nearest upcoming</option>'+
+    list.map(function(e){return '<option value="'+e.id+'"'+(has&&w.exam===e.id?' selected':'')+'>'+esc(e.title)+' \u00b7 '+e.date+(e.time?' '+fmtT(e.time):'')+'</option>'}).join('');
+}
+/* Only the raw target instant is sent: Android does all of the counting down. */
+function wgPayload(){
+  var w=wgState(),x=wgPick(),s=x?subj(x.subj):null;
+  return{enabled:!!w.on,size:w.size,examId:x?x.id:'',title:x?x.title:'',at:x?examAt(x):0,date:x?x.date:'',time:x?(x.time||'08:00'):'',subj:s?s.name:''};
+}
 var WG_T=null,WG_LAST='';
-function wgSync(){
+function wgSync(force){
   var n=wgBridge();if(!n||typeof n.sync!=='function')return false;
+  if(force)WG_LAST='';
   var p;try{p=JSON.stringify(wgPayload())}catch(e){return false}
   if(p===WG_LAST)return true;
   try{n.sync(p);WG_LAST=p;return true}catch(e){return false}
@@ -622,19 +649,25 @@ function wgRoute(){
   try{if(n.getPendingRoute())window.__ssOpenExams()}catch(e){}
 }
 function wgHTML(){
-  var w=wgState(),x=wgNext(),on=!!w.on;
+  var w=wgState(),x=wgPick(),on=!!w.on;
   var sizeBtn=function(k,l,d){return'<button data-wgsize="'+k+'" class="'+(w.size===k?'on':'')+'">'+l+'<br><small>'+d+'</small></button>'};
-  var dim={small:'60%',medium:'80%',large:'100%'}[w.size]||'80%';
-  var days=x?Math.max(0,Math.floor((examAt(x)-Date.now())/864e5)):0;
-  var dateTxt=x?(x.date+(x.time?', '+fmtT(x.time):'')):'No exam date yet';
+  var dim={small:'62%',medium:'82%',large:'100%'}[w.size]||'82%';
+  var preview;
+  if(!on){
+    preview='<div class="cdc"><div class="cdt"><span>Exam countdown</span><small>Widget off</small></div><div class="empty" style="padding:4px 0">Widget disabled in app settings</div></div>';
+  }else if(!x){
+    preview='<div class="cdc"><div class="cdt"><span>No exam selected</span><small>Add one in Exam countdown</small></div><div class="empty" style="padding:4px 0">Your countdown will appear here</div></div>';
+  }else{
+    var s=subj(x.subj),v=tmVals(examAt(x)).slice(0,3),L=['days','hrs','min'];
+    preview='<div class="cdc"><div class="cdt"><span>'+esc(x.title)+'</span><small>'+(s?esc(s.name)+' \u00b7 ':'')+x.date+(x.time?', '+fmtT(x.time):'')+'</small></div><div class="tm" data-at="'+examAt(x)+'">'+
+      v.map(function(n,i){return(i?'<i>:</i>':'')+'<div class="sg"><b>'+n+'</b><small>'+L[i]+'</small></div>'}).join('')+'</div></div>';
+  }
   return'<h2>Widget</h2><div class="card">'+
-  '<div class="row"><div class="t">Exam countdown widget<br><small>Puts your next exam on your home screen.</small></div><button id="wgtoggle" class="'+(on?'':'ghost')+'">'+(on?'On':'Off')+'</button></div>'+
+  '<div class="row"><div class="t">Exam countdown widget<br><small>Puts one exam countdown on your home screen.</small></div><button id="wgtoggle" class="'+(on?'':'ghost')+'">'+(on?'On':'Off')+'</button></div>'+
   '<div class="row" style="margin-top:12px"><div class="t">Widget size</div></div>'+
   '<div class="modes">'+sizeBtn('small','Small','2 x 1')+sizeBtn('medium','Medium','3 x 2')+sizeBtn('large','Large','4 x 2')+'</div>'+
-  '<div style="display:flex;justify-content:center;margin:14px 0 6px"><div style="width:'+dim+';min-width:150px;max-width:100%;background:linear-gradient(135deg,#1e2b24,#14211a);border-radius:16px;padding:12px 14px;color:#fff">'+
-  '<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(on?(x?esc(x.title):'No upcoming exam'):'Widget disabled in app settings')+'</div>'+
-  (on&&x?'<div style="display:flex;align-items:flex-end;gap:8px;margin-top:6px"><b style="font-size:26px;line-height:1;color:#8fe3b4">'+days+'</b><span style="font-size:11px;opacity:.85">'+(days===1?'day left':'days left')+'</span></div>':'')+
-  '<div style="font-size:10px;opacity:.7;margin-top:6px">'+(on?esc(dateTxt):'Turn the widget on to show your countdown')+'</div></div></div>'+
+  (on?'<label style="display:block;margin-top:14px">Exam on the widget<select id="wgexam" style="width:100%">'+wgExamOpts()+'</select></label>':'')+
+  '<div style="display:flex;justify-content:center;margin:14px 0 6px"><div style="width:'+dim+';min-width:180px;max-width:100%">'+preview+'</div></div>'+
   '<button id="wgpin" style="width:100%"'+(on?'':' disabled')+'>Add to home screen</button>'+
   '<small style="display:block;margin-top:8px">'+(wgIsNative()?'Places the widget on your home screen. If nothing happens, long-press your home screen, tap Widgets, then choose StudySpace.':'Available inside the StudySpace Android app. Open Settings there and tap Add to home screen.')+'</small></div>';
 }
@@ -1584,8 +1617,8 @@ if(d.resfav){const r=S.res.find(x=>x.id===d.resfav);if(r){r.fav=!r.fav;save();re
 if(d.delres){if(sure(t,'Delete?')){S.res=S.res.filter(x=>x.id!==d.delres);fdel(d.delres).catch(()=>{});save();render()}return}
 if(d.resopen){const r=S.res.find(x=>x.id===d.resopen);if(!r)return;if(r.type==='link'){window.open(r.url,'_blank','noopener')}else{fget(r.id).then(b=>{if(!b){banner('File not found on this phone.');return}const u=URL.createObjectURL(b);if(!window.open(u,'_blank')){const a=document.createElement('a');a.href=u;a.download=r.name;a.click()}}).catch(()=>banner('Could not open this file.'))}return}
 if(d.note){hv='n:'+d.note;render();$('#view').scrollTop=0;return}
-if(d.wgsize){const w=wgState();if(w.size!==d.wgsize){w.size=d.wgsize;save();wgSync();render()}return}
-if(d.delexam){S.exams=S.exams.filter(x=>x.id!==d.delexam);save();wgSync();render();return}
+if(d.wgsize){const w=wgState();if(w.size!==d.wgsize){w.size=d.wgsize;save();wgSync(true);render()}return}
+if(d.delexam){S.exams=S.exams.filter(x=>x.id!==d.delexam);if(wgState().exam===d.delexam)wgState().exam='';save();wgSync(true);render();return}
 if(d.delclass){const s=subj(curSub);s.classes=s.classes.filter(c=>c.id!==d.delclass);save();render();return}
 if(d.deltask){S.tasks=S.tasks.filter(x=>x.id!==d.deltask);save();render();return}
 if(d.accttab){ACCT.tab=d.accttab;render();return}
@@ -1675,8 +1708,8 @@ case'newnote':{const n={id:uid(),title:'',body:'',subj:'',pinned:false,updated:D
 case'pinnote':{const n=S.notes.find(x=>x.id===hv.slice(2));n.pinned=!n.pinned;save();render();break}
 case'delnote':{if(sure(t,'Tap again to delete')){S.notes=S.notes.filter(x=>x.id!==hv.slice(2));save();hv='notes';render()}break}
 case'openexams':tab='acad';hv='exams';render();break;
-case'addexam':{const n=$('#etitle').value.trim(),dt=$('#edate').value;if(!n){$('#etitle').focus();return}if(!dt){$('#edate').focus();return}S.exams.push({id:uid(),title:n,date:dt,time:$('#etime').value,subj:$('#esubj').value,cover:$('#ecover').value.trim()});save();wgSync();render();break}
-case'wgtoggle':{const w=wgState();w.on=!w.on;save();wgSync();if(w.on&&!wgNext())banner('Add an exam date and it will show on the widget.');if(!wgIsNative())banner('The widget works in the StudySpace Android app.');render();break}
+case'addexam':{const n=$('#etitle').value.trim(),dt=$('#edate').value;if(!n){$('#etitle').focus();return}if(!dt){$('#edate').focus();return}S.exams.push({id:uid(),title:n,date:dt,time:$('#etime').value,subj:$('#esubj').value,cover:$('#ecover').value.trim()});save();wgSync(true);render();break}
+case'wgtoggle':{const w=wgState();w.on=!w.on;save();wgSync(true);if(w.on&&!wgPick())banner('Add an exam date and it will show on the widget.');if(!wgIsNative())banner('The widget works in the StudySpace Android app.');render();break}
 case'wgpin':{const n=wgBridge();if(!n||typeof n.requestPin!=='function'){banner('Open StudySpace on Android, then long-press your home screen, tap Widgets, and choose StudySpace.');break}try{n.requestPin()}catch(e){banner('Long-press your home screen, tap Widgets, then choose StudySpace.')}break}
 case'addsub':{const n=$('#subname').value.trim();if(!n){$('#subname').focus();return}const s={id:uid(),name:n,color:COLORS[S.subjects.length%COLORS.length],classes:[]};S.subjects.push(s);save();curSub=s.id;render();break}
 case'delsubj':{if(sure(t,'Tap again to delete')){[S.exams,S.notes,S.res,S.reviews].forEach(a=>a.forEach(x=>{if(x.subj===curSub)x.subj=''}));S.tasks=S.tasks.filter(x=>x.subj!==curSub);S.subjects=S.subjects.filter(x=>x.id!==curSub);curSub=null;save();render()}break}

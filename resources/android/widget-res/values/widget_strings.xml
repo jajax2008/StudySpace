@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ss_widget_title">Exam countdown</string>
-    <string name="ss_widget_hint">Tap to open</string>
-    <string name="ss_widget_description">Counts down the days and hours to your next exam.</string>
+    <string name="ss_widget_hint">Tap to open Exam countdown</string>
+    <string name="ss_widget_description">Counts down the days, hours and minutes to your next exam.</string>
+    <string name="ss_widget_days">days</string>
+    <string name="ss_widget_hours">hrs</string>
+    <string name="ss_widget_mins">min</string>
 </resources>

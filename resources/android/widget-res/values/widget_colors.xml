@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Same palette as the web app's light theme (index.html :root). -->
 <resources>
-    <color name="ss_widget_bg_start">#FF1E2B24</color>
-    <color name="ss_widget_bg_end">#FF14211A</color>
-    <color name="ss_widget_text">#FFFFFFFF</color>
-    <color name="ss_widget_muted">#FFB9E6CC</color>
-    <color name="ss_widget_accent">#FF8FE3B4</color>
-    <color name="ss_widget_warn">#FFF2C48B</color>
+    <color name="ss_widget_bg">#FFFFFFFF</color>
+    <color name="ss_widget_border">#FFD9E3DA</color>
+    <color name="ss_widget_text">#FF1E2B24</color>
+    <color name="ss_widget_muted">#FF5D6E64</color>
+    <color name="ss_widget_accent">#FF3D7A5A</color>
+    <color name="ss_widget_seg_bg">#FFECF2EF</color>
+    <color name="ss_widget_seg_line">#FFC9DAD1</color>
+    <color name="ss_widget_warn">#FFA9701C</color>
 </resources>

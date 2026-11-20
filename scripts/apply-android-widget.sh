@@ -80,6 +80,8 @@ RECEIVER = """
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.USER_PRESENT" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -96,6 +98,16 @@ if "android.permission.RECEIVE_BOOT_COMPLETED" not in xml:
 if "ExamCountdownWidgetProvider" not in xml:
     close = xml.rindex("</application>")
     xml = xml[:close] + RECEIVER + xml[close:]
+else:
+    # Replace the whole block so action or metadata changes also reach projects
+    # that were generated with an older version of this script.
+    existing = re.search(
+        r"[ \t]*<receiver\b[^>]*\.ExamCountdownWidgetProvider[^>]*>.*?</receiver>",
+        xml,
+        re.S,
+    )
+    if existing:
+        xml = xml[: existing.start()] + RECEIVER.strip("\n") + xml[existing.end():]
 
 # Keep a second tap on the widget inside the existing Activity so it can open
 # the Examination Countdown view instead of restarting the web app.
@@ -122,7 +134,8 @@ else:
 PY
 
 for f in layout/widget_small.xml layout/widget_medium.xml layout/widget_large.xml \
-         drawable/widget_bg.xml xml/exam_countdown_widget_info.xml; do
+         drawable/widget_bg.xml drawable/widget_seg.xml xml/exam_countdown_widget_info.xml \
+         font/ss_sans.xml font/ss_mono.xml font/ss_sans_regular.ttf font/ss_sans_bold.ttf font/ss_mono_bold.ttf; do
   if [ ! -f "$RES_DIR/$f" ]; then
     echo "error: $RES_DIR/$f is missing after the copy" >&2
     exit 1

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same palette as the web app's dark theme. -->
+<resources>
+    <color name="ss_widget_bg">#FF1A251F</color>
+    <color name="ss_widget_border">#FF29372E</color>
+    <color name="ss_widget_text">#FFE5EEE8</color>
+    <color name="ss_widget_muted">#FF92A69A</color>
+    <color name="ss_widget_accent">#FF7CC29E</color>
+    <color name="ss_widget_seg_bg">#FF24352C</color>
+    <color name="ss_widget_seg_line">#FF355143</color>
+    <color name="ss_widget_warn">#FFF2C48B</color>
+</resources>
