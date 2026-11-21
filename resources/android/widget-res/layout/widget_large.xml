@@ -1,12 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Large (4 x 2): the app card with larger digits and a tap hint. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_bg"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
+
+    <!-- Tinted at runtime with the colours picked in the app. -->
+    <ImageView
+        android:id="@+id/w_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_bg"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY" />
+<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
 
     <TextView
         android:id="@+id/w_title"
@@ -53,6 +65,7 @@
         android:orientation="horizontal">
 
         <LinearLayout
+            android:id="@+id/w_seg1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -97,6 +110,7 @@
             android:textStyle="bold" />
 
         <LinearLayout
+            android:id="@+id/w_seg2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -141,6 +155,7 @@
             android:textStyle="bold" />
 
         <LinearLayout
+            android:id="@+id/w_seg3"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -183,3 +198,4 @@
         android:textColor="@color/ss_widget_muted"
         android:textSize="10sp" />
 </LinearLayout>
+</FrameLayout>

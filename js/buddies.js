@@ -109,6 +109,36 @@
       try { if (navigator.vibrate) navigator.vibrate(ms) } catch (e) {}
     }
 
+    /* ---------- CONSECUTIVE-TAP LINES ---------- */
+    var SAY = ['Hey there', 'That tickles me', 'Hehe'];
+    var sayAt = { study: 0, life: 0 };
+    var sayT = {};
+
+    function nextLine(kind) {
+      var i = sayAt[kind] || 0;
+      sayAt[kind] = (i + 1) % SAY.length;
+      clearTimeout(sayT[kind]);
+      sayT[kind] = setTimeout(function () { sayAt[kind] = 0 }, 6000);
+      return SAY[i];
+    }
+
+    /* A little comic bubble above the avatar, shown for a couple of seconds. */
+    function say(el, text) {
+      var head = el.closest && el.closest('.sb-head');
+      if (!head) return;
+      var bubble = head.querySelector('.sb-say');
+      if (!bubble) {
+        bubble = document.createElement('div');
+        bubble.className = 'sb-say';
+        bubble.setAttribute('aria-live', 'polite');
+        head.appendChild(bubble);
+      }
+      bubble.textContent = text;
+      bubble.style.animation = 'none';
+      void bubble.offsetWidth;
+      bubble.style.animation = '';
+    }
+
     /* ---------- PETTING ---------- */
     function pet(el) {
       if (!el) return;
@@ -144,10 +174,14 @@
         }
       }
 
+      var kind = el.dataset.kind === 'life' ? 'life' : 'study';
+      var said = nextLine(kind);
+      say(el, said);
+
       var line = document.querySelector('#ssBuddyHead small');
       if (line) {
         var was = line.textContent;
-        line.textContent = 'Hehe ♥';
+        line.textContent = said;
         line.dataset.locked = '1';
         clearTimeout(line.__t);
         line.__t = setTimeout(function () {

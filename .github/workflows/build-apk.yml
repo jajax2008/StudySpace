@@ -39,6 +39,9 @@ jobs:
       - name: Apply custom launcher icons
         run: bash scripts/apply-android-icons.sh android
 
+      - name: Apply app icon themes
+        run: bash scripts/apply-android-icon-themes.sh android
+
       - name: Add exam countdown home screen widget
         run: bash scripts/apply-android-widget.sh android
 

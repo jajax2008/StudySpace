@@ -8,7 +8,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -20,9 +25,11 @@ import java.util.Locale;
  * Exam countdown home screen widget.
  *
  * The web app writes the selected exam into SharedPreferences through
- * {@link WidgetBridge}: its title, its subject and the exact target instant as a
- * Unix epoch timestamp in milliseconds. This provider does all of the maths, so
- * the widget keeps ticking on its own even when the app is closed.
+ * {@link WidgetBridge}: its title, its subject, the exact target instant as a
+ * Unix epoch timestamp in milliseconds, and the colours of the theme currently
+ * selected in the app. This provider does all of the maths and all of the
+ * colouring, so the widget keeps ticking and stays in the app's theme even when
+ * the app is closed.
  *
  * A one minute {@link AlarmManager} alarm (RTC, so it never wakes a sleeping
  * device) plus the launcher's updatePeriodMillis keep the numbers live.
@@ -37,6 +44,11 @@ public class ExamCountdownWidgetProvider extends AppWidgetProvider {
     public static final String KEY_AT = "at";
     public static final String KEY_SUBJ = "subj";
     public static final String KEY_SYNCED = "synced";
+    public static final String KEY_THEME_CARD = "themeCard";
+    public static final String KEY_THEME_LINE = "themeLine";
+    public static final String KEY_THEME_INK = "themeInk";
+    public static final String KEY_THEME_MUTED = "themeMuted";
+    public static final String KEY_THEME_ACCENT = "themeAccent";
 
     public static final String ACTION_REFRESH = "com.jajax.studyspace.WIDGET_REFRESH";
     private static final int REFRESH_RC = 4711;
@@ -122,6 +134,8 @@ public class ExamCountdownWidgetProvider extends AppWidgetProvider {
             return;
         }
 
+        applyTheme(context, manager, widgetId, views, sp);
+
         boolean hasExam = enabled && at > 0L && title.length() > 0;
         long now = System.currentTimeMillis();
         long diff = at - now;
@@ -184,6 +198,149 @@ public class ExamCountdownWidgetProvider extends AppWidgetProvider {
         try {
             manager.updateAppWidget(widgetId, views);
         } catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * Paints the widget in the colours the app currently uses: the card colour
+     * becomes a rounded, bordered backdrop, muted text stays muted and the
+     * digits use the accent (or the user's countdown colour).
+     */
+    private static void applyTheme(Context context, AppWidgetManager manager, int widgetId,
+                                   RemoteViews views, SharedPreferences sp) {
+        try {
+            int card = colour(context, sp, KEY_THEME_CARD, R.color.ss_widget_bg);
+            int line = colour(context, sp, KEY_THEME_LINE, R.color.ss_widget_border);
+            int ink = colour(context, sp, KEY_THEME_INK, R.color.ss_widget_text);
+            int muted = colour(context, sp, KEY_THEME_MUTED, R.color.ss_widget_muted);
+            int accent = colour(context, sp, KEY_THEME_ACCENT, R.color.ss_widget_accent);
+
+            int[] size = widgetSize(manager, widgetId);
+            Bitmap backdrop = cardBitmap(context, size[0], size[1], card, line);
+            if (backdrop != null) {
+                views.setImageViewBitmap(R.id.w_bg, backdrop);
+            } else {
+                views.setInt(R.id.w_bg, "setBackgroundColor", card);
+            }
+
+            int tile = blend(card, accent, 0.12f);
+            views.setInt(R.id.w_seg1, "setBackgroundColor", tile);
+            views.setInt(R.id.w_seg2, "setBackgroundColor", tile);
+            views.setInt(R.id.w_seg3, "setBackgroundColor", tile);
+
+            views.setTextColor(R.id.w_title, ink);
+            views.setTextColor(R.id.w_when, muted);
+            views.setTextColor(R.id.w_hint, muted);
+            views.setTextColor(R.id.w_dayslabel, muted);
+            views.setTextColor(R.id.w_hourslabel, muted);
+            views.setTextColor(R.id.w_minslabel, muted);
+            views.setTextColor(R.id.w_days, accent);
+            views.setTextColor(R.id.w_hours, accent);
+            views.setTextColor(R.id.w_mins, accent);
+            views.setTextColor(R.id.w_sep1, accent);
+            views.setTextColor(R.id.w_sep2, accent);
+        } catch (Exception ignored) {
+            // A widget placed before an update keeps the bundled theme colours.
+        }
+    }
+
+    /** Widget size in dp, used to draw a crisp rounded backdrop. */
+    private static int[] widgetSize(AppWidgetManager manager, int widgetId) {
+        int width = 300;
+        int height = 160;
+        try {
+            Bundle options = manager.getAppWidgetOptions(widgetId);
+            if (options != null) {
+                int w = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
+                int h = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT);
+                if (w > 0) {
+                    width = w;
+                }
+                if (h > 0) {
+                    height = h;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return new int[] { width, height };
+    }
+
+    private static Bitmap cardBitmap(Context context, int widthDp, int heightDp, int card, int border) {
+        try {
+            float density = context.getResources().getDisplayMetrics().density;
+            int width = Math.max(1, Math.round(widthDp * density));
+            int height = Math.max(1, Math.round(heightDp * density));
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            float radius = 16f * density;
+            float stroke = Math.max(1f, density);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            paint.setColor(card);
+            canvas.drawRoundRect(new RectF(0, 0, width, height), radius, radius, paint);
+            if (border != 0) {
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(stroke);
+                paint.setColor(border);
+                canvas.drawRoundRect(
+                        new RectF(stroke / 2f, stroke / 2f, width - stroke / 2f, height - stroke / 2f),
+                        radius, radius, paint);
+            }
+            return bitmap;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static int blend(int from, int to, float ratio) {
+        float r = ratio < 0f ? 0f : (ratio > 1f ? 1f : ratio);
+        int a = Math.round(android.graphics.Color.alpha(from)
+                + (android.graphics.Color.alpha(to) - android.graphics.Color.alpha(from)) * r);
+        int red = Math.round(android.graphics.Color.red(from)
+                + (android.graphics.Color.red(to) - android.graphics.Color.red(from)) * r);
+        int green = Math.round(android.graphics.Color.green(from)
+                + (android.graphics.Color.green(to) - android.graphics.Color.green(from)) * r);
+        int blue = Math.round(android.graphics.Color.blue(from)
+                + (android.graphics.Color.blue(to) - android.graphics.Color.blue(from)) * r);
+        return android.graphics.Color.argb(a, red, green, blue);
+    }
+
+    private static int colour(Context context, SharedPreferences sp, String key, int fallback) {
+        int parsed = parseHex(sp.getString(key, ""));
+        if (parsed != 0) {
+            return parsed;
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= 23) {
+                return context.getColor(fallback);
+            }
+            return context.getResources().getColor(fallback);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    static int parseHex(String hex) {
+        if (hex == null) {
+            return 0;
+        }
+        String value = hex.trim();
+        if (value.startsWith("#")) {
+            value = value.substring(1);
+        }
+        if (value.length() == 3) {
+            StringBuilder expanded = new StringBuilder(6);
+            for (int i = 0; i < 3; i++) {
+                expanded.append(value.charAt(i)).append(value.charAt(i));
+            }
+            value = expanded.toString();
+        }
+        if (value.length() != 6) {
+            return 0;
+        }
+        try {
+            return 0xFF000000 | (int) Long.parseLong(value, 16);
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 

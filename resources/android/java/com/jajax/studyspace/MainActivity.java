@@ -15,6 +15,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
 
     private WidgetBridge widgetBridge;
+    private AppIconBridge iconBridge;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,8 @@ public class MainActivity extends BridgeActivity {
             WebView webView = getBridge().getWebView();
             widgetBridge = new WidgetBridge(this, webView);
             webView.addJavascriptInterface(widgetBridge, "StudySpaceWidget");
+            iconBridge = new AppIconBridge(this);
+            webView.addJavascriptInterface(iconBridge, "StudySpaceIcon");
             String route = routeOf(getIntent());
             if (route != null) {
                 widgetBridge.setPendingRoute(route);

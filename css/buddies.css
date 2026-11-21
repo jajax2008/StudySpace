@@ -7,6 +7,7 @@
 
 .sb-av{
   display:block;width:56px;height:56px;overflow:visible;
+  -webkit-tap-highlight-color:transparent;outline:none;
   --lx:0;--ly:0;--bc:var(--accent);
   color:var(--bc);
   animation:sbBob 4.6s ease-in-out infinite;
@@ -23,7 +24,7 @@
 .sb-av .sb-glint{fill:var(--card);opacity:.92}
 .sb-av .sb-brow{stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;opacity:.5;transition:transform .3s var(--spring),opacity .3s}
 .sb-av .sb-blush ellipse{fill:color-mix(in srgb,var(--bc) 42%,transparent);opacity:.45;transition:opacity .3s}
-.sb-av .sb-smile,.sb-av .sb-frown{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;transition:opacity .22s var(--out),transform .3s var(--spring)}
+.sb-av .sb-smile,.sb-av .sb-frown{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;transition:opacity .22s var(--out),transform .3s var(--spring);transform-box:fill-box;transform-origin:center}
 .sb-av .sb-frown{opacity:0}
 .sb-av .sb-omouth{fill:var(--ink);opacity:0;transform-box:fill-box;transform-origin:center}
 .sb-av .sb-zzz{fill:var(--bc);font-size:9px;font-weight:700;opacity:0}
@@ -39,7 +40,7 @@
 .sb-av.sb-blink .sb-eye{transform:scaleY(.1)}
 
 /* ---------- MOODS ---------- */
-.sb-av[data-mood="happy"] .sb-smile{transform:scaleY(1.45);transform-origin:36px 45px}
+.sb-av[data-mood="happy"] .sb-smile{transform:scaleY(1.35)}
 .sb-av[data-mood="happy"] .sb-blush ellipse{opacity:.9}
 .sb-av[data-mood="sad"] .sb-smile{opacity:0}
 .sb-av[data-mood="sad"] .sb-frown{opacity:1}
@@ -76,10 +77,10 @@
   border:1px solid color-mix(in srgb,var(--bc,var(--accent)) 28%,var(--line));
   box-shadow:var(--lift);
   animation:ssBuddyIn .5s var(--spring) both;
-  position:relative;overflow:hidden;
+  position:relative;overflow:visible;
 }
 .sb-head::after{
-  content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;
+  content:"";position:absolute;right:0;top:0;width:150px;height:100%;border-radius:0 22px 0 0;
   background:radial-gradient(circle,color-mix(in srgb,var(--bc,var(--accent)) 22%,transparent),transparent 70%);
   pointer-events:none;
 }
@@ -106,6 +107,28 @@
 @keyframes sbSquish{0%{transform:rotate(calc(var(--lx) * 3deg)) scale(1,1)}30%{transform:scale(1.14,.86)}60%{transform:scale(.94,1.08)}100%{transform:rotate(calc(var(--lx) * 3deg)) scale(1,1)}}
 @keyframes ssBuddyIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes sbHeart{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-22px) scale(1.15)}}
+
+/* ---------- NO FOCUS RING / TAP FLASH ON THE BUDDIES ---------- */
+.bcard,.sb-av{-webkit-tap-highlight-color:transparent}
+.bcard{outline:none}
+.bcard:focus,.bcard:focus-visible,.sb-av:focus,.sb-av:focus-visible{outline:none}
+
+/* ---------- CONSECUTIVE-TAP SPEECH BUBBLE ---------- */
+.sb-say{
+  position:absolute;left:18px;bottom:calc(100% + 8px);z-index:4;max-width:220px;
+  padding:8px 12px;border-radius:14px;background:var(--card);color:var(--ink);
+  border:1px solid color-mix(in srgb,var(--bc,var(--accent)) 30%,var(--line));
+  box-shadow:0 14px 26px -18px rgba(0,0,0,.65);
+  font-size:12.5px;font-weight:600;line-height:1.3;pointer-events:none;opacity:0;
+  animation:sbSay 2.1s var(--out) both;
+}
+.sb-say::after{
+  content:"";position:absolute;left:22px;bottom:-6px;width:11px;height:11px;
+  background:var(--card);border-right:1px solid color-mix(in srgb,var(--bc,var(--accent)) 30%,var(--line));
+  border-bottom:1px solid color-mix(in srgb,var(--bc,var(--accent)) 30%,var(--line));
+  transform:rotate(45deg);border-radius:0 0 3px 0;
+}
+@keyframes sbSay{0%{opacity:0;transform:translateY(8px) scale(.94)}12%,78%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-6px) scale(.98)}}
 
 @media (prefers-reduced-motion:reduce){
   .sb-av,.sb-av .sb-paw-r,.sb-av[data-mood="talk"] .sb-omouth,.sb-av[data-mood="thinking"] .sb-dots circle,.sb-av[data-mood="sleepy"] .sb-zzz{animation:none!important}

@@ -150,6 +150,31 @@ nav{display:none!important}
 .bud.sleepy .ey{animation:none;transform:scaleY(.15)}.bud.sleepy .wv{animation:none}
 @keyframes zz{0%{opacity:0;transform:translateY(6px)}50%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
 @media (prefers-reduced-motion:reduce){.bud.sleepy .zz{animation:none}}
+
+/* ---------- APP ICON PICKER ---------- */
+.icongrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 12px}
+.iconpick{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:10px 6px 8px;font-size:12px;font-weight:600;box-shadow:none}
+.iconpick img{display:block;width:46px;height:46px;border-radius:12px}
+.iconpick.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 32%,transparent)}
+.iconprev{display:flex;justify-content:center;margin:2px 0 12px}
+.iconprev img{display:block;width:88px;height:88px;border-radius:22px;box-shadow:0 10px 20px -12px rgba(0,0,0,.55);transition:transform .3s var(--ease)}
+
+/* ---------- CHAT INPUT ROWS (Ask / Send) ---------- */
+.chatIn{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.chatIn.tight{margin-bottom:12px}
+.chatIn.top{margin-top:10px;margin-bottom:0}
+.chatIn input{flex:1;min-width:0;height:46px;margin:0;padding:0 14px;line-height:1.2}
+.chatIn button{flex:none;height:46px;min-height:46px;margin:0;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+@media (max-width:360px){.chatIn button{padding:0 12px}}
+
+/* ---------- MOOD BUTTONS: state changes in place ---------- */
+.card [data-hmood]{transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease)}
+.card [data-hmood].on{background:var(--accent);color:var(--on);border-color:var(--accent)}
+
+/* ---------- STABLE TAB BAR + QUICK-ADD ---------- */
+nav{flex:none;height:56px;align-items:stretch;box-sizing:border-box;padding:0}
+nav button{box-sizing:border-box;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;border:0;border-radius:0;line-height:1.15}
+#ssFab{contain:layout}
 </style>
 <script>
 // Safety net. If the app fails to start, show a recovery card. Once it is running, a stray error only shows a small banner and never wipes the screen or your data.
@@ -256,6 +281,7 @@ const blank=()=>({
   ai:{date:todayStr(),used:0,onlineUsed:0,offlineUsed:0,acctUsed:0,mode:'online'},
   lb:{date:todayStr(),used:0,noted:false},
   wg:{on:false,size:'medium',exam:''},
+  icon:{style:'style1',theme:'default'},
   prof:{name:'',age:'',level:'',done:false},ui:{}
 });
 
@@ -296,6 +322,9 @@ function load(){
   if(d.wg.size!=='small'&&d.wg.size!=='large')d.wg.size='medium';
   if(typeof d.wg.exam!=='string')d.wg.exam='';
   d.wg.on=!!d.wg.on;
+  if(!d.icon||typeof d.icon!=='object')d.icon={style:'style1',theme:'default'};
+  if(d.icon.style!=='style1'&&d.icon.style!=='style2')d.icon.style='style1';
+  if(!/^(default|theme[1-5])$/.test(String(d.icon.theme||'')))d.icon.theme='default';
   Object.keys(d.fired).forEach(k=>{if(d.fired[k]===1)d.fired[k]=Date.now()});
   return d;
 }
@@ -350,6 +379,8 @@ function applyUI(){
   const fs={S:'15px',L:'18px'}[u.fs];if(fs)r.setProperty('--fs',fs);
   const img=u.bgimg?lsGet('studyspace-bgimg'):'';
   st('ubg',img?'body{background-image:linear-gradient(color-mix(in srgb,var(--bg) 82%,transparent),color-mix(in srgb,var(--bg) 82%,transparent)),url('+img+');background-size:cover;background-position:center;background-attachment:fixed}':'');
+  /* Colour changes must reach the home screen widget, not just this page. */
+  try{wgSyncSoon()}catch(e){}
 }
 {const _at=applyTheme;applyTheme=function(){_at();applyUI()}}
 applyUI();
@@ -369,6 +400,60 @@ function personalizeHTML(){
   '<input id="uifontf" type="file" accept=".ttf,.otf,.woff,.woff2" hidden><input id="uibgf" type="file" accept="image/*" hidden>'+
   '<button class="ghost" id="uireset" style="width:100%;margin-top:8px">Reset to default look</button><small style="display:block;margin-top:8px">Fonts and photos stay on this device only.</small></div>'}
 
+/* APP ICON (Android launcher) */
+const ICON_STYLES=[{k:'style1',l:'Style 1'},{k:'style2',l:'Style 2'}];
+const ICON_THEMES=[{k:'default',l:'Default'},{k:'theme1',l:'Light'},{k:'theme2',l:'Blue'},{k:'theme3',l:'Sage'},{k:'theme4',l:'Amber'},{k:'theme5',l:'Pink'}];
+function iconState(){
+  if(!S.icon||typeof S.icon!=='object')S.icon={style:'style1',theme:'default'};
+  if(S.icon.style!=='style1'&&S.icon.style!=='style2')S.icon.style='style1';
+  return S.icon;
+}
+function iconFile(style,theme){return 'icons/app-themes/'+style+'_'+theme+'.png'}
+/* Aliases are style_theme; style1_default is the icon the app ships with. */
+function iconAlias(style,theme){return(style==='style1'&&theme==='default')?'default':style+'_'+theme}
+function iconNative(){
+  try{var C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform()&&((C.Plugins&&C.Plugins.AppIcon)||window.StudySpaceIcon))}catch(e){return false}
+}
+function iconSet(name){
+  /* Alias names are style_theme; style1_default is the shipped icon. */
+  var alias=name==='default'?'style1_default':name;
+  try{var C=window.Capacitor,P=C&&C.Plugins&&C.Plugins.AppIcon;if(P&&typeof P.setIcon==='function'){P.setIcon({icon:alias}).catch(function(){});return true}}catch(e){}
+  try{var H=window.StudySpaceIcon;if(H&&typeof H.setIcon==='function')return !!H.setIcon(name)}catch(e){}
+  return false;
+}
+function appIconHTML(){
+  var w=iconState();
+  return '<h2>App Icon</h2><div class="card">'+
+  '<div class="row"><div class="t">Icon style<br><small>Pick a style, then a theme colour.</small></div></div>'+
+  '<div class="modes">'+ICON_STYLES.map(function(s){return '<button class="'+(w.style===s.k?'on':'')+'" data-iconstyle="'+s.k+'">'+s.l+'</button>'}).join('')+'</div>'+
+  '<div class="icongrid">'+ICON_THEMES.map(function(t){var on=w.theme===t.k;return '<button class="iconpick '+(on?'on':'')+'" data-icontheme="'+t.k+'" aria-pressed="'+(on?'true':'false')+'"><img src="'+iconFile(w.style,t.k)+'" alt="" loading="lazy"><span>'+t.l+'</span></button>'}).join('')+'</div>'+
+  '<div class="iconprev"><img id="iconpreview" src="'+iconFile(w.style,w.theme)+'" alt="Selected app icon"></div>'+
+  '<button id="iconapply" style="width:100%">Apply icon</button>'+
+  '<small style="display:block;margin-top:8px">'+(iconNative()?'The app may close for a moment while Android swaps the icon. Your home screen can take a few seconds to show it.':'Icon switching works inside the StudySpace Android app.')+'</small></div>';
+}
+function iconRefresh(){
+  var w=iconState();
+  document.querySelectorAll('[data-icontheme]').forEach(function(b){
+    var on=b.dataset.icontheme===w.theme;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');
+    var img=b.querySelector('img');if(img)img.src=iconFile(w.style,b.dataset.icontheme);
+  });
+  document.querySelectorAll('[data-iconstyle]').forEach(function(b){b.classList.toggle('on',b.dataset.iconstyle===w.style)});
+  var p=document.getElementById('iconpreview');if(p)p.src=iconFile(w.style,w.theme);
+}
+function applyAppIcon(){
+  var w=iconState(),name=iconAlias(w.style,w.theme);
+  save();
+  if(!iconNative()){banner('Open the StudySpace Android app to change your icon.');return}
+  var ok=iconSet(name);
+  banner(ok?'Icon applied. Your home screen may take a few seconds to refresh.':'This build cannot change the app icon yet.');
+}
+document.addEventListener('click',e=>{
+  const s=e.target.closest('[data-iconstyle]');
+  if(s){const w=iconState();w.style=s.dataset.iconstyle;save();iconRefresh();return}
+  const t=e.target.closest('[data-icontheme]');
+  if(t){const w=iconState();w.theme=t.dataset.icontheme;save();iconRefresh();return}
+  if(e.target.closest('#iconapply')){applyAppIcon();return}
+});
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const u=ud();
   if(b.dataset.preset){const p=THEMES[b.dataset.preset];u.bg=p[0];u.ink=p[1];u.accent=p[2];save();applyUI();render()}
@@ -425,8 +510,22 @@ setInterval(()=>{document.querySelectorAll('.tm').forEach(e=>{const v=tmVals(+e.
 const MOODL=['Rough','Low','Okay','Good','Great'];
 function moodCard(){
   const mv=d=>MOODL.indexOf((S.journal[d]||{}).mood)+1,cur=mv(todayStr());let bars='';
-  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=mv(ymd(d));bars+='<span style="flex:1;height:'+(v?6+v*5:4)+'px;border-radius:3px;background:'+(v?'var(--accent)':'var(--line)')+';opacity:'+(v?.35+v*.13:1)+'"></span>'}
-  return'<div class="lbl">How are you today?</div><div class="card"><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">'+MOODL.map((m,i)=>'<button class="'+(cur===i+1?'':'ghost')+'" data-hmood="'+m+'" style="padding:8px 2px;font-size:12px">'+m+'</button>').join('')+'</div><div style="display:flex;align-items:flex-end;gap:4px;height:36px;margin-top:12px">'+bars+'</div><small>Last 7 days</small></div>'}
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=mv(ymd(d));bars+='<span data-mbar="'+ymd(d)+'" style="flex:1;height:'+(v?6+v*5:4)+'px;border-radius:3px;background:'+(v?'var(--accent)':'var(--line)')+';opacity:'+(v?.35+v*.13:1)+';transition:height .35s var(--ease),background-color .35s var(--ease)"></span>'}
+  return'<div class="lbl">How are you today?</div><div class="card" id="moodcard"><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">'+MOODL.map((m,i)=>'<button class="'+(cur===i+1?'':'ghost')+'" data-hmood="'+m+'" aria-pressed="'+(cur===i+1?'true':'false')+'" style="padding:8px 2px;font-size:12px">'+m+'</button>').join('')+'</div><div style="display:flex;align-items:flex-end;gap:4px;height:36px;margin-top:12px">'+bars+'</div><small>Last 7 days</small></div>'}
+/* Mood changes are applied in place. Re-rendering Home would recreate the
+   StudyBuddy / LifeBuddy avatars, which makes their icons flicker. */
+function moodSet(btn){
+  jent(todayStr()).mood=btn.dataset.hmood;save();
+  const card=btn.closest('#moodcard');if(!card)return;
+  card.querySelectorAll('[data-hmood]').forEach(function(b){const on=b===btn;b.classList.toggle('ghost',!on);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')});
+  card.querySelectorAll('[data-mbar]').forEach(function(el){
+    const day=el.getAttribute('data-mbar'),val=day===todayStr()?MOODL.indexOf(btn.dataset.hmood)+1:MOODL.indexOf((S.journal[day]||{}).mood)+1;
+    el.style.height=(val?6+val*5:4)+'px';
+    el.style.background=val?'var(--accent)':'var(--line)';
+    el.style.opacity=val?.35+val*.13:1;
+  });
+  try{wgSyncSoon()}catch(e){}
+}
 function weekWrap(){
   const f=(()=>{const d=new Date();d.setDate(d.getDate()-6);return ymd(d)})(),ss=S.sessions.filter(x=>x.date>=f);
   if(!ss.length)return'';
@@ -458,7 +557,7 @@ function sndSet(k){
 document.addEventListener('change',e=>{if(e.target.id==='tsnd')sndSet(e.target.value)});
 document.addEventListener('click',e=>{
   const m=e.target.closest('[data-hmood]');
-  if(m){jent(todayStr()).mood=m.dataset.hmood;save();render();return}
+  if(m){moodSet(m);return}
   const b=e.target.closest('button');if(!b)return;
   if(b.id==='bkup'){exportData();render()}
   else if(b.id==='wrapshare'){const t=window.__wrapTxt||'';try{if(navigator.share)navigator.share({text:t}).catch(()=>{});else navigator.clipboard.writeText(t).then(()=>banner('Copied to clipboard.'))}catch(x){banner('Could not share.')}}
@@ -602,7 +701,7 @@ return'<h1>More</h1><p class="sub">Alerts, AI quotas, and settings</p>'+
 '<div class="row"><div class="t">StudyBuddy Offline AI<br><small>Instant local engine · Zero download</small></div><b>'+buddyOfflineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
 '<div class="row"><div class="t">Test online AI<br><small id="aitestmsg">'+esc(AITEST||'Checks the server, then the AI')+'</small></div><button class="ghost" id="aitest">Test</button></div>'+
 '</div>'+
-personalizeHTML()+'<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
+personalizeHTML()+appIconHTML()+'<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
 '<div class="row"><div class="t">Backup<br><small>Notes, tasks, grades, wallet and more. Library files and Life Buddy chats are not included.</small></div><button class="ghost" id="expdata">Export</button></div>'+
 '<div class="row"><div class="t">Restore backup</div><button class="ghost" id="impdata">Import</button><input id="impfile" type="file" accept=".json,application/json" hidden></div>'+
 '<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'+wgHTML()}
@@ -630,10 +729,18 @@ function wgExamOpts(){
   return '<option value=""'+(has?'':' selected')+'>Automatic \u00b7 nearest upcoming</option>'+
     list.map(function(e){return '<option value="'+e.id+'"'+(has&&w.exam===e.id?' selected':'')+'>'+esc(e.title)+' \u00b7 '+e.date+(e.time?' '+fmtT(e.time):'')+'</option>'}).join('');
 }
+/* The colours of the theme currently on screen, so the home screen widget can
+   follow the same palette. */
+function wgColors(){
+  var cs=getComputedStyle(document.documentElement);
+  var g=function(k,d){var v=(cs.getPropertyValue(k)||'').trim();return /^#[0-9a-f]{6}$/i.test(v)?v:d};
+  var accent=g('--accent','#3d7a5a');
+  return{card:g('--card','#ffffff'),line:g('--line','#d9e3da'),ink:g('--ink','#1e2b24'),muted:g('--muted','#5d6e64'),accent:accent,cd:g('--cd',accent)};
+}
 /* Only the raw target instant is sent: Android does all of the counting down. */
 function wgPayload(){
   var w=wgState(),x=wgPick(),s=x?subj(x.subj):null;
-  return{enabled:!!w.on,size:w.size,examId:x?x.id:'',title:x?x.title:'',at:x?examAt(x):0,date:x?x.date:'',time:x?(x.time||'08:00'):'',subj:s?s.name:''};
+  return{enabled:!!w.on,size:w.size,examId:x?x.id:'',title:x?x.title:'',at:x?examAt(x):0,date:x?x.date:'',time:x?(x.time||'08:00'):'',subj:s?s.name:'',theme:wgColors()};
 }
 var WG_T=null,WG_LAST='';
 function wgSync(force){
@@ -978,7 +1085,7 @@ return BK_ACAD+'<h1 style="margin-top:14px">StudyBuddy AI</h1><p class="sub">Onl
 (B.chat.length?B.chat.map(m=>'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Ask StudyBuddy to explain a concept, summarize, or quiz you! ('+(mode==='online'?'Online Cloud Mode':mode==='device'?'On-device AI. Runs on your phone, no internet needed':'Instant Offline Mode — works with zero internet')+')</div>')+
 (B.busy?'<div class="bubble a">Thinking...</div>':'')+
 '</div>'+
-'<div style="display:flex;gap:8px;margin-bottom:18px"><input id="bask" placeholder="Ask a question..." value="'+esc(B.q)+'" maxlength="240"'+(B.busy?' disabled':'')+'><button id="bsend"'+(B.busy?' disabled':'')+'>Ask</button></div>'+
+'<div class="chatIn"><input id="bask" placeholder="Ask a question..." value="'+esc(B.q)+'" maxlength="240"'+(B.busy?' disabled':'')+'><button id="bsend"'+(B.busy?' disabled':'')+'>Ask</button></div>'+
 '<h2>Study Material & Quick Tools</h2>'+
 '<div class="form"><select id="bnote"><option value="">Pick a note for context</option>'+S.notes.map(n=>'<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</select><textarea id="btext" placeholder="Or paste text here. For quizzes, write one card per line like: Term: definition" style="min-height:18vh">'+esc(B.text)+'</textarea><div class="two"><button class="ghost" id="bsum">Quick Summarize</button><button class="ghost" id="bcards">Quiz me</button></div></div>'+
 (B.sum?'<h2>Key points</h2><div class="card">'+(B.sum.length?B.sum.map(x=>'<div class="row"><div class="t"><div>'+esc(x)+'</div></div></div>').join(''):'<div class="empty">Not enough text to summarize.</div>')+'</div>'+(B.sum.length?'<button class="ghost" id="bsave" style="margin-top:10px;width:100%">Save as note</button>':''):'')}
@@ -1135,7 +1242,7 @@ function lifeBuddyView(){
   '<div class="two" style="margin-bottom:12px"><button class="ghost" id="lbhelp">'+(LB.help?'Hide help lines':'Need help now?')+'</button><button class="ghost" id="lbbreath">'+(LB.showBreath||limited?'Breathing exercise \u2713':'Breathing exercise')+'</button></div>'+
   (LB.help?help:'')+(limited||LB.showBreath?breathCard():'')+
   '<div class="chat-box" id="chatbox">'+chat+(LB.busy?'<div class="bubble a">Thinking...</div>':'')+'</div>'+
-  '<div style="display:flex;gap:8px;margin-bottom:12px"><input id="lbask" placeholder="'+(limited?'Resting until tomorrow':'Write what is on your mind...')+'" value="'+esc(LB.q)+'" maxlength="400"'+(LB.busy?' disabled':'')+'><button id="lbsend"'+(LB.busy||limited?' disabled':'')+'>Send</button></div>'+
+  '<div class="chatIn tight"><input id="lbask" placeholder="'+(limited?'Resting until tomorrow':'Write what is on your mind...')+'" value="'+esc(LB.q)+'" maxlength="400"'+(LB.busy?' disabled':'')+'><button id="lbsend"'+(LB.busy||limited?' disabled':'')+'>Send</button></div>'+
   (limited?'<button class="ghost" id="lbjournal" style="width:100%;margin-bottom:8px">Write in my journal instead</button>':'')+
   '<button class="ghost" id="lbclear" style="width:100%">Clear chat</button>'}
 function lbPushBye(){const last=LB.chat[LB.chat.length-1];if(!last||!last.limit)LB.chat.push({role:'a',text:LB_BYE,limit:true,x:true})}
@@ -1514,7 +1621,7 @@ function acctView(){
       '<div class="empty">Hi! I am your Socratic Ledger Companion. Tell me which date or question you are solving and share your proposed Debit/Credit or computation first!</div>')+
       (ACCT.busy?'<div class="bubble a">Checking ledger history...</div>':'')+'</div>'+
       '<div class="form"><input id="acctatt" placeholder="Your trial entry / math (e.g. Dr Purchases 540k, Cr AP 540k)" value="'+esc(ACCT.attempt)+'" maxlength="240"'+(ACCT.busy?' disabled':'')+'>'+
-      '<div style="display:flex;gap:8px"><input id="acctq" placeholder="Ask about a transaction or adjustment..." value="'+esc(ACCT.q)+'" maxlength="300"'+(ACCT.busy?' disabled':'')+'><button id="acctsend"'+(ACCT.busy?' disabled':'')+'>Check</button></div></div>'+
+      '<div class="chatIn tight"><input id="acctq" placeholder="Ask about a transaction or adjustment..." value="'+esc(ACCT.q)+'" maxlength="300"'+(ACCT.busy?' disabled':'')+'><button id="acctsend"'+(ACCT.busy?' disabled':'')+'>Check</button></div></div>'+
       '<button class="ghost" id="acctclearchat" style="width:100%;margin-top:10px">Clear Tutor Chat</button>';
   }
 
@@ -2314,7 +2421,7 @@ function helpView(s,t){
   '<div class="chat-box" id="chatbox">'+(ch.length?ch.map(bub).join(''):'<div class="empty">Ask anything about this assignment, or add a photo of it and I will help you work through it.</div>')+(AH.busy?'<div class="bubble a">Thinking...</div>':'')+'</div>'+
   '<div class="thumbs">'+IMG.assign.map(function(m,i){return '<div><img src="'+m.url+'" alt="Attached image"><button data-imgrm="'+i+'" aria-label="Remove image">×</button></div>'}).join('')+'</div>'+
   '<div class="two"><button class="ghost" data-imgpick="asCam">Camera</button><button class="ghost" data-imgpick="asFile">Add image</button></div><input id="asCam" type="file" accept="image/*" capture="environment" hidden><input id="asFile" type="file" accept="image/*" multiple hidden>'+
-  '<div style="display:flex;gap:8px;margin-top:10px"><input id="asq" placeholder="Ask about this assignment..." value="'+esc(AH.q)+'" maxlength="500"'+(AH.busy?' disabled':'')+'><button id="assend"'+(AH.busy?' disabled':'')+'>Ask</button></div><small style="display:block;margin-top:6px">'+asLeft()+' of '+MAX_AS+' AI helps left today</small>';
+  '<div class="chatIn top"><input id="asq" placeholder="Ask about this assignment..." value="'+esc(AH.q)+'" maxlength="500"'+(AH.busy?' disabled':'')+'><button id="assend"'+(AH.busy?' disabled':'')+'>Ask</button></div><small style="display:block;margin-top:6px">'+asLeft()+' of '+MAX_AS+' AI helps left today</small>';
 }
 detail=function(s){
   if(SV.sid!==s.id){SV.sid=s.id;SV.v=''}

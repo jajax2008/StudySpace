@@ -1,13 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Small (2 x 1): title and date on the left, compact digits on the right. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_bg"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:padding="12dp">
+    android:layout_height="match_parent">
+
+    <!-- Tinted at runtime with the colours picked in the app. -->
+    <ImageView
+        android:id="@+id/w_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_bg"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY" />
+<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -61,6 +73,7 @@
         android:paddingLeft="8dp">
 
         <LinearLayout
+            android:id="@+id/w_seg1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/widget_seg"
@@ -103,6 +116,7 @@
             android:visibility="gone" />
 
         <LinearLayout
+            android:id="@+id/w_seg2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
@@ -147,6 +161,7 @@
             android:visibility="gone" />
 
         <LinearLayout
+            android:id="@+id/w_seg3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
@@ -186,3 +201,4 @@
         android:layout_height="wrap_content"
         android:visibility="gone" />
 </LinearLayout>
+</FrameLayout>

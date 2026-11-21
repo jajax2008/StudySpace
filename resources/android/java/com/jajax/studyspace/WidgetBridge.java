@@ -69,6 +69,7 @@ public class WidgetBridge {
         try {
             JSONObject data = new JSONObject(json == null ? "{}" : json);
             enabled = data.optBoolean("enabled", false);
+            JSONObject theme = data.optJSONObject("theme");
             shared().edit()
                     .putBoolean(ExamCountdownWidgetProvider.KEY_ENABLED, enabled)
                     .putString(ExamCountdownWidgetProvider.KEY_SIZE, sanitizeSize(data.optString("size", "medium")))
@@ -76,6 +77,11 @@ public class WidgetBridge {
                     .putString(ExamCountdownWidgetProvider.KEY_TITLE, data.optString("title", ""))
                     .putLong(ExamCountdownWidgetProvider.KEY_AT, data.optLong("at", 0L))
                     .putString(ExamCountdownWidgetProvider.KEY_SUBJ, data.optString("subj", ""))
+                    .putString(ExamCountdownWidgetProvider.KEY_THEME_CARD, colour(theme, "card"))
+                    .putString(ExamCountdownWidgetProvider.KEY_THEME_LINE, colour(theme, "line"))
+                    .putString(ExamCountdownWidgetProvider.KEY_THEME_INK, colour(theme, "ink"))
+                    .putString(ExamCountdownWidgetProvider.KEY_THEME_MUTED, colour(theme, "muted"))
+                    .putString(ExamCountdownWidgetProvider.KEY_THEME_ACCENT, colour(theme, "cd"))
                     .putLong(ExamCountdownWidgetProvider.KEY_SYNCED, System.currentTimeMillis())
                     .commit();
         } catch (Exception e) {
@@ -139,6 +145,15 @@ public class WidgetBridge {
 
     private SharedPreferences shared() {
         return activity.getSharedPreferences(ExamCountdownWidgetProvider.PREFS, Context.MODE_PRIVATE);
+    }
+
+    /** A "#rrggbb" colour from the theme object, or "" when it is missing. */
+    private static String colour(JSONObject theme, String key) {
+        if (theme == null) {
+            return "";
+        }
+        String value = theme.optString(key, "");
+        return value == null ? "" : value.trim();
     }
 
     private String sanitizeSize(String size) {
