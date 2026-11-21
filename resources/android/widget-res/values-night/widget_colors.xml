@@ -9,4 +9,7 @@
     <color name="ss_widget_seg_bg">#FF24352C</color>
     <color name="ss_widget_seg_line">#FF355143</color>
     <color name="ss_widget_warn">#FFF2C48B</color>
+    <!-- Sticky paper keeps the colour picked in the app, even at night. -->
+    <color name="ss_note_default">#FFFDF3C7</color>
+    <color name="ss_note_default_ink">#FF5A4A12</color>
 </resources>

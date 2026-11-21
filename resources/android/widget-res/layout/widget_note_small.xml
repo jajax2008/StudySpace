@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small (2 x 2): one journal sticky note, compact padding and text. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_note_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/w_note_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_bg"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY" />
+
+    <LinearLayout
+        android:id="@+id/w_note_pad"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="11dp">
+
+        <TextView
+            android:id="@+id/w_note_text"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="@font/ss_sans"
+            android:lineSpacingMultiplier="1.15"
+            android:maxLines="5"
+            android:text="@string/ss_note_empty"
+            android:textColor="@color/ss_note_default_ink"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/w_note_left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/ss_sans"
+            android:maxLines="1"
+            android:textColor="@color/ss_note_default_ink"
+            android:textSize="9sp" />
+    </LinearLayout>
+</FrameLayout>

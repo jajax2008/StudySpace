@@ -100,6 +100,49 @@ public class WidgetBridge {
         });
     }
 
+    /**
+     * Persists the Daily Journal sticky note shown by the sticky note widget and
+     * broadcasts an immediate ACTION_APPWIDGET_UPDATE so the home screen redraws
+     * without waiting for the launcher's own update period.
+     */
+    @JavascriptInterface
+    public void syncSticky(String json) {
+        try {
+            JSONObject data = new JSONObject(json == null ? "{}" : json);
+            shared().edit()
+                    .putString(StickyNoteWidgetProvider.KEY_TEXT, data.optString("text", ""))
+                    .putString(StickyNoteWidgetProvider.KEY_COLOR, colourHex(data.optString("color", "")))
+                    .putString(StickyNoteWidgetProvider.KEY_INK, colourHex(data.optString("ink", "")))
+                    .putLong(StickyNoteWidgetProvider.KEY_EXPIRES, data.optLong("expires", 0L))
+                    .putString(StickyNoteWidgetProvider.KEY_SIZE, sanitizeSize(data.optString("size", "medium")))
+                    .putLong(StickyNoteWidgetProvider.KEY_SYNCED, System.currentTimeMillis())
+                    .commit();
+        } catch (Exception e) {
+            return;
+        }
+        main.post(new Runnable() {
+            @Override
+            public void run() {
+                StickyNoteWidgetProvider.updateAll(activity);
+                try {
+                    Intent update = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                    update.setComponent(new ComponentName(activity, StickyNoteWidgetProvider.class));
+                    int[] ids = AppWidgetManager.getInstance(activity)
+                            .getAppWidgetIds(new ComponentName(activity, StickyNoteWidgetProvider.class));
+                    update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+                    activity.sendBroadcast(update);
+                } catch (Exception ignored) {
+                }
+            }
+        });
+    }
+
+    /** Shows Android's native "add widget" dialog for the sticky note widget. */
+    @JavascriptInterface
+    public void requestPinSticky() {
+        requestPin(StickyNoteWidgetProvider.class);
+    }
+
     /** Forces a redraw, used when the app resumes from the background. */
     @JavascriptInterface
     public void refresh() {
@@ -114,6 +157,10 @@ public class WidgetBridge {
     /** Shows Android's native "add widget" dialog when the launcher supports it. */
     @JavascriptInterface
     public void requestPin() {
+        requestPin(ExamCountdownWidgetProvider.class);
+    }
+
+    private void requestPin(final Class<?> provider) {
         main.post(new Runnable() {
             @Override
             public void run() {
@@ -122,7 +169,7 @@ public class WidgetBridge {
                     if (Build.VERSION.SDK_INT >= 26) {
                         AppWidgetManager manager = AppWidgetManager.getInstance(activity);
                         if (manager.isRequestPinAppWidgetSupported()) {
-                            ComponentName name = new ComponentName(activity, ExamCountdownWidgetProvider.class);
+                            ComponentName name = new ComponentName(activity, provider);
                             pinned = manager.requestPinAppWidget(name, null, null);
                         }
                     }
@@ -141,6 +188,15 @@ public class WidgetBridge {
                 }
             }
         });
+    }
+
+    /** Keeps only a "#rrggbb" value so a bad string never reaches the widget. */
+    private static String colourHex(String value) {
+        if (value == null) {
+            return "";
+        }
+        String v = value.trim();
+        return v.matches("#[0-9a-fA-F]{6}") ? v : "";
     }
 
     private SharedPreferences shared() {

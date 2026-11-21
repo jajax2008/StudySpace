@@ -9,4 +9,6 @@
     <color name="ss_widget_seg_bg">#FFECF2EF</color>
     <color name="ss_widget_seg_line">#FFC9DAD1</color>
     <color name="ss_widget_warn">#FFA9701C</color>
+    <color name="ss_note_default">#FFFDF3C7</color>
+    <color name="ss_note_default_ink">#FF5A4A12</color>
 </resources>

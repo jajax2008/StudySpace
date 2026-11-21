@@ -6,4 +6,12 @@
     <string name="ss_widget_days">days</string>
     <string name="ss_widget_hours">hrs</string>
     <string name="ss_widget_mins">min</string>
+
+    <string name="ss_note_widget_title">Sticky note</string>
+    <string name="ss_note_widget_description">Shows one sticky note from your Daily Journal.</string>
+    <string name="ss_note_empty">No sticky note selected yet. Open StudySpace and choose one under More, Widget, Sticky Notes.</string>
+    <string name="ss_note_permanent">Kept until you delete it</string>
+    <string name="ss_note_expired">This note expired</string>
+    <string name="ss_note_days_left">%1$d days left</string>
+    <string name="ss_note_hours_left">%1$d hours left</string>
 </resources>
