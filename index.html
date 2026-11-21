@@ -1567,7 +1567,16 @@ function stickyWidgetHTML(){
 }
 function wgRoute(){
   var n=wgBridge();if(!n||typeof n.getPendingRoute!=='function')return;
-  try{if(n.getPendingRoute())window.__ssOpenExams()}catch(e){}
+  try{
+    var r=n.getPendingRoute();
+    if(!r)return;
+    if(r==='journal'){
+      tab='life';hv='journal';render();
+      var v=document.getElementById('view');if(v)v.scrollTop=0;
+      return;
+    }
+    window.__ssOpenExams();
+  }catch(e){}
 }
 function wgHTML(){
   var w=wgState(),x=wgPick(),on=!!w.on;
