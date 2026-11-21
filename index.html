@@ -104,9 +104,15 @@ button,textarea{font-family:inherit}
 .lv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sw{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}.sw i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
 .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.cols input{height:42px;padding:3px}
-.buddies{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px}
-.bcard{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:4px;transition:transform .15s}
-.bcard:active{transform:scale(.97)}.bcard small{color:var(--muted)}
+.buddies{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 4px;align-items:stretch}
+.bcard{position:relative;overflow:visible;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;background:linear-gradient(172deg,color-mix(in srgb,var(--bc,var(--accent)) 9%,var(--card)),var(--card) 62%);color:var(--ink);border:1px solid color-mix(in srgb,var(--bc,var(--accent)) 24%,var(--line));border-radius:20px;padding:16px 12px 13px;min-height:186px;transition:transform .22s var(--spring),border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.bcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120px 70px at 50% 4%,color-mix(in srgb,var(--bc,var(--accent)) 17%,transparent),transparent 72%)}
+.bcard:active{transform:scale(.975)}
+.bcard>.sb-av,.bcard>b,.bcard>small,.bcard>.bgo{position:relative;z-index:1}
+.bcard>.ss-ripple{display:none}
+.bcard b{display:block;margin-top:9px;font-size:14.5px;font-weight:700;letter-spacing:-.1px;line-height:1.2}
+.bcard small{display:block;margin-top:4px;min-height:2.8em;color:var(--muted);font-size:11.5px;line-height:1.4;max-width:16em}
+.bcard .bgo{display:inline-flex;align-items:center;gap:4px;margin-top:2px;padding:3px 9px;border-radius:999px;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:color-mix(in srgb,var(--bc,var(--accent)) 78%,var(--ink));background:color-mix(in srgb,var(--bc,var(--accent)) 12%,var(--card));border:1px solid color-mix(in srgb,var(--bc,var(--accent)) 26%,var(--line))}
 .bud{width:58px;height:58px;overflow:visible;animation:bob 3.4s ease-in-out infinite}
 .bud .bd{fill:color-mix(in srgb,var(--bc) 24%,var(--card));stroke:var(--bc);stroke-width:2}
 .bud .ey{fill:var(--ink);transform-box:fill-box;transform-origin:center;animation:blink 4.2s infinite}
@@ -171,30 +177,31 @@ nav{display:none!important}
 /* ---------- MOOD BUTTONS: state changes in place ---------- */
 .card [data-hmood]{transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease)}
 .card [data-hmood].on{background:var(--accent);color:var(--on);border-color:var(--accent)}
-.moodc{padding:14px 12px 10px}
-.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
-.mood{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 2px 7px;min-height:64px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:10.5px;line-height:1.2;box-shadow:none}
-.mood .mi{display:block;width:27px;height:27px;color:var(--mc,var(--accent));transition:color .25s var(--ease),transform .32s var(--spring)}
-.mood .mi svg{display:block;width:100%;height:100%;overflow:visible}
-.mood .mi svg *{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.mood .mi .fhd{fill:currentColor;stroke:none;opacity:.13}
-.mood .mi .fe{fill:currentColor;stroke:none}
-.mood .mi .fb{fill:currentColor;stroke:none;opacity:.36}
-.mood .mi .ftear{fill:currentColor;stroke:none;opacity:.42}
-.mood .mi .fsp{fill:currentColor;stroke:none;opacity:.6}
-.mood:nth-child(1){--mc:#e0857f}
-.mood:nth-child(2){--mc:#dfa76b}
-.mood:nth-child(3){--mc:#87aec9}
-.mood:nth-child(4){--mc:#76bfa0}
-.mood:nth-child(5){--mc:#ae95dd}
-.mood:hover .mi{transform:scale(1.06)}
-.mood.on .mi{color:var(--on);transform:scale(1.08)}
-.mood.on{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
-.mweek{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;align-items:end;margin-top:14px}
-.mday{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:6px 0 4px;border-radius:9px;transition:background-color .25s var(--ease)}
-.mday .mbar{display:block;width:100%;max-width:20px;border-radius:4px;transition:height .35s var(--ease),background-color .35s var(--ease),opacity .35s var(--ease)}
-.mday small{font-size:10px;letter-spacing:.01em;color:var(--muted);font-weight:600}
-.mday.today{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.moodc{padding:16px 14px 12px}
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mood{--mc:var(--accent);display:flex;align-items:center;justify-content:center;padding:12px 2px;min-height:0;border-radius:11px;background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:650;font-size:11.5px;letter-spacing:.005em;line-height:1.1;box-shadow:none;overflow:visible}
+.mood .ml{display:inline-block;transition:transform .2s var(--spring)}
+.mood:nth-child(1){--mc:#cf7c76}
+.mood:nth-child(2){--mc:#d9a15f}
+.mood:nth-child(3){--mc:#86aecb}
+.mood:nth-child(4){--mc:#72bda0}
+.mood:nth-child(5){--mc:#a68bd8}
+.mood:hover{color:var(--ink);border-color:color-mix(in srgb,var(--mc) 48%,var(--line));background:color-mix(in srgb,var(--mc) 10%,transparent)}
+.mood:hover .ml{transform:translateY(-1px)}
+.mood.on{background:var(--accent);color:var(--on);border-color:var(--accent);box-shadow:0 8px 18px -13px color-mix(in srgb,var(--accent) 90%,transparent)}
+.mood.on .ml{font-weight:800;animation:moodPop .42s var(--spring)}
+@keyframes moodPop{0%{transform:scale(.84)}55%{transform:scale(1.07)}100%{transform:scale(1)}}
+.mweek{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:14px;padding-top:13px;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent)}
+.mday{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:7px 0 6px;border-radius:10px;transition:background-color .25s var(--ease)}
+.mday small{font-size:10px;letter-spacing:.02em;color:var(--muted);font-weight:700}
+.mday .mdot{display:block;width:5px;height:5px;border-radius:50%;background:var(--line);opacity:.95;transition:transform .35s var(--spring),background-color .35s var(--ease),opacity .35s var(--ease)}
+.mday[data-v="0"] .mdot{opacity:.42}
+.mday[data-v="1"] .mdot{background:#cf7c76}
+.mday[data-v="2"] .mdot{background:#d9a15f}
+.mday[data-v="3"] .mdot{background:#86aecb}
+.mday[data-v="4"] .mdot{background:#72bda0}
+.mday[data-v="5"] .mdot{background:var(--accent);transform:scale(1.4)}
+.mday.today{background:color-mix(in srgb,var(--accent) 11%,transparent)}
 .mday.today small{color:var(--accent);font-weight:800}
 
 /* ---------- STABLE TAB BAR + QUICK-ADD ---------- */
@@ -816,7 +823,10 @@ function budSVG(kind){
   const cheeks=kind==='l'?'<ellipse class="ck" cx="21" cy="40" rx="3.5" ry="2.4"/><ellipse class="ck" cx="43" cy="40" rx="3.5" ry="2.4"/>':'';
   return'<svg class="bud'+(slp?' sleepy':'')+'" viewBox="0 0 64 64" aria-hidden="true"><circle class="bd" cx="32" cy="36" r="19"/>'+cap+cheeks+'<ellipse class="ey" cx="25" cy="34" rx="2.4" ry="3.2"/><ellipse class="ey b" cx="39" cy="34" rx="2.4" ry="3.2"/><path class="mo" d="'+(slp?'M28 43q4 1.8 8 0':'M27 42Q32 46.5 37 42')+'"/><g class="wv"><ellipse cx="53" cy="36" rx="4" ry="7"/></g><text class="zz" x="44" y="16">z</text></svg>'}
 function buddyBoxes(){
-  return'<div class="buddies"><button class="bcard" data-mod="buddy" style="--bc:var(--accent)">'+budSVG('s')+'<b>StudyBuddy</b><small>Ask me anything</small></button><button class="bcard" data-mod="lifebuddy" style="--bc:#c0793b">'+budSVG('l')+'<b>Life Buddy</b><small>I’m here to listen</small></button></div>'}
+  return'<div class="buddies">'+
+    '<button class="bcard" data-mod="buddy" data-kind="study" style="--bc:var(--accent)" aria-label="StudyBuddy, ask me anything">'+budSVG('s')+'<b>StudyBuddy</b><small>Ask me anything</small><span class="bgo">Open chat<span aria-hidden="true">\u203a</span></span></button>'+
+    '<button class="bcard" data-mod="lifebuddy" data-kind="life" style="--bc:#c0793b" aria-label="LifeBuddy, I am here to listen">'+budSVG('l')+'<b>LifeBuddy</b><small>I’m here to listen</small><span class="bgo">Open chat<span aria-hidden="true">\u203a</span></span></button>'+
+  '</div>'}
 const KATE_MSG='Jaja loves you, always cares for you, and will never stop loving you &lt;3';
 const isKate=()=>/^kate$/i.test((S.prof&&S.prof.name||'').trim());
 function kateCard(){
@@ -845,26 +855,19 @@ function cdBox(x){
   return'<div class="cdc"><div class="cdt"><span>'+esc(x.title)+'</span><small>'+(s?esc(s.name)+' \u00b7 ':'')+x.date+(x.time?', '+fmtT(x.time):'')+'</small></div><div class="tm" data-at="'+examAt(x)+'">'+v.map((n,i)=>(i?'<i>:</i>':'')+'<div class="sg"><b>'+n+'</b><small>'+L[i]+'</small></div>').join('')+'</div></div>'}
 setInterval(()=>{document.querySelectorAll('.tm').forEach(e=>{const v=tmVals(+e.dataset.at),b=e.querySelectorAll('b');v.forEach((n,i)=>{if(b[i]&&b[i].textContent!==n)b[i].textContent=n})})},1000);
 const MOODL=['Rough','Low','Okay','Good','Great'];
-const MOOD_FACES={
-  Rough:'<circle class="fhd" cx="16" cy="16" r="14"/><path d="M10.4 13.6q1.9 1.7 3.8 0M17.8 13.6q1.9 1.7 3.8 0"/><path d="M11.7 22.5c2.3-2.9 6.3-2.9 8.6 0"/><path class="ftear" d="M22.6 17.4c1.3 1.9 1.3 3.3 0 4.1-1.3-.8-1.3-2.2 0-4.1Z"/>',
-  Low:'<circle class="fhd" cx="16" cy="16" r="14"/><circle class="fe" cx="12" cy="13.8" r="1.35"/><circle class="fe" cx="20" cy="13.8" r="1.35"/><path d="M12.9 21.4q3.1-2.3 6.2 0"/>',
-  Okay:'<circle class="fhd" cx="16" cy="16" r="14"/><circle class="fe" cx="12" cy="13.8" r="1.35"/><circle class="fe" cx="20" cy="13.8" r="1.35"/><path d="M13.4 20.7h5.2"/>',
-  Good:'<circle class="fhd" cx="16" cy="16" r="14"/><circle class="fe" cx="12" cy="13.8" r="1.35"/><circle class="fe" cx="20" cy="13.8" r="1.35"/><path d="M12.4 19.6q3.6 3.2 7.2 0"/><circle class="fb" cx="8.9" cy="18.8" r="1.7"/><circle class="fb" cx="23.1" cy="18.8" r="1.7"/>',
-  Great:'<circle class="fhd" cx="16" cy="16" r="14"/><path d="M9.8 14.1q2.6-2.7 5.2 0M17 14.1q2.6-2.7 5.2 0"/><path d="M11.9 19.1q4.1 4.5 8.2 0"/><circle class="fb" cx="8.6" cy="18.6" r="1.7"/><circle class="fb" cx="23.4" cy="18.6" r="1.7"/><path class="fsp" d="M25 8.2l.75 1.85 1.85.75-1.85.75-.75 1.85-.75-1.85-1.85-.75 1.85-.75Z"/>'
-};
-function moodFace(m){return '<svg viewBox="0 0 32 32" aria-hidden="true">'+(MOOD_FACES[m]||MOOD_FACES.Okay)+'</svg>'}
+/* Text-only mood pills: every emoji and icon is gone, the label carries it. */
 function moodCard(){
   const cur=MOODL.indexOf((S.journal[todayStr()]||{}).mood)+1;
   const moods=MOODL.map(function(m,i){
     const on=cur===i+1;
-    return '<button type="button" class="mood'+(on?' on':'')+'" data-hmood="'+m+'" aria-pressed="'+(on?'true':'false')+'"><span class="mi" aria-hidden="true">'+moodFace(m)+'</span><span>'+m+'</span></button>';
+    return '<button type="button" class="mood'+(on?' on':'')+'" data-hmood="'+m+'" aria-pressed="'+(on?'true':'false')+'"><span class="ml">'+m+'</span></button>';
   }).join('');
   let days='';
   const mon=new Date();mon.setHours(12,0,0,0);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
   for(let i=0;i<7;i++){
     const dt=new Date(mon);dt.setDate(mon.getDate()+i);
     const key=ymd(dt),v=MOODL.indexOf((S.journal[key]||{}).mood)+1,today=key===todayStr();
-    days+='<div class="mday'+(today?' today':'')+'" data-mbar="'+key+'"'+(today?' aria-current="date"':'')+'><span class="mbar" style="height:'+(v?8+v*5:5)+'px;background:'+(v?'var(--accent)':'var(--line)')+';opacity:'+(v?.4+v*.12:1)+'"></span><small>'+DAYS[dt.getDay()]+'</small></div>';
+    days+='<div class="mday'+(today?' today':'')+'" data-mbar="'+key+'" data-v="'+v+'"'+(today?' aria-current="date"':'')+' aria-label="'+DAYS[dt.getDay()]+(v?', '+MOODL[v-1]:', no mood yet')+'"><small>'+DAYS[dt.getDay()]+'</small><span class="mdot" aria-hidden="true"></span></div>';
   }
   return '<div class="lbl">How are you today?</div><div class="card moodc" id="moodcard"><div class="moods">'+moods+'</div><div class="mweek" aria-label="Mood over the last seven days">'+days+'</div></div>';
 }
@@ -877,11 +880,10 @@ function moodSet(btn){
     const on=b===btn;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');
   });
   card.querySelectorAll('[data-mbar]').forEach(function(el){
-    const v=MOODL.indexOf((S.journal[el.getAttribute('data-mbar')]||{}).mood)+1,bar=el.querySelector('.mbar');
-    if(!bar)return;
-    bar.style.height=(v?8+v*5:5)+'px';
-    bar.style.background=v?'var(--accent)':'var(--line)';
-    bar.style.opacity=v?.4+v*.12:1;
+    const key=el.getAttribute('data-mbar'),v=MOODL.indexOf((S.journal[key]||{}).mood)+1;
+    el.setAttribute('data-v',String(v));
+    const day=new Date(key+'T12:00');
+    el.setAttribute('aria-label',DAYS[day.getDay()]+(v?', '+MOODL[v-1]:', no mood yet'));
   });
   try{wgSyncSoon()}catch(e){}
 }
