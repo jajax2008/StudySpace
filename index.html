@@ -171,11 +171,21 @@ nav{display:none!important}
 /* ---------- MOOD BUTTONS: state changes in place ---------- */
 .card [data-hmood]{transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease)}
 .card [data-hmood].on{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.moodc{padding:14px 12px 10px}
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.mood{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 2px 7px;min-height:64px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:10.5px;line-height:1.2;box-shadow:none}
+.mood .mi{font-size:19px;line-height:1}
+.mood.on{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.mweek{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;align-items:end;margin-top:14px}
+.mday{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:6px 0 4px;border-radius:9px;transition:background-color .25s var(--ease)}
+.mday .mbar{display:block;width:100%;max-width:20px;border-radius:4px;transition:height .35s var(--ease),background-color .35s var(--ease),opacity .35s var(--ease)}
+.mday small{font-size:10px;letter-spacing:.01em;color:var(--muted);font-weight:600}
+.mday.today{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.mday.today small{color:var(--accent);font-weight:800}
 
 /* ---------- STABLE TAB BAR + QUICK-ADD ---------- */
 nav{flex:none;height:56px;align-items:stretch;box-sizing:border-box;padding:0}
 nav button{box-sizing:border-box;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;border:0;border-radius:0;line-height:1.15}
-#ssFab{contain:layout}
 
 /* ---------- Group Study tile, More tiles, Custom Layout, voice room ---------- */
 .gtile{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 2px;font-weight:400}
@@ -311,17 +321,38 @@ img,video,canvas{max-width:100%;height:auto}
 .sn.snmin svg{width:19px;height:19px;fill:none;stroke:var(--inkp);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sn.snmin .sndot{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#d98324;box-shadow:0 0 0 3px rgba(217,131,36,.18)}
 #snlayer.sndrag,#snlayer.sndrag *{cursor:grabbing}
+/* ---------- Journal sticky note on Home ---------- */
+.sn.fl.stk{background-image:none;border-radius:6px 16px 16px 16px;transform:rotate(.9deg);box-shadow:0 10px 22px rgba(40,35,15,.2),0 1px 0 rgba(255,255,255,.6) inset}
+.sn.fl.stk .snq{font-size:11.5px;line-height:1.4;-webkit-line-clamp:6}
+.sn.fl.stk .snsig{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;opacity:.72;text-align:left}
+.sn.fl.stk.dragging{transform:rotate(1.8deg) scale(1.03)}
+.sn.snmin.stk{background-color:var(--paper)}
+/* ---------- Journal sticky note zoom ---------- */
+.skopen{cursor:pointer}
+.skcard .skonhome{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--skink);background:rgba(255,255,255,.55);border:1px solid color-mix(in srgb,var(--skink) 22%,transparent);border-radius:999px;padding:3px 7px}
+.skzc .skleft{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.75;background:rgba(255,255,255,.5);border-radius:999px;padding:4px 9px;margin-bottom:4px}
+.skzc .snq{font-size:18px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:52vh;overflow:auto}
+.skzc .snzacts{display:flex;gap:8px;margin-top:20px}
+.skzc .snzacts button{flex:1;min-height:46px;border-radius:12px;font-size:14px;font-weight:700}
+.skzc .snzacts button[data-skdisplay]{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.skzc .snzacts button[data-skdisplay].on{background:transparent;color:inherit;border:1px solid color-mix(in srgb,var(--inkp) 32%,transparent)}
+.skzc .snzacts button.ghost{flex:0 0 auto;padding:0 18px;background:transparent;color:inherit;border:1px solid color-mix(in srgb,var(--inkp) 26%,transparent)}
 
 /* ---------- Draggable Quick Add (+) ---------- */
-#qa{position:fixed;z-index:930;width:52px;height:52px;min-height:52px;padding:0;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--on);border:0;box-shadow:0 14px 30px -12px rgba(20,40,30,.55);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;transition:transform .18s var(--spring),box-shadow .25s var(--ease)}
-#qa.dragging{transform:scale(1.07);box-shadow:0 20px 40px -14px rgba(20,40,30,.6);cursor:grabbing}
-#qa svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;pointer-events:none}
-#qamenu{position:fixed;z-index:931;width:212px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 22px 48px -18px rgba(16,24,20,.55);display:none}
-#qamenu.on{display:block;animation:qaIn .18s var(--ease) both}
-@keyframes qaIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
-#qamenu button{display:flex;width:100%;text-align:left;gap:9px;align-items:center;min-height:42px;background:transparent;border:0;box-shadow:none;padding:8px 10px;border-radius:10px;font-size:14px;font-weight:600;color:var(--ink)}
+#qa{position:fixed;z-index:930;width:54px;height:54px;min-height:54px;padding:0;border-radius:18px;display:grid;place-items:center;background:linear-gradient(152deg,color-mix(in srgb,var(--accent) 52%,#fff),color-mix(in srgb,var(--accent) 90%,#000));color:var(--on);border:1px solid color-mix(in srgb,var(--accent) 28%,#fff);box-shadow:0 14px 28px -12px color-mix(in srgb,var(--accent) 70%,transparent),0 2px 6px rgba(8,18,13,.16),inset 0 1px 0 rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;transition:transform .22s var(--spring),box-shadow .28s var(--ease),opacity .22s var(--ease)}
+#qa svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;pointer-events:none;transition:transform .3s var(--spring)}
+#qa.dragging{transform:scale(1.08);box-shadow:0 22px 42px -14px rgba(20,40,30,.55);cursor:grabbing}
+#qa.open{opacity:0;transform:scale(.78) rotate(-90deg);pointer-events:none}
+#qabk{position:fixed;inset:0;z-index:929;background:rgba(10,18,14,.36);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .28s var(--ease)}
+#qabk.on{opacity:1;pointer-events:auto}
+#qamenu{position:fixed;left:50%;top:50%;z-index:931;width:min(calc(100% - 36px),340px);max-height:calc(100% - 40px);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:10px;box-shadow:0 30px 60px -24px rgba(10,20,15,.6);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%) scale(.82);transition:opacity .22s var(--ease),transform .32s cubic-bezier(.2,.9,.25,1),visibility .22s}
+#qamenu.on{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+#qamenu button{display:flex;width:100%;text-align:left;gap:11px;align-items:center;min-height:52px;background:transparent;border:0;box-shadow:none;padding:10px 12px;border-radius:13px;font-size:14.5px;font-weight:600;color:var(--ink)}
+#qamenu.on button{animation:qaPop .4s cubic-bezier(.2,.9,.25,1) both;animation-delay:calc(var(--i,0) * 55ms)}
 #qamenu button:active{background:color-mix(in srgb,var(--accent) 12%,var(--card))}
-#qamenu svg{width:17px;height:17px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#qamenu svg{width:19px;height:19px;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@keyframes qaPop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#qamenu,#qabk{transition:none}#qamenu.on button{animation:none}}
 
 /* ---------- Daily Journal sticky notes (pinboard) ---------- */
 .sk-sec{margin-top:26px}
@@ -523,6 +554,7 @@ const blank=()=>({
   icon:{style:'style1',theme:'default'},
   home:{order:[],hidden:[]},
   stickies:[],quick:{x:null,y:null},
+  spin:{id:'',x:null,y:null,min:false,side:'',py:null},
   note:{date:'',text:'',x:null,y:null,dismissed:false,src:'',min:false,side:'',py:null},
   prof:{name:'',age:'',level:'',done:false},ui:{}
 });
@@ -593,6 +625,13 @@ function load(){
   if(!d.quick||typeof d.quick!=='object')d.quick={x:null,y:null};
   if(typeof d.quick.x!=='number')d.quick.x=null;
   if(typeof d.quick.y!=='number')d.quick.y=null;
+  if(!d.spin||typeof d.spin!=='object')d.spin={id:'',x:null,y:null,min:false,side:'',py:null};
+  if(typeof d.spin.id!=='string')d.spin.id='';
+  if(typeof d.spin.x!=='number')d.spin.x=null;
+  if(typeof d.spin.y!=='number')d.spin.y=null;
+  d.spin.min=!!d.spin.min;
+  if(d.spin.side!=='left'&&d.spin.side!=='right')d.spin.side='';
+  if(typeof d.spin.py!=='number')d.spin.py=null;
   Object.keys(d.fired).forEach(k=>{if(d.fired[k]===1)d.fired[k]=Date.now()});
   return d;
 }
@@ -793,20 +832,35 @@ function cdBox(x){
 setInterval(()=>{document.querySelectorAll('.tm').forEach(e=>{const v=tmVals(+e.dataset.at),b=e.querySelectorAll('b');v.forEach((n,i)=>{if(b[i]&&b[i].textContent!==n)b[i].textContent=n})})},1000);
 const MOODL=['Rough','Low','Okay','Good','Great'];
 function moodCard(){
-  const mv=d=>MOODL.indexOf((S.journal[d]||{}).mood)+1,cur=mv(todayStr());let bars='';
-  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=mv(ymd(d));bars+='<span data-mbar="'+ymd(d)+'" style="flex:1;height:'+(v?6+v*5:4)+'px;border-radius:3px;background:'+(v?'var(--accent)':'var(--line)')+';opacity:'+(v?.35+v*.13:1)+';transition:height .35s var(--ease),background-color .35s var(--ease)"></span>'}
-  return'<div class="lbl">How are you today?</div><div class="card" id="moodcard"><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">'+MOODL.map((m,i)=>'<button class="'+(cur===i+1?'':'ghost')+'" data-hmood="'+m+'" aria-pressed="'+(cur===i+1?'true':'false')+'" style="padding:8px 2px;font-size:12px">'+m+'</button>').join('')+'</div><div style="display:flex;align-items:flex-end;gap:4px;height:36px;margin-top:12px">'+bars+'</div><small>Last 7 days</small></div>'}
+  const cur=MOODL.indexOf((S.journal[todayStr()]||{}).mood)+1;
+  const MI={Rough:'😖',Low:'😕',Okay:'😐',Good:'🙂',Great:'😄'};
+  const moods=MOODL.map(function(m,i){
+    const on=cur===i+1;
+    return '<button type="button" class="mood'+(on?' on':'')+'" data-hmood="'+m+'" aria-pressed="'+(on?'true':'false')+'"><span class="mi" aria-hidden="true">'+MI[m]+'</span><span>'+m+'</span></button>';
+  }).join('');
+  let days='';
+  const mon=new Date();mon.setHours(12,0,0,0);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  for(let i=0;i<7;i++){
+    const dt=new Date(mon);dt.setDate(mon.getDate()+i);
+    const key=ymd(dt),v=MOODL.indexOf((S.journal[key]||{}).mood)+1,today=key===todayStr();
+    days+='<div class="mday'+(today?' today':'')+'" data-mbar="'+key+'"'+(today?' aria-current="date"':'')+'><span class="mbar" style="height:'+(v?8+v*5:5)+'px;background:'+(v?'var(--accent)':'var(--line)')+';opacity:'+(v?.4+v*.12:1)+'"></span><small>'+DAYS[dt.getDay()]+'</small></div>';
+  }
+  return '<div class="lbl">How are you today?</div><div class="card moodc" id="moodcard"><div class="moods">'+moods+'</div><div class="mweek" aria-label="Mood over the last seven days">'+days+'</div></div>';
+}
 /* Mood changes are applied in place. Re-rendering Home would recreate the
    StudyBuddy / LifeBuddy avatars, which makes their icons flicker. */
 function moodSet(btn){
   jent(todayStr()).mood=btn.dataset.hmood;save();
   const card=btn.closest('#moodcard');if(!card)return;
-  card.querySelectorAll('[data-hmood]').forEach(function(b){const on=b===btn;b.classList.toggle('ghost',!on);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')});
+  card.querySelectorAll('[data-hmood]').forEach(function(b){
+    const on=b===btn;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');
+  });
   card.querySelectorAll('[data-mbar]').forEach(function(el){
-    const day=el.getAttribute('data-mbar'),val=day===todayStr()?MOODL.indexOf(btn.dataset.hmood)+1:MOODL.indexOf((S.journal[day]||{}).mood)+1;
-    el.style.height=(val?6+val*5:4)+'px';
-    el.style.background=val?'var(--accent)':'var(--line)';
-    el.style.opacity=val?.35+val*.13:1;
+    const v=MOODL.indexOf((S.journal[el.getAttribute('data-mbar')]||{}).mood)+1,bar=el.querySelector('.mbar');
+    if(!bar)return;
+    bar.style.height=(v?8+v*5:5)+'px';
+    bar.style.background=v?'var(--accent)':'var(--line)';
+    bar.style.opacity=v?.4+v*.12:1;
   });
   try{wgSyncSoon()}catch(e){}
 }
@@ -988,29 +1042,80 @@ function snClamp(n){
   return n;
 }
 const SNI='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v7l-5 5H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM14 18v-4h4"/></svg>';
+function snBox(o,defY){
+  const v=snViewport();
+  if(o.x===null||o.y===null){o.x=16;o.y=(typeof defY==='number'?defY:110)}
+  o.x=Math.min(Math.max(4,o.x),Math.max(8,v.w-126));
+  o.y=Math.min(Math.max(56,o.y),Math.max(70,v.h-152));
+  if(typeof o.py!=='number')o.py=o.y;
+  if(o.side!=='left'&&o.side!=='right')o.side='right';
+  return o;
+}
+function spinState(){
+  if(!S.spin||typeof S.spin!=='object')S.spin={id:'',x:null,y:null,min:false,side:'',py:null};
+  const s=S.spin;
+  if(typeof s.id!=='string')s.id='';
+  if(typeof s.x!=='number')s.x=null;
+  if(typeof s.y!=='number')s.y=null;
+  if(typeof s.min!=='boolean')s.min=false;
+  if(s.side!=='left'&&s.side!=='right')s.side='';
+  if(typeof s.py!=='number')s.py=null;
+  return s;
+}
+/* The journal note pinned to Home is stored by id, so edits, colours and the
+   remaining duration in the journal show up on Home straight away. */
+function homeSticky(){
+  const s=spinState();
+  if(!s.id)return null;
+  const st=stickyList().filter(function(x){return x.id===s.id})[0];
+  if(!st||(st.expires&&st.expires<=Date.now())){s.id='';save();return null}
+  return st;
+}
 function snRender(anim){
   const layer=document.getElementById('snlayer');
   if(!layer)return;
-  const n=noteState();
-  if(n.dismissed||tab!=='home'){layer.innerHTML='';return}
-  snClamp(n);
-  const v=snViewport();
-  if(n.min){
-    n.py=Math.min(Math.max(56,n.py),Math.max(70,v.h-96));
-    const top=Math.round(n.py),left=n.side==='left'?-12:Math.round(v.w-32);
-    layer.innerHTML='<button class="sn snmin'+(n.side==='left'?'':' rm')+(anim?' an':'')+'" id="sn" type="button" style="left:'+left+'px;top:'+top+'px" aria-label="Expand your sticky note">'+SNI+'<span class="sndot" aria-hidden="true"></span></button>';
-    return;
+  let html='';
+  if(tab==='home'){
+    const n=noteState();
+    if(!n.dismissed){
+      snClamp(n);
+      const v=snViewport();
+      if(n.min){
+        n.py=Math.min(Math.max(56,n.py),Math.max(70,v.h-96));
+        const top=Math.round(n.py),left=n.side==='left'?-12:Math.round(v.w-32);
+        html+='<button class="sn snmin'+(n.side==='left'?'':' rm')+(anim?' an':'')+'" id="sn" type="button" style="left:'+left+'px;top:'+top+'px" aria-label="Expand your sticky note">'+SNI+'<span class="sndot" aria-hidden="true"></span></button>';
+      }else{
+        const q=esc(n.text||noteText());
+        html+='<div class="sn fl'+(anim?' an':'')+'" id="sn" role="button" tabindex="0" style="left:'+Math.round(n.x)+'px;top:'+Math.round(n.y)+'px" aria-label="Today’s note from Life Buddy. Tap to read it larger.">'+
+          '<span class="sntape" aria-hidden="true"></span>'+
+          '<button class="snminb" data-snmin="1" aria-label="Minimise the note">–</button>'+
+          '<span class="snq">“'+q+'”</span>'+
+          '<span class="snsig">- Life Buddy ;&gt;</span></div>';
+      }
+    }
+    const st=homeSticky();
+    if(st){
+      const s=spinState(),v=snViewport(),c=stkColor(st.color);
+      const vars='--paper:'+c.bg+';--paper2:'+c.bg+';--inkp:'+c.ink+';--linep:color-mix(in srgb,'+c.ink+' 20%,transparent)';
+      if(s.min){
+        s.py=Math.min(Math.max(56,s.py),Math.max(70,v.h-96));
+        const top=Math.round(s.py),left=s.side==='left'?-12:Math.round(v.w-32);
+        html+='<button class="sn snmin stk'+(s.side==='left'?'':' rm')+(anim?' an':'')+'" id="sns" type="button" style="left:'+left+'px;top:'+top+'px;'+vars+'" aria-label="Expand your journal sticky note">'+SNI+'<span class="sndot" aria-hidden="true"></span></button>';
+      }else{
+        snBox(s,132);
+        html+='<div class="sn fl stk'+(anim?' an':'')+'" id="sns" role="button" tabindex="0" style="left:'+Math.round(s.x)+'px;top:'+Math.round(s.y)+'px;'+vars+'" aria-label="Your journal sticky note. Tap to read it larger.">'+
+          '<span class="sntape" aria-hidden="true"></span>'+
+          '<button class="snminb" data-snmin="stk" aria-label="Minimise the note">–</button>'+
+          '<span class="snq">'+esc(st.text)+'</span>'+
+          '<span class="snsig">'+stkLeft(st)+'</span></div>';
+      }
+    }
   }
-  const q=esc(n.text||noteText());
-  layer.innerHTML='<div class="sn fl'+(anim?' an':'')+'" id="sn" role="button" tabindex="0" style="left:'+Math.round(n.x)+'px;top:'+Math.round(n.y)+'px" aria-label="Today\u2019s note from Life Buddy. Tap to read it larger.">'+
-    '<span class="sntape" aria-hidden="true"></span>'+
-    '<button class="snminb" data-snmin="1" aria-label="Minimise the note">\u2013</button>'+
-    '<span class="snq">\u201c'+q+'\u201d</span>'+
-    '<span class="snsig">- Life Buddy ;&gt;</span></div>';
+  layer.innerHTML=html;
 }
 function snDown(el,pt,e){
   const r=el.getBoundingClientRect();
-  SNG={el:el,min:el.classList.contains('snmin'),x0:pt.clientX,y0:pt.clientY,bx:r.left,by:r.top,x:r.left,y:r.top,w:r.width,h:r.height,moved:false};
+  SNG={el:el,kind:el.id==='sns'?'stk':'main',min:el.classList.contains('snmin'),x0:pt.clientX,y0:pt.clientY,bx:r.left,by:r.top,x:r.left,y:r.top,w:r.width,h:r.height,moved:false};
   try{if(pt.pointerId!==undefined&&el.setPointerCapture)el.setPointerCapture(pt.pointerId)}catch(err){}
   document.body.classList.add('sndrag');
   const layer=document.getElementById('snlayer');if(layer)layer.classList.add('sndrag');
@@ -1042,12 +1147,12 @@ function snUp(){
   const layer=document.getElementById('snlayer');if(layer)layer.classList.remove('sndrag');
   snTrashHot(false);snTrash(false);
   if(!d.moved){
-    const n=noteState();
+    const n=d.kind==='stk'?spinState():noteState();
     if(d.min){n.min=false;save();snRender(true);return}
-    snFocus();return;
+    snFocus(d.kind);return;
   }
-  if(snOverTrash(d.el)){snDropOut(d.el);return}
-  const n=noteState(),v=snViewport();
+  if(snOverTrash(d.el)){snDropOut(d.el,d.kind);return}
+  const n=d.kind==='stk'?spinState():noteState(),v=snViewport();
   if(d.min){
     n.side=(d.x+d.w/2)<v.w/2?'left':'right';
     n.py=Math.round(Math.min(Math.max(56,d.y),v.h-96));
@@ -1076,26 +1181,38 @@ function snTrashEl(){
 }
 function snTrash(on){const t=snTrashEl();requestAnimationFrame(function(){t.classList.toggle('on',!!on)})}
 function snTrashHot(on){snTrashEl().classList.toggle('hot',!!on)}
-function snDropOut(el){
-  const n=noteState();n.dismissed=true;n.x=null;n.y=null;save();
-  el.classList.remove('moved');el.classList.add('gone');
+function snDropOut(el,kind){
+  if(kind!=='stk'){
+    const n=noteState();n.dismissed=true;n.x=null;n.y=null;save();
+    el.classList.remove('moved');el.classList.add('gone');
+    setTimeout(function(){snTrash(false);if(tab==='home')render()},380);
+    return;
+  }
+  const s=spinState();s.id='';s.x=null;s.y=null;s.min=false;s.py=null;save();
+  el.classList.add('gone');
   setTimeout(function(){snTrash(false);if(tab==='home')render()},380);
 }
-let SNFOCUS=0;
-function snFocus(){
-  const el=document.getElementById('sn');
+let SNFOCUS=0,SNZKIND='main';
+function snFocus(kind){
+  kind=kind==='stk'?'stk':'main';
+  const el=document.getElementById(kind==='stk'?'sns':'sn');
   if(!el||document.getElementById('snz'))return;
-  const n=noteState(),q=esc(n.text||noteFallback());
+  const st=kind==='stk'?homeSticky():null;
+  if(kind==='stk'&&!st)return;
+  const n=noteState(),c=st?stkColor(st.color):null;
+  const text=st?st.text:(n.text||noteFallback());
   const r=el.getBoundingClientRect();
+  const vars=c?' style="--paper:'+c.bg+';--paper2:'+c.bg+';--inkp:'+c.ink+';--linep:color-mix(in srgb,'+c.ink+' 20%,transparent)"':'';
   const o=document.createElement('div');o.id='snz';o.className='snz';
-  o.innerHTML='<div class="snzcard" role="dialog" aria-modal="true" aria-label="Today\u2019s note">'+
+  o.innerHTML='<div class="snzcard'+(c?' skzc':'')+'"'+vars+' role="dialog" aria-modal="true" aria-label="'+(c?'Sticky note':'Today’s note')+'">'+
     '<span class="sntape" aria-hidden="true"></span>'+
-    '<div class="snq">\u201c'+q+'\u201d</div>'+
-    '<div class="snsig">- Life Buddy ;&gt;</div>'+
-    '<button class="snzclose" id="snzclose" aria-label="Close">\u00d7</button>'+
+    (c?'<span class="skleft">'+stkLeft(st)+'</span>':'')+
+    '<div class="snq">'+(c?esc(text):'“'+esc(text)+'”')+'</div>'+
+    '<div class="snsig">'+(c?c.n:'- Life Buddy ;&gt;')+'</div>'+
+    '<button class="snzclose" id="snzclose" aria-label="Close">×</button>'+
     '<small class="snzhint">Tap outside to close</small></div>';
   document.body.appendChild(o);
-  SNFOCUS=Date.now();
+  SNFOCUS=Date.now();SNZKIND=kind;
   const card=o.querySelector('.snzcard'),cr=card.getBoundingClientRect();
   const s=Math.min(1.05,Math.max(.34,Math.min(r.width/cr.width,r.height/cr.height)));
   card.style.transform='translate('+(r.left+r.width/2-(cr.left+cr.width/2))+'px,'+(r.top+r.height/2-(cr.top+cr.height/2))+'px) scale('+s+') rotate(-2deg)';
@@ -1111,7 +1228,7 @@ function snFocus(){
 function snUnfocus(){
   const o=document.getElementById('snz');if(!o)return;
   o.classList.remove('on');
-  const c=o.querySelector('.snzcard'),n=document.getElementById('sn');
+  const c=o.querySelector('.snzcard'),n=document.getElementById(SNZKIND==='stk'?'sns':'sn');
   if(c&&n){
     /* Shrink back into the pinned square instead of just fading. */
     const r=c.getBoundingClientRect(),t=n.getBoundingClientRect();
@@ -1121,7 +1238,7 @@ function snUnfocus(){
   setTimeout(function(){o.remove()},300);
 }
 function snBind(){
-  const find=function(e){return e.target&&e.target.closest?e.target.closest('#sn'):null};
+  const find=function(e){return e.target&&e.target.closest?e.target.closest('#sn,#sns'):null};
   if(window.PointerEvent){
     document.addEventListener('pointerdown',function(e){
       const el=find(e);
@@ -1151,19 +1268,21 @@ function snBind(){
     const b=e.target.closest&&e.target.closest('[data-snmin]');
     if(!b)return;
     e.preventDefault();e.stopPropagation();
-    const el=document.getElementById('sn');if(!el)return;
-    const r=el.getBoundingClientRect(),v=snViewport(),n=noteState();
+    const stk=b.getAttribute('data-snmin')==='stk';
+    const el=document.getElementById(stk?'sns':'sn');if(!el)return;
+    const r=el.getBoundingClientRect(),v=snViewport(),n=stk?spinState():noteState();
     n.min=true;
     n.side=(r.left+r.width/2)<v.w/2?'left':'right';
     n.py=Math.round(Math.min(Math.max(56,r.top),v.h-96));
     save();snRender(true);
   },true);
   document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){if(document.getElementById('snz'))snUnfocus();return}
-    if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.id==='sn'){
+    if(e.key==='Escape'){if(document.getElementById('snz'))snUnfocus();else if(document.getElementById('skz'))skZoomClose();return}
+    if((e.key==='Enter'||e.key===' ')&&e.target&&(e.target.id==='sn'||e.target.id==='sns')){
       e.preventDefault();
-      const n=noteState();
-      if(n.min){n.min=false;save();snRender(true)}else snFocus();
+      const kind=e.target.id==='sns'?'stk':'main';
+      const n=kind==='stk'?spinState():noteState();
+      if(n.min){n.min=false;save();snRender(true)}else snFocus(kind);
     }
   });
   window.addEventListener('resize',function(){try{snRender();qaRender()}catch(e){}});
@@ -1187,32 +1306,45 @@ function qaRender(){
   q.y=Math.min(Math.max(60,q.y),Math.max(80,v.h-110));
   b.style.left=Math.round(q.x)+'px';b.style.top=Math.round(q.y)+'px';
 }
-function qaClose(){const m=document.getElementById('qamenu');if(m)m.classList.remove('on')}
+let QAT=null;
+function qaClose(){
+  const m=document.getElementById('qamenu'),b=document.getElementById('qa'),bk=document.getElementById('qabk');
+  if(m&&m.classList.contains('on')){
+    m.classList.remove('on');m.classList.add('out');
+    clearTimeout(QAT);QAT=setTimeout(function(){m.classList.remove('out')},340);
+  }
+  if(bk)bk.classList.remove('on');
+  if(b){b.classList.remove('open');b.setAttribute('aria-expanded','false')}
+}
 function qaOpen(){
-  const m=document.getElementById('qamenu'),b=document.getElementById('qa');
+  const m=document.getElementById('qamenu'),b=document.getElementById('qa'),bk=document.getElementById('qabk');
   if(!m||!b)return;
-  const r=b.getBoundingClientRect(),v=snViewport();
+  clearTimeout(QAT);m.classList.remove('out');
+  if(bk)bk.classList.add('on');
   m.classList.add('on');
-  const mh=m.offsetHeight||196,mw=m.offsetWidth||212;
-  let top=r.top-mh-10;
-  if(top<10)top=Math.min(v.h-mh-10,r.bottom+10);
-  const left=Math.min(Math.max(8,r.left+r.width-mw),Math.max(8,v.w-mw-8));
-  m.style.top=Math.round(top)+'px';m.style.left=Math.round(left)+'px';
+  b.classList.add('open');b.setAttribute('aria-expanded','true');
+  const first=m.querySelector('button');
+  if(first)setTimeout(function(){try{first.focus({preventScroll:true})}catch(e){}},230);
 }
 function qaToggle(){const m=document.getElementById('qamenu');if(!m)return;if(m.classList.contains('on'))qaClose();else qaOpen()}
 function qaInit(){
   if(!document.getElementById('qa')){
     const b=document.createElement('button');
     b.id='qa';b.type='button';
-    b.setAttribute('aria-label','Quick add');b.setAttribute('aria-haspopup','menu');
+    b.setAttribute('aria-label','Quick add');b.setAttribute('aria-haspopup','menu');b.setAttribute('aria-expanded','false');
     b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
     document.body.appendChild(b);
+    const bk=document.createElement('div');
+    bk.id='qabk';bk.setAttribute('aria-hidden','true');
+    bk.addEventListener('click',function(){qaClose()});
+    document.body.appendChild(bk);
     const m=document.createElement('div');
     m.id='qamenu';m.setAttribute('role','menu');m.setAttribute('aria-label','Quick add');
-    m.innerHTML=QA_ACTIONS.map(function(a){
-      return '<button type="button" role="menuitem" data-qa-go="'+a.k+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+a.i+'"/></svg>'+a.l+'</button>';
+    m.innerHTML=QA_ACTIONS.map(function(a,i){
+      return '<button type="button" role="menuitem" data-qa-go="'+a.k+'" style="--i:'+i+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+a.i+'"/></svg>'+a.l+'</button>';
     }).join('');
     document.body.appendChild(m);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')qaClose()});
     let d=null;
     b.addEventListener('pointerdown',function(e){
       if(e.pointerType==='mouse'&&e.button!==0)return;
@@ -1790,7 +1922,9 @@ function stkPurge(){
   const list=stickyList(),now=Date.now();
   const live=list.filter(function(n){return !n.expires||n.expires>now});
   if(live.length!==list.length){
-    S.stickies=live;save();
+    S.stickies=live;
+    if(S.spin&&S.spin.id&&!live.some(function(x){return x.id===S.spin.id})){S.spin.id='';S.spin.min=false}
+    save();
     try{swSyncSoon()}catch(e){}
     return true;
   }
@@ -1820,15 +1954,76 @@ function skComposerHTML(){
     '<div style="display:flex;gap:8px;margin-top:12px"><button id="skadd" style="flex:1">'+(editing?'Save changes':'Add sticky note')+'</button>'+
     (editing?'<button class="ghost" id="skcancel" style="flex:0 0 auto;padding:0 14px">Cancel</button>':'')+'</div></div>';
 }
+/* Tapping a sticky note opens it centred, with the board still visible and
+   blurred behind it. Display / Remove from Home pins it on Home. */
+function skPin(id){
+  const s=spinState(),st=stickyList().filter(function(x){return x.id===id})[0];
+  if(!st)return false;
+  if(s.id===id){s.id='';s.min=false;s.py=null;save();snRender();return false}
+  s.id=id;s.x=null;s.y=null;s.min=false;s.side='right';s.py=null;save();
+  snRender(true);
+  return true;
+}
+function skZoomSync(id,on){
+  const o=document.getElementById('skz');if(!o)return;
+  const b=o.querySelector('[data-skdisplay]');if(!b)return;
+  b.textContent=on?'Remove from Home':'Display';
+  b.classList.toggle('on',!!on);
+  b.setAttribute('data-skdisplay',id);
+}
+function skZoom(id){
+  const st=stickyList().filter(function(x){return x.id===id})[0];
+  if(!st||document.getElementById('skz'))return;
+  const c=stkColor(st.color),on=spinState().id===id;
+  const src=document.querySelector('.skcard[data-skid="'+id+'"]');
+  const r=src?src.getBoundingClientRect():null;
+  const vars='--paper:'+c.bg+';--paper2:'+c.bg+';--inkp:'+c.ink+';--linep:color-mix(in srgb,'+c.ink+' 20%,transparent)';
+  const o=document.createElement('div');o.id='skz';o.className='snz';
+  o.innerHTML='<div class="snzcard skzc" style="'+vars+'" role="dialog" aria-modal="true" aria-label="Sticky note">'+
+    '<span class="sntape" aria-hidden="true"></span>'+
+    '<span class="skleft">'+stkLeft(st)+'</span>'+
+    '<div class="snq">'+esc(st.text)+'</div>'+
+    '<div class="snzacts"><button type="button" data-skdisplay="'+st.id+'"'+(on?' class="on"':'')+'>'+(on?'Remove from Home':'Display')+'</button>'+
+    '<button type="button" class="ghost" data-skzedit="'+st.id+'">Edit</button></div>'+
+    '<button class="snzclose" id="skzclose" aria-label="Close">×</button>'+
+    '<small class="snzhint">Tap outside to close</small></div>';
+  document.body.appendChild(o);
+  const card=o.querySelector('.snzcard');
+  if(r){
+    const cr=card.getBoundingClientRect();
+    const k=Math.min(.94,Math.max(.3,Math.min(r.width/cr.width,r.height/cr.height)));
+    card.style.transform='translate('+(r.left+r.width/2-(cr.left+cr.width/2))+'px,'+(r.top+r.height/2-(cr.top+cr.height/2))+'px) scale('+k+') rotate(-1deg)';
+  }
+  requestAnimationFrame(function(){requestAnimationFrame(function(){o.classList.add('on');card.style.transform='none'})});
+  const t0=Date.now();
+  o.addEventListener('click',function(e){
+    if(Date.now()-t0<350)return;
+    if(e.target.closest('.snzcard')&&!e.target.closest('#skzclose'))return;
+    e.preventDefault();skZoomClose();
+  });
+  setTimeout(function(){const b=document.getElementById('skzdisplay');if(b)b.focus()},260);
+}
+document.addEventListener('click',function(e){
+  const o=e.target.closest?e.target.closest('[data-skopen]'):null;
+  if(!o||e.target.closest('[data-skdel]'))return;
+  e.preventDefault();skZoom(o.getAttribute('data-skopen'));
+});
+function skZoomClose(){
+  const o=document.getElementById('skz');if(!o)return;
+  o.classList.remove('on');
+  const c=o.querySelector('.snzcard');if(c)c.style.transform='scale(.9)';
+  setTimeout(function(){o.remove()},280);
+}
 function stickiesHTML(){
   stkPurge();
   const list=stickyList().slice().sort(function(a,b){return (b.created||0)-(a.created||0)});
+  const pinId=spinState().id;
   const cards=list.length?list.map(function(n){
     const c=stkColor(n.color);
-    return '<div class="skcard" style="--skbg:'+c.bg+';--skink:'+c.ink+'"><div class="skopen" data-skopen="'+n.id+'" role="button" tabindex="0" aria-label="Edit sticky note">'+
+    return '<div class="skcard" data-skid="'+n.id+'" style="--skbg:'+c.bg+';--skink:'+c.ink+'"><div class="skopen" data-skopen="'+n.id+'" role="button" tabindex="0" aria-label="Open sticky note">'+
       '<span class="skpin" aria-hidden="true"></span>'+
       '<div class="sktext">'+esc(n.text)+'</div></div>'+
-      '<div class="skfoot"><span class="skleft">'+stkLeft(n)+'</span><button type="button" class="skdel" data-skdel="'+n.id+'" aria-label="Delete sticky note">\u00d7</button></div></div>';
+      '<div class="skfoot"><span class="skleft">'+stkLeft(n)+'</span>'+(pinId===n.id?'<span class="skonhome">Home</span>':'')+'<button type="button" class="skdel" data-skdel="'+n.id+'" aria-label="Delete sticky note">\u00d7</button></div></div>';
   }).join(''):'<div class="sk-empty">No sticky notes yet. Write one below and it will show up here.</div>';
   return '<div class="sk-sec"><div class="sk-head"><h2>Sticky Notes</h2><small>'+list.length+' on the board</small></div>'+
     '<div class="sk-grid">'+cards+'</div>'+skComposerHTML()+'</div>';
@@ -2607,8 +2802,21 @@ if(d.mood){jent(jd||todayStr()).mood=d.mood;save();render();return}
 if(d.jday){jd=d.jday;render();$('#view').scrollTop=0;return}
 if(d.skcolor){SK.color=d.skcolor;render();return}
 if(d.skdur){SK.dur=d.skdur;if(d.skdur==='custom'&&!SK.days)SK.days=3;render();return}
-if(d.skdel){S.stickies=stickyList().filter(x=>x.id!==d.skdel);save();try{swSyncSoon()}catch(e){}render();return}
-if(d.skopen){const sn=stickyList().filter(x=>x.id===d.skopen)[0];if(sn){SK={edit:sn.id,text:sn.text,color:sn.color,dur:sn.expires?'custom':'never',days:sn.expires?Math.max(1,Math.ceil((sn.expires-Date.now())/86400000)):3};render();const el=document.getElementById('sktext');if(el){el.focus();try{el.scrollIntoView({block:'center'})}catch(e){}}}return}
+if(d.skdel){
+  S.stickies=stickyList().filter(x=>x.id!==d.skdel);
+  const sp=spinState();if(sp.id===d.skdel){sp.id='';sp.min=false;sp.py=null}
+  save();try{swSyncSoon()}catch(e){}render();return}
+if(d.skopen){try{skZoom(d.skopen)}catch(e){}return}
+if(d.skdisplay){const on=skPin(d.skdisplay);try{skZoomSync(d.skdisplay,on)}catch(e){}try{swSyncSoon()}catch(e){}render();return}
+if(d.skzedit){
+  const id=d.skzedit;skZoomClose();
+  const sn=stickyList().filter(x=>x.id===id)[0];
+  if(sn){
+    SK={edit:sn.id,text:sn.text,color:sn.color,dur:sn.expires?'custom':'never',days:sn.expires?Math.max(1,Math.ceil((sn.expires-Date.now())/86400000)):3};
+    render();
+    const el=document.getElementById('sktext');if(el){el.focus();try{el.scrollIntoView({block:'center'})}catch(e){}}
+  }
+  return}
 if(d.gdel){S.grades[gs].items=S.grades[gs].items.filter(i=>i.id!==d.gdel);save();render();return}
 if(d.gadd){const v=+$('#gin-'+d.gadd).value,g=S.wallet.goals.find(x=>x.id===d.gadd);if(g&&v>0){g.saved=fromCents(toCents(g.saved)+toCents(v));save();render()}return}
 if(d.delgoal){S.wallet.goals=S.wallet.goals.filter(x=>x.id!==d.delgoal);save();render();return}
