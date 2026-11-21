@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 :root{--bg:#f1f5ef;--ink:#1e2b24;--muted:#5d6e64;--accent:#3d7a5a;--card:#fff;--line:#d9e3da;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111915;--ink:#e5eee8;--muted:#92a69a;--accent:#7cc29e;--card:#1a251f;--line:#29372e;--on:#0f1a14;color-scheme:dark}}
@@ -175,6 +176,53 @@ nav{display:none!important}
 nav{flex:none;height:56px;align-items:stretch;box-sizing:border-box;padding:0}
 nav button{box-sizing:border-box;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;border:0;border-radius:0;line-height:1.15}
 #ssFab{contain:layout}
+
+/* ---------- Group Study tile, More tiles, Custom Layout, voice room ---------- */
+.gtile{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 2px;font-weight:400}
+.gtile .gico{flex:none;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 12%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line))}
+.gtile .gico svg{width:24px;height:24px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.gtile .gt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gtile .gt b{font-size:16px;font-weight:650;letter-spacing:-.2px}
+.gtile .gt small{color:var(--muted);font-size:12.5px}
+.gbadge{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:999px;padding:4px 9px;white-space:nowrap}
+.gbadge i{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.mtiles{display:grid;gap:10px;margin-bottom:8px}
+.mtile{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px;font-weight:400}
+.mtile .mi{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line)}
+.mtile .mi svg{width:19px;height:19px;fill:none;stroke:var(--ink);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.mtile .mt{flex:1;min-width:0}
+.mtile .mt b{display:block;font-size:15px;font-weight:600}
+.mtile .mt small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtile .mgo{color:var(--muted);font-size:18px;line-height:1}
+.hllist{display:grid;gap:8px}
+.hlrow{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.hlrow .hl{flex:1;min-width:0}
+.hlrow .hl b{display:block;font-size:14px;font-weight:600}
+.hlrow .hl small{display:block;color:var(--muted);font-size:12px}
+.hlrow button{background:var(--bg);color:var(--ink);border:1px solid var(--line);padding:6px 9px;border-radius:9px;font-weight:600;min-width:0}
+.hlrow button.ond{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.hlrow.locked{background:var(--bg)}
+#gsroom{position:fixed;inset:0;z-index:70;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(14px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+.gshe{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.gshe h1{font-size:22px;margin:0}
+.gshe button{background:transparent;color:var(--muted);border:1px solid var(--line);padding:6px 12px;border-radius:10px;font-weight:600}
+.gscard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:12px}
+.gslabel{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+#gsroom input{background:var(--bg);text-transform:none}
+#gscode{letter-spacing:.18em;text-transform:uppercase}
+.gscode{font-variant-numeric:tabular-nums;letter-spacing:.22em;font-weight:800;font-size:28px;text-align:center;margin:2px 0 4px}
+.gspeople{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gsp{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.gsp .av{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,var(--card));border:2px solid var(--line);font-weight:700;font-size:17px;color:var(--ink);transition:box-shadow .18s var(--ease),border-color .18s var(--ease)}
+.gsp.speaking .av{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 24%,transparent),0 0 16px color-mix(in srgb,var(--accent) 40%,transparent)}
+.gsp b{font-size:13px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gsp small{font-size:11.5px;color:var(--muted)}
+.gsnote{font-size:12.5px;color:var(--muted);margin-top:10px}
+.gsbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.gsbtns button{flex:1;min-width:104px}
+.gsleave{background:#c2410c;color:#fff;border-color:#c2410c}
+.gserr{color:#c2410c;font-weight:600}
+#gsaudio{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
 </style>
 <script>
 // Safety net. If the app fails to start, show a recovery card. Once it is running, a stray error only shows a small banner and never wipes the screen or your data.
@@ -282,6 +330,7 @@ const blank=()=>({
   lb:{date:todayStr(),used:0,noted:false},
   wg:{on:false,size:'medium',exam:''},
   icon:{style:'style1',theme:'default'},
+  home:{order:[],hidden:[]},
   prof:{name:'',age:'',level:'',done:false},ui:{}
 });
 
@@ -325,6 +374,9 @@ function load(){
   if(!d.icon||typeof d.icon!=='object')d.icon={style:'style1',theme:'default'};
   if(d.icon.style!=='style1'&&d.icon.style!=='style2')d.icon.style='style1';
   if(!/^(default|theme[1-5])$/.test(String(d.icon.theme||'')))d.icon.theme='default';
+  if(!d.home||typeof d.home!=='object')d.home={order:[],hidden:[]};
+  if(!Array.isArray(d.home.order))d.home.order=[];
+  if(!Array.isArray(d.home.hidden))d.home.hidden=[];
   Object.keys(d.fired).forEach(k=>{if(d.fired[k]===1)d.fired[k]=Date.now()});
   return d;
 }
@@ -580,7 +632,7 @@ function onboard(){
   });
   setTimeout(()=>{const i=o.querySelector('#obn');if(i)i.focus()},50);
 }
-let tab='home',curSub=null,hv=null,L=null,mv=null;
+let tab='home',curSub=null,hv=null,L=null,mv=null,moreSub='';
 const T={mode:'p',f:25,b:5,phase:'focus',left:1500,running:false,end:0};
 const PRESETS={p:[25,5],d:[52,17]};
 const subj=id=>S.subjects.find(s=>s.id===id);
@@ -593,6 +645,72 @@ function streak(){const days=new Set(S.sessions.map(x=>x.date));let d=new Date()
 function taskRow(t,hideSubj){const s=subj(t.subj);return'<div class="row'+(t.done?' done':'')+'"><input type="checkbox" style="width:22px;height:22px;flex:none" data-done="'+t.id+'"'+(t.done?' checked':'')+' aria-label="Mark done"><span class="dot" style="background:'+(s?s.color:'var(--line)')+'"></span><div class="t"><div>'+esc(t.title)+'</div><small>'+(s&&!hideSubj?esc(s.name)+' · ':'')+dueLabel(t)+'</small></div><button class="x" data-deltask="'+t.id+'" aria-label="Delete">×</button></div>'}
 function todayClasses(){const d=new Date().getDay(),o=[];S.subjects.forEach(s=>s.classes.forEach(c=>{if(c.day===d)o.push({s,c})}));return o.sort((a,b)=>a.c.start.localeCompare(b.c.start))}
 function tile(id,t,sub){return'<button class="tile" data-mod="'+id+'"><b>'+t+'</b><small>'+sub+'</small></button>'}
+
+/* ---------- Home layout (Custom Layout) ---------- */
+const HOME_CARDS=[
+  {k:'exams',l:'Exam countdown',d:'Upcoming exam dates'},
+  {k:'buddies',l:'StudyBuddy & LifeBuddy',d:'Your AI study and life helpers'},
+  {k:'mood',l:'Mood check-in',d:'How are you today?'},
+  {k:'group',l:'Group Study',d:'Voice study room for up to 5'}
+];
+function homeLayout(){
+  if(!S.home||typeof S.home!=='object')S.home={};
+  const known=k=>HOME_CARDS.some(c=>c.k===k);
+  const order=Array.isArray(S.home.order)?S.home.order.filter(known):[];
+  HOME_CARDS.forEach(c=>{if(order.indexOf(c.k)<0)order.push(c.k)});
+  const hidden=Array.isArray(S.home.hidden)?S.home.hidden.filter(known):[];
+  return{order,hidden};
+}
+function groupStudyTile(){
+  return '<button class="gtile" data-gs="open" aria-label="Open the Group Study voice room">'+
+    '<span class="gico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/><path d="M12 21h2a3 3 0 0 0 3-3"/></svg></span>'+
+    '<span class="gt"><b>Group Study</b><small>Voice room \u00b7 up to 5 people</small></span>'+
+    '<span class="gbadge"><i></i>Ready</span></button>';
+}
+/* ---------- More tab ---------- */
+const MORE_IC={
+  profile:'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4 21a8 8 0 0 1 16 0',
+  layout:'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
+  quotas:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v5l3 2',
+  icon:'M4 5h16v14H4zM4 9h16M8 5v4',
+  settings:'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM12 4v2M12 18v2M4 12h2M18 12h2M6.4 6.4l1.4 1.4M16.2 16.2l1.4 1.4M17.6 6.4l-1.4 1.4M7.8 16.2l-1.4 1.4'
+};
+function mTile(key,title,sub){
+  return '<button class="mtile" data-msub="'+key+'"><span class="mi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(MORE_IC[key]||'')+'"/></svg></span><span class="mt"><b>'+title+'</b><small>'+sub+'</small></span><span class="mgo" aria-hidden="true">\u203a</span></button>';
+}
+function moreBack(){return '<button class="ghost" data-moreback="1" style="width:auto;padding:6px 14px;margin-bottom:10px">\u2039 More</button>'}
+function quotaHTML(){
+  return '<h1>Daily AI Quotas</h1><p class="sub">What is left today. Everything resets at midnight.</p><div class="card">'+
+  '<div class="row"><div class="t">Flashcards AI Generator<br><small>Max 10MB file \u00b7 Resets midnight</small></div><b>'+aiLeft()+' / '+MAX_AI_DAILY+'</b></div>'+
+  '<div class="row"><div class="t">StudyBuddy Online AI<br><small>Cloud AI queries left today</small></div><b>'+buddyOnlineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
+  '<div class="row"><div class="t">Ledger Companion AI<br><small>Socratic Accounting Tutor</small></div><b>'+acctLeft()+' / '+MAX_ACCT_DAILY+'</b></div>'+
+  '<div class="row"><div class="t">StudyBuddy Offline AI<br><small>Instant local engine \u00b7 Zero download</small></div><b>'+buddyOfflineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
+  '<div class="row"><div class="t">Test online AI<br><small id="aitestmsg">'+esc(AITEST||'Checks the server, then the AI')+'</small></div><button class="ghost" id="aitest">Test</button></div>'+
+  '</div>';
+}
+function settingsHTML(){
+  return '<h1>Settings</h1><p class="sub">Appearance, alerts, backup and your data</p>'+
+  '<h2 style="margin-top:0">Alerts</h2><div class="card"><div class="row"><div class="t">Beep for classes and deadlines</div><button id="alerton" class="'+(S.alerts?'ghost':'')+'">'+(S.alerts?'Turn off':'Turn on')+'</button></div>'+
+  '<div class="row"><div class="t">Remind me</div><select id="lead" style="width:auto"><option value="0">At the time</option><option value="10">10 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option></select></div>'+
+  '<div class="row"><div class="t"><small>Alerts sound while StudySpace is open or running in the background.</small></div><button class="ghost" id="testalert">Test</button></div></div>'+
+  '<h2>Appearance & data</h2><div class="card"><div class="row"><div class="t">Theme</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
+  '<div class="row"><div class="t">Backup<br><small>Notes, tasks, grades, wallet and more. Library files and Life Buddy chats are not included.</small></div><button class="ghost" id="expdata">Export</button></div>'+
+  '<div class="row"><div class="t">Restore backup</div><button class="ghost" id="impdata">Import</button><input id="impfile" type="file" accept=".json,application/json" hidden></div>'+
+  '<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'+wgHTML();
+}
+function layoutHTML(){
+  const l=homeLayout();
+  const rows=l.order.map(function(k,i){
+    const c=HOME_CARDS.filter(x=>x.k===k)[0],show=l.hidden.indexOf(k)<0;
+    return '<div class="hlrow"><span class="hl"><b>'+c.l+'</b><small>'+c.d+'</small></span>'+
+      '<button data-hlmove="'+k+':-1" aria-label="Move '+c.l+' up"'+(i?'':' disabled')+'>\u2191</button>'+
+      '<button data-hlmove="'+k+':1" aria-label="Move '+c.l+' down"'+(i<l.order.length-1?'':' disabled')+'>\u2193</button>'+
+      '<button class="'+(show?'ond':'')+'" data-hltoggle="'+k+'" aria-pressed="'+(show?'true':'false')+'">'+(show?'Shown':'Hidden')+'</button></div>';
+  }).join('');
+  return moreBack()+'<h1>Custom Layout</h1><p class="sub">Choose what Home shows and in which order.</p>'+
+  '<div class="hllist"><div class="hlrow locked"><span class="hl"><b>Greetings &amp; date</b><small>Always at the top of Home</small></span><span class="gbadge">Locked</span></div>'+rows+'</div>'+
+  '<button class="ghost" data-hlreset="1" style="width:100%;margin-top:12px">Reset to default layout</button>';
+}
 
 /* HOME TAB */
 function home(){
@@ -607,15 +725,18 @@ function home(){
   const IC={acad:'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11',notes:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h6',learn:'M4 8l8-4 8 4-8 4zM4 12l8 4 8-4M4 16l8 4 8-4',lib:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',grades:'M5 20V10M12 20V4M19 20v-7',exams:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M9 15l2 2 4-4',focus:'M12 5a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 9v4l3 2M9 2h6',wallet:'M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4zM4 7V6a2 2 0 0 1 2-2h11M16 13.5h.01',journal:'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3',habits:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8.5 12.5l2.5 2.5 4.5-5',more:'M4 7h10M18 7h2M4 17h2M10 17h10M16 5v4M8 15v4'};
   const ht=(k,l,sub,at2)=>'<button class="ht" '+at2+'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+IC[k]+'"/></svg><span>'+l+'</span><small>'+(sub||'&nbsp;')+'</small></button>';
   const lb=t=>'<div class="lbl">'+t+'</div>';
+  /* Home cards follow the Custom Layout order and visibility (greetings are fixed). */
+  const hp={
+    exams: lb('Exam countdown')+(ups.length?ups.slice(0,2).map(cdBox).join(''):'<div class="card empty">No upcoming exams.</div>'),
+    buddies: buddyBoxes(),
+    mood: moodCard(),
+    group: groupStudyTile()
+  },lay=homeLayout();
+  let hcards='';lay.order.forEach(k=>{if(lay.hidden.indexOf(k)<0)hcards+=hp[k]});
   return'<h1>'+g+(S.prof&&S.prof.name?', '+esc(S.prof.name):'')+'</h1><p class="sub">'+new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+'</p>'+kateCard()+
   (next?'<div class="card nx"><small>Next up</small><br><b>'+next+'</b></div>':'')+
   '<div class="stats"><div class="card"><b>'+focusToday()+'</b><span>min focused</span></div><div class="card"><b>'+streak()+'</b><span>day streak</span></div><div class="card"><b>'+open.length+'</b><span>tasks open</span></div></div>'+
-  lb('Exam countdown')+(ups.length?ups.slice(0,2).map(cdBox).join(''):'<div class="card empty">No upcoming exams.</div>')+
-  buddyBoxes()+moodCard()+lb('Explore')+
-  '<div class="hg">'+ht('acad','Subjects',S.subjects.length+' added','data-t="acad"')+ht('notes','Notes',S.notes.length+' saved','data-mod="notes"')+ht('learn','Learn',due?due+' to review':'Flashcards','data-mod="learn"')+
-  ht('lib','Library',S.res.length+' saved','data-mod="lib"')+ht('grades','Grades','Scores','data-mod="grades"')+ht('exams','Exams',ups.length+' upcoming','data-mod="exams"')+
-  ht('focus','Focus',focusToday()+' min today','data-t="focus"')+ht('wallet','Wallet',money(walletBal()),'data-mod="wallet"')+ht('journal','Journal',je&&je.text?'Written':'Write today','data-mod="journal"')+
-  ht('habits','Habits',S.habits.length?hd+'/'+S.habits.length+' today':'Track',' data-mod="lifetracker"')+ht('more','Settings','Theme, alerts','data-t="more"')+'</div>'+
+  hcards+
   (due?'<button class="subcard" id="gorev" style="margin-top:12px"><span class="t"><b>Topics to review</b><br><small>'+due+' due in Spaced Repetition</small></span><span aria-hidden="true">\u203a</span></button>':'')+
   lb('Today\u2019s classes')+'<div class="card">'+(tc.length?tc.map(x=>'<div class="row"><b style="width:66px;font-size:14px">'+fmtT(x.c.start)+'</b><span class="dot" style="background:'+x.s.color+'"></span><div class="t"><div>'+esc(x.s.name)+'</div>'+(x.c.room?'<small>'+esc(x.c.room)+'</small>':'')+'</div></div>').join(''):'<div class="empty">No classes today.</div>')+'</div>'+
   lb('Due soon')+'<div class="card">'+(open.length?open.slice(0,4).map(t=>taskRow(t)).join(''):'<div class="empty">Nothing due.</div>')+'</div>'+
@@ -639,6 +760,7 @@ function acad(){
   '<div style="display:flex;gap:8px;margin-bottom:16px"><input id="subname" placeholder="New subject, e.g. Mathematics" maxlength="40"><button id="addsub" style="white-space:nowrap">Add</button></div>'+
   (list||'<div class="empty">No subjects yet. Add your first one above.</div>')+
   '<h2>Study tools</h2><div class="tiles">'+
+  '<button class="tile" data-gs="open" style="grid-column:1/-1"><b>Group Study</b><small>Voice room \u00b7 up to 5 people</small></button>'+
   tile('notes','Notes',S.notes.length+' saved')+
   tile('learn','Learning Techniques',due?due+' to review':'Flashcards & AI')+
   tile('lib','Resource Library',S.res.length+' saved')+
@@ -688,23 +810,27 @@ ringHTML()+
 '<div class="ctrl"><button id="tgo">'+(T.running?'Pause':'Start')+'</button><button class="ghost" id="treset">Reset</button><button class="ghost" id="tskip">Skip</button></div>'+
 '<div class="card"><b>'+focusToday()+' minutes</b> focused today across '+S.sessions.filter(x=>x.date===todayStr()).length+' sessions.</div>'+weekBySubject()}
 
-function more(){return moreMain()}
+function more(){
+  if(moreSub==='profile')return moreBack()+personalizeHTML();
+  if(moreSub==='layout')return layoutHTML();
+  if(moreSub==='quotas')return moreBack()+quotaHTML();
+  if(moreSub==='appicon')return moreBack()+appIconHTML();
+  if(moreSub==='settings')return moreBack()+settingsHTML();
+  return moreMain();
+}
 function moreMain(){
-return'<h1>More</h1><p class="sub">Alerts, AI quotas, and settings</p>'+
-'<h2 style="margin-top:0">Alerts</h2><div class="card"><div class="row"><div class="t">Beep for classes and deadlines</div><button id="alerton" class="'+(S.alerts?'ghost':'')+'">'+(S.alerts?'Turn off':'Turn on')+'</button></div>'+
-'<div class="row"><div class="t">Remind me</div><select id="lead" style="width:auto"><option value="0">At the time</option><option value="10">10 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option></select></div>'+
-'<div class="row"><div class="t"><small>Alerts sound while StudySpace is open or running in the background.</small></div><button class="ghost" id="testalert">Test</button></div></div>'+
-'<h2>Daily AI Quotas</h2><div class="card">'+
-'<div class="row"><div class="t">Flashcards AI Generator<br><small>Max 10MB file · Resets midnight</small></div><b>'+aiLeft()+' / '+MAX_AI_DAILY+'</b></div>'+
-'<div class="row"><div class="t">StudyBuddy Online AI<br><small>Cloud AI queries left today</small></div><b>'+buddyOnlineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
-'<div class="row"><div class="t">Ledger Companion AI<br><small>Socratic Accounting Tutor</small></div><b>'+acctLeft()+' / '+MAX_ACCT_DAILY+'</b></div>'+
-'<div class="row"><div class="t">StudyBuddy Offline AI<br><small>Instant local engine · Zero download</small></div><b>'+buddyOfflineLeft()+' / '+MAX_BUDDY_DAILY+'</b></div>'+
-'<div class="row"><div class="t">Test online AI<br><small id="aitestmsg">'+esc(AITEST||'Checks the server, then the AI')+'</small></div><button class="ghost" id="aitest">Test</button></div>'+
-'</div>'+
-personalizeHTML()+appIconHTML()+'<h2>Settings</h2><div class="card"><div class="row"><div class="t">Appearance</div><select id="theme" style="width:auto"><option value="">Match phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>'+
-'<div class="row"><div class="t">Backup<br><small>Notes, tasks, grades, wallet and more. Library files and Life Buddy chats are not included.</small></div><button class="ghost" id="expdata">Export</button></div>'+
-'<div class="row"><div class="t">Restore backup</div><button class="ghost" id="impdata">Import</button><input id="impfile" type="file" accept=".json,application/json" hidden></div>'+
-'<div class="row"><div class="t">Your data<br><small>Saved only in this browser on this device.</small></div><button class="ghost" id="reset">Clear all</button></div></div>'+wgHTML()}
+  const p=S.prof||{};
+  const who=p.name?esc(p.name)+(p.level?' \u00b7 '+esc(p.level):''):'Name, age, level and look';
+  return '<h1>More</h1><p class="sub">Profile, layout, quotas and settings</p>'+
+  '<div class="mtiles">'+
+  mTile('profile','Profile',who)+
+  mTile('layout','Custom Layout','Reorder or hide your Home cards')+
+  mTile('quotas','Daily AI Quotas',aiLeft()+'/'+MAX_AI_DAILY+' flashcards \u00b7 '+buddyOnlineLeft()+'/'+MAX_BUDDY_DAILY+' StudyBuddy')+
+  mTile('appicon','App Icon','Style and colour of the launcher icon')+
+  '</div><div class="mtiles" style="margin-top:16px">'+
+  mTile('settings','Settings','Appearance, alerts, backup and data')+
+  '</div>';
+}
 
 /* EXAM COUNTDOWN WIDGET (Android home screen) */
 function wgState(){
@@ -1686,8 +1812,14 @@ document.addEventListener('click',e=>{
 audio();
 const t=e.target.closest('button');if(!t)return;
 const d=t.dataset;
+if(d.gs){try{groupStudyOpen(d.gs)}catch(err){banner('Could not open the study room.')}return}
+if(d.msub){moreSub=d.msub;render();$('#view').scrollTop=0;return}
+if(d.moreback){moreSub='';render();$('#view').scrollTop=0;return}
+if(d.hlmove){const bits=String(d.hlmove).split(':'),k=bits[0],dir=+bits[1]||0,l=homeLayout(),i=l.order.indexOf(k),j=i+dir;if(i>=0&&j>=0&&j<l.order.length){l.order.splice(i,1);l.order.splice(j,0,k);S.home={order:l.order,hidden:l.hidden};save();render()}return}
+if(d.hltoggle){const l=homeLayout(),k=d.hltoggle,i=l.hidden.indexOf(k);if(i<0)l.hidden.push(k);else l.hidden.splice(i,1);S.home={order:l.order,hidden:l.hidden};save();render();return}
+if(d.hlreset){S.home={order:[],hidden:[]};save();render();return}
 if(t.id==='hardrepair'){ssBackup();localStorage.removeItem('studyspace1');location.reload();return}
-if(d.t){tab=d.t;curSub=null;hv=null;mv=null;L=null;render();$('#view').scrollTop=0;return}
+if(d.t){tab=d.t;curSub=null;hv=null;mv=null;L=null;moreSub='';render();$('#view').scrollTop=0;return}
 if(d.go){tab=d.go;render();return}
 if(d.open){curSub=d.open;render();$('#view').scrollTop=0;return}
 if(d.mode){setMode(d.mode);render();return}
@@ -3120,6 +3252,353 @@ document.addEventListener('click',async function(e){
   DEV.state='idle';DEV.pct=0;DEV.msg='';S.ai.devCached='';save();render();
 });
 }catch(err){try{console.error('on-device tier layer failed',err)}catch(x){}}})();
+</script>
+<script>
+/* ================= Group Study voice room (audio only, max 5) =================
+   The worker keeps the participant list in Cloudflare KV; the audio itself is a
+   peer-to-peer mesh over PeerJS, so nothing but the room code leaves the phones. */
+(function(){
+  'use strict';
+  var PEER_SRC='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+  var G={peer:null,id:'',room:'',host:false,stream:null,muted:false,people:{},order:[],calls:{},ctx:null,an:{},raf:0,name:''};
+
+  function q(id){return document.getElementById(id)}
+  function initials(n){n=String(n||'?').trim();var p=n.split(/\s+/);return(((p[0]||'?')[0]||'?')+(p[1]?p[1][0]:'')).toUpperCase()}
+  function nameFromInput(){
+    var el=q('gsname'),v=el&&el.value?String(el.value).trim():'';
+    if(!v)v=((typeof S!=='undefined'&&S.prof&&S.prof.name)||'').trim();
+    return (v||'Learner').slice(0,24);
+  }
+  function post(path,body){
+    return aiFetch(AI_WORKER_URL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){
+        return r.text().then(function(t){
+          var j={};try{j=JSON.parse(t)}catch(e){}
+          return {ok:r.ok,status:r.status,data:j||{}};
+        });
+      })
+      .catch(function(){return {ok:false,status:0,data:{}}});
+  }
+  function errText(r){
+    if(!r)return 'Could not reach the StudySpace server.';
+    var d=r.data||{},m=(d.error&&(d.error.message||d.error))||d.message||'';
+    if(m)return String(m);
+    if(!r.status)return 'Could not reach the StudySpace server. Check your connection.';
+    if(r.status===404)return 'Room not found. Check the code.';
+    if(r.status===403)return 'Room is full (max 5 people)';
+    return 'The room server did not answer ('+r.status+').';
+  }
+  function loadPeer(){
+    if(window.Peer)return Promise.resolve(true);
+    return new Promise(function(done){
+      var s=document.createElement('script');
+      s.src=PEER_SRC;s.async=true;
+      s.onload=function(){done(!!window.Peer)};
+      s.onerror=function(){done(false)};
+      document.head.appendChild(s);
+    });
+  }
+  function mic(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return Promise.reject(new Error('no-media'));
+    return navigator.mediaDevices.getUserMedia({audio:true,video:false});
+  }
+
+  /* ---- overlay ---- */
+  function shell(){
+    var r=q('gsroom');
+    if(!r){
+      r=document.createElement('div');r.id='gsroom';
+      r.setAttribute('role','dialog');r.setAttribute('aria-label','Group Study voice room');
+      document.body.appendChild(r);
+    }
+    return r;
+  }
+  function closeOverlay(){var r=q('gsroom');if(r)r.remove()}
+  function status(msg,bad){
+    var el=q('gsstatus');
+    if(!el)return;
+    el.className='gsnote'+(bad?' gserr':'');
+    el.textContent=msg;
+  }
+  function lobby(){
+    var r=shell();
+    r.innerHTML='<div class="gshe"><h1>Group Study</h1><button data-gs="close">Close</button></div>'+
+      '<p class="sub" style="margin:0 0 4px">A voice-only study room for up to 5 people.</p>'+
+      '<div class="gscard"><label class="gslabel" for="gsname">Your name</label><input id="gsname" maxlength="24" autocomplete="off" value="'+esc(G.name||((S.prof&&S.prof.name)||'').trim())+'">'+
+      '<div class="gsbtns"><button data-gs="create">Create a room</button></div></div>'+
+      '<div class="gscard"><label class="gslabel" for="gscode">Room code</label><input id="gscode" maxlength="6" placeholder="STUDY7" autocapitalize="characters" autocomplete="off">'+
+      '<div class="gsbtns"><button class="ghost" data-gs="join">Join room</button></div></div>'+
+      '<p class="gsnote" id="gsstatus">Audio only. Nobody can see your camera.</p>';
+  }
+  function paintPeople(){
+    var list=G.order.map(function(id){
+      var p=G.people[id]||{},me=id===G.id;
+      return '<div class="gsp" data-gsp="'+esc(id)+'"><div class="av">'+esc(initials(p.name))+'</div><b>'+esc(p.name||'Guest')+(me?' (you)':'')+'</b><small data-gsl>'+(p.live?'Listening':'Connecting\u2026')+'</small></div>';
+    }).join('');
+    var el=q('gspeople');if(el)el.innerHTML=list;
+    var c=q('gscount');if(c)c.textContent=G.order.length+'/5 in room';
+  }
+  function room(){
+    var r=shell();
+    r.innerHTML='<div class="gshe"><h1>Group Study</h1><span class="gbadge" id="gscount"><i></i>1/5 in room</span></div>'+
+      '<p class="sub" style="margin:0">Share the code so others can join.</p>'+
+      '<div class="gscard"><div class="gscode" id="gscodebig">'+esc(G.room)+'</div><div class="gsbtns"><button class="ghost" data-gs="copy">Copy room code</button></div></div>'+
+      '<div class="gspeople" id="gspeople"></div>'+
+      '<div class="gsbtns"><button data-gs="mute" id="gsmute">'+(G.muted?'Unmute mic':'Mute mic')+'</button><button class="gsleave" data-gs="leave">Leave room</button></div>'+
+      '<p class="gsnote">A glowing ring shows who is speaking. Audio only, max 5 people.</p>'+
+      '<div id="gsaudio"></div>';
+    paintPeople();
+  }
+
+  /* ---- people ---- */
+  function addPerson(id,name,live){
+    if(!id)return;
+    if(!G.people[id]){G.people[id]={name:name||'Guest',live:!!live};G.order.push(id)}
+    else{G.people[id].live=!!live;if(name)G.people[id].name=name}
+    paintPeople();
+  }
+  function dropPerson(id){
+    if(!G.people[id])return;
+    delete G.people[id];
+    G.order=G.order.filter(function(x){return x!==id});
+    delete G.calls[id];
+    stopListen(id);
+    var a=q('gsa-'+id);if(a)a.remove();
+    paintPeople();
+  }
+  function attach(id,stream,name){
+    addPerson(id,name,true);
+    var box=q('gsaudio');
+    if(box){
+      var a=q('gsa-'+id);
+      if(!a){a=document.createElement('audio');a.id='gsa-'+id;a.autoplay=true;a.setAttribute('playsinline','');box.appendChild(a)}
+      try{a.srcObject=stream}catch(e){a.src=URL.createObjectURL(stream)}
+      var p=a.play();if(p&&p.catch)p.catch(function(){});
+    }
+    listen(id,stream);
+  }
+
+  /* ---- speaking rings (Web Audio analyser per stream) ---- */
+  function listen(id,stream){
+    try{
+      var C=window.AudioContext||window.webkitAudioContext;
+      if(!C)return;
+      G.ctx=G.ctx||new C();
+      if(G.ctx.state==='suspended'){var r=G.ctx.resume();if(r&&r.catch)r.catch(function(){})}
+      var src=G.ctx.createMediaStreamSource(stream),an=G.ctx.createAnalyser();
+      an.fftSize=512;an.smoothingTimeConstant=.75;src.connect(an);
+      G.an[id]={an:an,src:src,buf:new Uint8Array(an.fftSize)};
+      loop();
+    }catch(e){}
+  }
+  function stopListen(id){
+    var a=G.an[id];
+    if(a&&a.src){try{a.src.disconnect()}catch(e){}}
+    delete G.an[id];
+  }
+  function loop(){
+    if(G.raf)return;
+    var step=function(){
+      var ids=Object.keys(G.an);
+      if(!ids.length){G.raf=0;return}
+      ids.forEach(function(id){
+        var a=G.an[id];if(!a)return;
+        var sum=0,i=0;
+        a.an.getByteTimeDomainData(a.buf);
+        for(;i<a.buf.length;i++){var v=(a.buf[i]-128)/128;sum+=v*v}
+        var on=Math.sqrt(sum/a.buf.length)>.03;
+        var card=document.querySelector('[data-gsp="'+id+'"]');
+        if(!card)return;
+        card.classList.toggle('speaking',on);
+        var l=card.querySelector('[data-gsl]');
+        if(l)l.textContent=on?'Speaking':(id===G.id&&G.muted?'Muted':'Listening');
+      });
+      G.raf=requestAnimationFrame(step);
+    };
+    G.raf=requestAnimationFrame(step);
+  }
+
+  /* ---- calls ---- */
+  function callPeer(id,name){
+    if(!G.peer||!G.stream||!id||id===G.id||G.calls[id])return;
+    var call=null;
+    try{call=G.peer.call(id,G.stream,{metadata:{name:G.name}})}catch(e){return}
+    if(!call)return;
+    G.calls[id]=call;
+    call.on('stream',function(s){attach(id,s,name)});
+    call.on('close',function(){dropPerson(id)});
+    call.on('error',function(){dropPerson(id)});
+  }
+  function incoming(call){
+    if(!call||!call.peer)return;
+    if(G.calls[call.peer]){try{call.close()}catch(e){}return}
+    var name=(call.metadata&&call.metadata.name)||'Guest';
+    G.calls[call.peer]=call;
+    try{call.answer(G.stream)}catch(e){}
+    call.on('stream',function(s){attach(call.peer,s,name)});
+    call.on('close',function(){dropPerson(call.peer)});
+    call.on('error',function(){dropPerson(call.peer)});
+    addPerson(call.peer,name,false);
+  }
+  function peerErr(err){
+    var t=err&&err.type;
+    if(t==='peer-unavailable'){
+      var m=/peer\s+([A-Za-z0-9]+)/.exec((err&&err.message)||'');
+      if(m&&G.people[m[1]])dropPerson(m[1]);
+      banner('A study partner could not be reached.');
+      return;
+    }
+    if(t==='network'||t==='server-error'||t==='socket-error'||t==='socket-closed'){
+      leave('Lost the connection to the voice server.');
+      return;
+    }
+    if(t==='unavailable-id'){leave('Could not start the voice connection. Try again.')}
+  }
+
+  /* ---- lifecycle ---- */
+  function enter(code,people){
+    G.room=code;
+    room();
+    addPerson(G.id,G.name,true);
+    listen(G.id,G.stream);
+    (people||[]).forEach(function(p){
+      if(!p||!p.peerId||p.peerId===G.id)return;
+      addPerson(p.peerId,p.name,false);
+      callPeer(p.peerId,p.name);
+    });
+  }
+  function cleanup(){
+    if(G.raf){try{cancelAnimationFrame(G.raf)}catch(e){}}
+    G.raf=0;
+    Object.keys(G.an).forEach(stopListen);
+    if(G.ctx&&G.ctx.close){try{G.ctx.close()}catch(e){}}
+    G.ctx=null;
+    Object.keys(G.calls).forEach(function(k){try{G.calls[k].close()}catch(e){}});
+    G.calls={};
+    if(G.stream){try{G.stream.getTracks().forEach(function(t){t.stop()})}catch(e){}}
+    G.stream=null;
+    if(G.peer){try{G.peer.destroy()}catch(e){}}
+    G.peer=null;
+  }
+  function leave(msg){
+    var code=G.room,id=G.id;
+    cleanup();
+    G.room='';G.id='';G.host=false;G.muted=false;G.people={};G.order=[];G.name='';
+    closeOverlay();
+    if(code&&id)post('/room/leave',{roomCode:code,peerId:id});
+    if(msg)banner(msg);
+  }
+  function create(){
+    G.name=nameFromInput();
+    status('Starting your microphone\u2026');
+    loadPeer().then(function(ok){
+      if(!ok){status('Could not load the voice library. Check your internet connection.',1);return}
+      return mic().then(function(stream){
+        G.stream=stream;
+        status('Creating the room\u2026');
+        var peer=new Peer();
+        G.peer=peer;
+        peer.on('error',peerErr);
+        peer.on('call',incoming);
+        peer.on('disconnected',function(){try{peer.reconnect()}catch(e){}});
+        peer.on('open',function(id){
+          G.id=id;
+          post('/room/create',{peerId:id,userName:G.name}).then(function(r){
+            if(!r.ok||!r.data||!r.data.roomCode){
+              status(errText(r),1);
+              cleanup();
+              G.id='';
+              return;
+            }
+            G.host=true;
+            enter(r.data.roomCode,[{peerId:id,name:G.name}]);
+          });
+        });
+      },function(e){
+        status(e&&e.name==='NotAllowedError'?'Allow microphone access to join a voice room.':'No microphone was found on this device.',1);
+      });
+    });
+  }
+  function join(){
+    var name=nameFromInput();
+    var codeEl=q('gscode');
+    var code=String((codeEl&&codeEl.value)||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+    G.name=name;
+    if(code.length!==6){status('Enter the 6-character room code.',1);return}
+    status('Joining the room\u2026');
+    loadPeer().then(function(ok){
+      if(!ok){status('Could not load the voice library. Check your internet connection.',1);return}
+      return mic().then(function(stream){
+        G.stream=stream;
+        var peer=new Peer();
+        G.peer=peer;
+        peer.on('error',peerErr);
+        peer.on('call',incoming);
+        peer.on('disconnected',function(){try{peer.reconnect()}catch(e){}});
+        peer.on('open',function(id){
+          G.id=id;
+          post('/room/join',{roomCode:code,peerId:id,userName:G.name}).then(function(r){
+            if(!r.ok||!r.data||!Array.isArray(r.data.participants)){
+              status(errText(r),1);
+              cleanup();
+              G.id='';
+              return;
+            }
+            enter(code,r.data.participants);
+          });
+        });
+      },function(e){
+        status(e&&e.name==='NotAllowedError'?'Allow microphone access to join a voice room.':'No microphone was found on this device.',1);
+      });
+    });
+  }
+  function copyCode(){
+    var code=G.room;
+    if(!code)return;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(function(){banner('Room code '+code+' copied.')},function(){banner('Room code: '+code)});
+    }else banner('Room code: '+code);
+  }
+  function toggleMute(){
+    G.muted=!G.muted;
+    if(G.stream){try{G.stream.getAudioTracks().forEach(function(t){t.enabled=!G.muted})}catch(e){}}
+    var b=q('gsmute');if(b)b.textContent=G.muted?'Unmute mic':'Mute mic';
+    var l=document.querySelector('[data-gsp="'+G.id+'"] [data-gsl]');
+    if(l)l.textContent=G.muted?'Muted':'Listening';
+  }
+
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-gs]');
+    if(!b)return;
+    var a=b.getAttribute('data-gs');
+    if(a==='open')return; /* handled by the main app handler */
+    if(a==='close'){if(G.room)leave();else closeOverlay();return}
+    if(a==='create'){create();return}
+    if(a==='join'){join();return}
+    if(a==='copy'){copyCode();return}
+    if(a==='mute'){toggleMute();return}
+    if(a==='leave'){leave('You left the study room.');return}
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter')return;
+    if(e.target&&e.target.id==='gscode'){e.preventDefault();join()}
+    else if(e.target&&e.target.id==='gsname'){e.preventDefault()}
+  });
+  window.addEventListener('pagehide',function(){
+    if(!G.room)return;
+    if(G.id&&navigator.sendBeacon){
+      try{
+        navigator.sendBeacon(AI_WORKER_URL+'/room/leave',new Blob([JSON.stringify({roomCode:G.room,peerId:G.id})],{type:'application/json'}));
+      }catch(e){}
+    }
+    cleanup();
+  });
+
+  window.groupStudyOpen=function(){
+    if(G.room){room();return}
+    lobby();
+  };
+})();
 </script>
 </body>
 </html>

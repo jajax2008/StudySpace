@@ -45,6 +45,9 @@ jobs:
       - name: Add exam countdown home screen widget
         run: bash scripts/apply-android-widget.sh android
 
+      - name: Add microphone permissions for Group Study
+        run: bash scripts/apply-android-media.sh android
+
       - name: Build debug APK
         working-directory: android
         run: |
