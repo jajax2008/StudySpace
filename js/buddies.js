@@ -7,17 +7,18 @@
     var NS = 'http://www.w3.org/2000/svg';
 
     /* ---------- AVATAR MARKUP ---------- */
-    function avatar(kind) {
+    function avatar(kind, mood) {
       var study = kind !== 'life';
       return '<svg class="sb-av" viewBox="0 0 72 72" data-kind="' + (study ? 'study' : 'life') +
-        '" data-mood="idle" role="img" aria-label="' + (study ? 'StudyBuddy' : 'Life Buddy') + '">' +
+        '" data-mood="' + (mood || 'idle') + '" role="img" aria-label="' + (study ? 'StudyBuddy' : 'Life Buddy') + '">' +
         '<ellipse class="sb-ground" cx="36" cy="67" rx="14" ry="2.6"/>' +
         '<g class="sb-tilt">' +
+          (study ? '<path class="sb-band" d="M17.4 34.5a18.6 18.6 0 0 1 37.2 0"/>' : '') +
           '<g class="sb-paw"><ellipse cx="17.5" cy="47" rx="4.7" ry="5.6"/></g>' +
           '<g class="sb-paw sb-paw-r"><ellipse cx="54.5" cy="47" rx="4.7" ry="5.6"/></g>' +
           '<circle class="sb-skin" cx="36" cy="38" r="20"/>' +
           (study
-            ? '<g class="sb-hat"><path class="sb-cap" d="M18 24 36 15 54 24 36 32Z"/><path class="sb-capband" d="M52 25v6"/></g>'
+            ? '<g class="sb-hset"><rect class="sb-cup" x="11.8" y="31" width="7.6" height="13" rx="3.6"/><rect class="sb-cup" x="52.6" y="31" width="7.6" height="13" rx="3.6"/></g><path class="sb-sheen" d="M23.5 26.5a15 15 0 0 1 10.6-6.2"/>'
             : '<g class="sb-leaf"><path d="M36 18c-.5-6 4-9 8-8-.5 4.5-3 8-8 8Z"/><path d="M36 18c.5-6-4-9-8-8 .5 4.5 3 8 8 8Z"/></g>') +
           '<g class="sb-face">' +
             '<path class="sb-brow" d="M24 30h8"/><path class="sb-brow" d="M40 30h8"/>' +
@@ -28,6 +29,7 @@
             '<g class="sb-blush"><ellipse cx="22" cy="43.5" rx="4" ry="2.3"/><ellipse cx="50" cy="43.5" rx="4" ry="2.3"/></g>' +
             '<path class="sb-smile" d="M32 45.5q4 4 8 0"/>' +
             '<path class="sb-frown" d="M32 47.5q4-4 8 0"/>' +
+            '<path class="sb-sleepmouth" d="M32.4 46.2q3.6 2.2 7.2 0"/>' +
             '<ellipse class="sb-omouth" cx="36" cy="46" rx="3" ry="2.6"/>' +
           '</g>' +
         '</g>' +
@@ -40,12 +42,20 @@
     /* The app builds the home cards through budSVG(), so overriding it swaps
        both faces without touching buddyBoxes(). */
     try {
-      budSVG = function (kind) { return avatar(kind === 'l' ? 'life' : 'study') };
+      budSVG = function (kind) { var k = kind === 'l' ? 'life' : 'study'; return avatar(k, baseMood(k)) };
       window.budSVG = budSVG;
     } catch (e) {}
 
     /* ---------- STATE ---------- */
+    /* Honour the sleep window from Life Tracker, not a fixed 22:00–05:00. */
     function isNight() {
+      try { if (typeof window.sleepTime === 'function') return !!window.sleepTime() } catch (e) {}
+      try {
+        var s = S.sleep, d = new Date(), m = d.getHours() * 60 + d.getMinutes();
+        var bm = Number(String(s.bed).slice(0, 2)) * 60 + Number(String(s.bed).slice(3));
+        var wm = Number(String(s.wake).slice(0, 2)) * 60 + Number(String(s.wake).slice(3));
+        if (s.bed && s.wake && bm !== wm) return bm > wm ? (m >= bm || m < wm) : (m >= bm && m < wm);
+      } catch (e) {}
       var h = new Date().getHours();
       return h >= 22 || h < 5;
     }
@@ -146,7 +156,7 @@
       if (el.__petAt && now - el.__petAt < 260) return; // debounce rapid taps
       el.__petAt = now;
 
-      el.dataset.mood = 'happy';
+      el.dataset.mood = isNight() ? 'sleepy' : 'happy';
       el.dataset.pet = '1';
       el.classList.remove('sb-pet');
       void el.getBoundingClientRect();
@@ -214,7 +224,7 @@
       head.className = 'sb-head';
       head.dataset.kind = kind;
       head.style.setProperty('--bc', kind === 'study' ? 'var(--accent)' : '#c0793b');
-      head.innerHTML = avatar(kind) +
+      head.innerHTML = avatar(kind, baseMood(kind)) +
         '<div class="sb-head-txt"><b>' + (kind === 'study' ? 'StudyBuddy' : 'Life Buddy') +
         '</b><small>' + caption(kind) + '</small></div>' +
         '<span class="sb-pill">' + (kind === 'study' ? modeLabel() : '') + '</span>';

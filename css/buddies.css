@@ -20,6 +20,9 @@
 .sb-av .sb-cap{fill:var(--bc);opacity:.92}
 .sb-av .sb-capband{stroke:var(--bc);stroke-width:2.4;fill:none;stroke-linecap:round}
 .sb-av .sb-leaf path{fill:color-mix(in srgb,var(--bc) 52%,var(--card));stroke:var(--bc);stroke-width:1.6;stroke-linejoin:round}
+.sb-av .sb-band{fill:none;stroke:var(--bc);stroke-width:3;stroke-linecap:round;opacity:.9}
+.sb-av .sb-cup{fill:color-mix(in srgb,var(--bc) 34%,var(--card));stroke:var(--bc);stroke-width:2}
+.sb-av .sb-sheen{fill:none;stroke:color-mix(in srgb,var(--card) 74%,transparent);stroke-width:3.2;stroke-linecap:round;opacity:.55}
 .sb-av .sb-eye ellipse{fill:var(--ink)}
 .sb-av .sb-glint{fill:var(--card);opacity:.92}
 .sb-av .sb-brow{stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;opacity:.5;transition:transform .3s var(--spring),opacity .3s}
@@ -27,6 +30,7 @@
 .sb-av .sb-smile,.sb-av .sb-frown{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;transition:opacity .22s var(--out),transform .3s var(--spring);transform-box:fill-box;transform-origin:center}
 .sb-av .sb-frown{opacity:0}
 .sb-av .sb-omouth{fill:var(--ink);opacity:0;transform-box:fill-box;transform-origin:center}
+.sb-av .sb-sleepmouth{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;opacity:0;transition:opacity .22s var(--out)}
 .sb-av .sb-zzz{fill:var(--bc);font-size:9px;font-weight:700;opacity:0}
 .sb-av .sb-dots circle{fill:var(--bc);opacity:0}
 
@@ -51,6 +55,11 @@
 .sb-av[data-mood="talk"] .sb-smile{opacity:0}
 .sb-av[data-mood="talk"] .sb-omouth{opacity:1;animation:sbTalk .34s ease-in-out infinite alternate}
 .sb-av[data-mood="sleepy"]{animation-duration:7s}
+.sb-av[data-mood="sleepy"] .sb-smile,.sb-av[data-mood="sleepy"] .sb-frown{opacity:0}
+.sb-av[data-mood="sleepy"] .sb-omouth{opacity:0}
+.sb-av[data-mood="sleepy"] .sb-sleepmouth{opacity:1}
+.sb-av[data-mood="sleepy"] .sb-blush ellipse{opacity:.28}
+.sb-av[data-mood="sleepy"] .sb-brow{opacity:.32}
 .sb-av[data-mood="sleepy"] .sb-eye{transform:scaleY(.12)}
 .sb-av[data-mood="sleepy"] .sb-zzz{opacity:1;animation:sbZ 2.6s ease-in-out infinite}
 .sb-av[data-mood="sleepy"] .sb-paw-r{animation:none}
