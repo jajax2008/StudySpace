@@ -532,6 +532,7 @@ window.addEventListener('unhandledrejection',function(e){ssFail((e.reason&&e.rea
 <link rel="stylesheet" href="css/motion.css">
 <link rel="stylesheet" href="css/cool.css">
 <link rel="stylesheet" href="css/buddies.css">
+<link rel="stylesheet" href="css/accounts.css">
 <style id="ss-compat">
 button.x,.rmain,.kh,.chrow{box-shadow:none}
 button.x{min-height:30px}
@@ -543,6 +544,8 @@ button.x{min-height:30px}
 nav button{justify-content:flex-start;padding-top:8px}
 nav button.on::before{left:calc(50% - 25px);top:3px;width:50px;height:30px;transform:none}
 </style>
+<script>/* hold the app hidden until the account gate decides who is signed in */
+try{document.documentElement.classList.add('acc-lock');setTimeout(function(){if(!document.querySelector('.acc-shell'))document.documentElement.classList.remove('acc-lock')},2500)}catch(e){}</script>
 </head>
 <body>
 <div id="app">
@@ -3094,7 +3097,7 @@ if(el.id==='devsize'){S.ai.dev=el.value;DEV.state='idle';DEV.check='';save();ren
 window.__ssOpenExams=function(){tab='acad';hv='exams';curSub=null;render();var v=document.getElementById('view');if(v)v.scrollTop=0};
 window.__ssWidgetPinned=function(ok){banner(ok?'Widget added to your home screen.':'Your launcher cannot add widgets automatically. Long-press the home screen, tap Widgets, then choose StudySpace.')};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){try{wgRoute()}catch(e){}}});
-render();onboard();
+render();
 try{wgSync();wgRoute()}catch(e){}
 window.__booted=true;
 if("serviceWorker" in navigator){
@@ -4795,5 +4798,6 @@ document.addEventListener('click',async function(e){
   };
 })();
 </script>
+<script src="js/accounts.js"></script>
 </body>
 </html>
