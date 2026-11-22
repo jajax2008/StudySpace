@@ -45,15 +45,39 @@
   stroke-linecap: round;
   opacity: .8;
 }
-.sb-av .sb-fin {
-  fill: color-mix(in srgb, var(--bc, var(--accent)) 34%, var(--card));
-  stroke: var(--bc, var(--accent));
-  stroke-width: 2.2;
-  stroke-linejoin: round;
+/* StudyBuddy: a boy with dark hair, round glasses and an open book. */
+.sb-av .sb-face { fill: #f7d9c2; stroke: #c99570; stroke-width: 1.9; }
+.sb-av .sb-ear-p { fill: #f7d9c2; stroke: #c99570; stroke-width: 1.7; }
+.sb-av .sb-hair { fill: #41312a; }
+.sb-av .sb-hair-shine {
+  fill: none;
+  stroke: color-mix(in srgb, var(--card) 46%, transparent);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  opacity: .55;
 }
+.sb-av .sb-lens {
+  fill: color-mix(in srgb, var(--card) 22%, transparent);
+  stroke: #5b4a3f;
+  stroke-width: 1.7;
+}
+.sb-av .sb-frame {
+  fill: none;
+  stroke: #5b4a3f;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+.sb-av .sb-glare {
+  fill: none;
+  stroke: color-mix(in srgb, var(--card) 88%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: .9;
+}
+.sb-av .sb-page { fill: #fdfaf1; stroke: #c9a87c; stroke-width: 1.4; stroke-linejoin: round; }
+.sb-av .sb-spine { fill: none; stroke: #b07d4f; stroke-width: 1.6; stroke-linecap: round; }
+.sb-av .sb-page-line { fill: none; stroke: #cbb08b; stroke-width: .9; stroke-linecap: round; }
 .sb-av .sb-stem { fill: none; stroke: var(--bc); stroke-width: 2.2; stroke-linecap: round; }
-.sb-av .sb-bulb-p { fill: var(--card); stroke: var(--bc); stroke-width: 2.2; }
-.sb-av .sb-bulb-c { fill: var(--bc); opacity: .85; }
 .sb-av .sb-leaf {
   fill: color-mix(in srgb, var(--bc) 50%, var(--card));
   stroke: var(--bc);
@@ -71,6 +95,7 @@
   stroke: var(--bc);
   stroke-width: 2.1;
 }
+.sb-av[data-kind="study"] .sb-hand { fill: #f7d9c2; stroke: #c99570; stroke-width: 1.8; }
 .sb-av .sb-hand-l { transform-origin: 100% 50%; }
 .sb-av .sb-hand-r { transform-origin: 0% 50%; }
 .sb-av .sb-scarf-band {
@@ -91,26 +116,13 @@
   transition: transform .5s cubic-bezier(.22, .8, .3, 1);
   transform: rotate(calc(var(--lx) * 2.6deg)) translateY(calc(var(--ly) * .9px));
 }
-.sb-av .sb-visor-p {
-  fill: color-mix(in srgb, var(--ink) 92%, var(--bc));
-  stroke: none;
-}
-.sb-av .sb-visor-shine {
-  fill: none;
-  stroke: color-mix(in srgb, var(--card) 70%, transparent);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  opacity: .5;
-}
 .sb-av .sb-eyes {
   transition: transform .22s cubic-bezier(.22, .8, .3, 1);
   transform: translate(calc(var(--lx) * 1.7px), calc(var(--ly) * 1.3px));
 }
 .sb-av .sb-eye { transition: transform .13s cubic-bezier(.34, 1.4, .5, 1); }
-.sb-av[data-kind="study"] .sb-eye-p { fill: var(--card); }
-.sb-av[data-kind="life"] .sb-eye-p { fill: var(--ink); }
-.sb-av .sb-glint { fill: var(--bc, var(--accent)); opacity: .9; }
-.sb-av[data-kind="life"] .sb-glint { fill: var(--card); opacity: .95; }
+.sb-av .sb-eye-p { fill: var(--ink); }
+.sb-av .sb-glint { fill: var(--card); opacity: .95; }
 .sb-av .sb-happy-eye {
   fill: none;
   stroke: var(--ink);

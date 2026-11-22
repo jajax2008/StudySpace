@@ -173,6 +173,20 @@ nav{display:none!important}
 .chatIn input{flex:1;min-width:0;height:46px;margin:0;padding:0 14px;line-height:1.2}
 .chatIn button{flex:none;height:46px;min-height:46px;margin:0;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
 @media (max-width:360px){.chatIn button{padding:0 12px}}
+.chatIn .askwrap{position:relative;display:flex;flex:1;min-width:0}
+.chatIn .askwrap input{width:100%;padding-left:46px}
+.chatIn .chat-ico{position:absolute;left:5px;top:50%;transform:translateY(-50%);width:36px;height:36px;min-height:36px;margin:0;padding:0;border-radius:11px;background:transparent;border:0;color:var(--muted);display:grid;place-items:center;box-shadow:none;flex:none;z-index:2}
+.chatIn .chat-ico svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.chatIn .chat-ico:hover{background:color-mix(in srgb,var(--accent) 11%,transparent);color:var(--ink)}
+.chatIn .chat-ico:active{transform:translateY(-50%) scale(.94)}
+.chatIn .chat-ico:disabled{opacity:.45;background:transparent}
+.cb-welcome{display:flex;flex-direction:column;gap:7px;padding:6px 2px 4px}
+.cb-welcome>b{font-size:15px;letter-spacing:-.2px}
+.cb-welcome p{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted);max-width:34em}
+.cb-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:5px}
+.cb-chip{min-height:34px;padding:7px 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent) 26%,var(--line));background:color-mix(in srgb,var(--accent) 8%,var(--card));color:var(--ink);font-size:12.5px;font-weight:650;line-height:1.2;box-shadow:none;text-align:left}
+.cb-chip:hover{border-color:color-mix(in srgb,var(--accent) 52%,var(--line));background:color-mix(in srgb,var(--accent) 14%,var(--card))}
+.bd-hint{display:block;margin:6px 0 14px;font-size:12px;line-height:1.45;color:var(--muted)}
 
 /* ---------- MOOD BUTTONS: state changes in place ---------- */
 .card [data-hmood]{transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease)}
@@ -438,7 +452,11 @@ img,video,canvas{max-width:100%;height:auto}
 #gsroom .gsl-code:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
 #gsroom .gsl-code::placeholder{letter-spacing:.3em;font-weight:400;color:var(--muted);opacity:.6}
 .gsl-btn{width:100%;min-height:48px;border-radius:14px;font-weight:800;letter-spacing:.01em}
-.gsl-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 14px;backdrop-filter:blur(14px);box-shadow:0 12px 30px -24px rgba(16,24,20,.8)}
+.gsl-bar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 14px;backdrop-filter:blur(14px);box-shadow:0 12px 30px -24px rgba(16,24,20,.8)}
+.gsl-min{flex:none;width:34px;height:34px;min-height:34px;padding:0;border-radius:50%;background:color-mix(in srgb,var(--bg) 72%,var(--card));border:1px solid var(--line);color:var(--muted);box-shadow:none;display:grid;place-items:center}
+.gsl-min svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.gsl-min:hover{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 42%,var(--line))}
+@media (max-width:360px){.gsl-bar{gap:6px;padding-left:11px}.gsl-copy{padding:5px 8px}}
 .gsl-live{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
 .gsl-live i{width:7px;height:7px;border-radius:50%;background:#e05252;box-shadow:0 0 0 3px rgba(224,82,82,.18);animation:gslLive 1.6s ease-in-out infinite}
 @keyframes gslLive{50%{opacity:.35;transform:scale(.85)}}
@@ -448,22 +466,49 @@ img,video,canvas{max-width:100%;height:auto}
 .gsl-seats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .gsl-seats .gsp{position:relative;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:18px;padding:16px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:124px;overflow:visible;transition:border-color .2s var(--ease),transform .2s var(--spring)}
 .gsl-seats .gsp:first-child{grid-column:1/-1;min-height:152px;background:linear-gradient(165deg,color-mix(in srgb,var(--accent) 13%,var(--card)),var(--card))}
-.gsp .av{position:relative;z-index:1;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:18px;letter-spacing:.5px;background:color-mix(in srgb,var(--accent) 16%,var(--card));border:2px solid color-mix(in srgb,var(--accent) 32%,var(--line));color:var(--ink);transition:box-shadow .2s var(--ease)}
-.gsp:first-child .av{width:70px;height:70px;font-size:22px}
-.gsp .ring{position:absolute;top:50%;left:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid var(--accent);opacity:calc(.14 + var(--lvl,0)*.72);transform:scale(calc(1 + var(--lvl,0)*.5));transition:transform .08s linear,opacity .08s linear;pointer-events:none}
-.gsp:first-child .ring{width:80px;height:80px;margin:-40px 0 0 -40px}
+.gsp .avw{position:relative;flex:none;width:56px;height:56px;display:grid;place-items:center}
+.gsp .avw .av{position:relative;z-index:1;width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:18px;letter-spacing:.5px;background:color-mix(in srgb,var(--accent) 16%,var(--card));border:2px solid color-mix(in srgb,var(--accent) 32%,var(--line));color:var(--ink);transition:box-shadow .2s var(--ease)}
+.gsp:first-child .avw{width:70px;height:70px}
+.gsp:first-child .avw .av{font-size:22px}
+.gsp .ring{position:absolute;inset:-4px;width:auto;height:auto;margin:0;border-radius:50%;border:2px solid var(--accent);opacity:calc(.16 + var(--lvl,0)*.7);transform:scale(calc(1 + var(--lvl,0)*.16));transform-origin:center;transition:transform .08s linear,opacity .08s linear;pointer-events:none;z-index:0}
 .gsp.speaking{border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
 .gsp b{font-size:12.5px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gsp small{font-size:10.5px;color:var(--muted);letter-spacing:.03em}
 .gsp .tag{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--muted) 12%,var(--card));color:var(--muted)}
 .gsp .tag.mut{background:color-mix(in srgb,#e05252 15%,var(--card));color:#b23b3b}
 .gsp.empty{background:transparent;border-style:dashed;opacity:.6}
-.gsp.empty .av{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted);font-weight:400;font-size:22px}
+.gsp.empty .av{width:56px;height:56px;background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted);font-weight:400;font-size:22px;border-radius:50%;display:grid;place-items:center}
 .gsl-dock{margin-top:auto;display:flex;gap:8px;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:999px;padding:7px;box-shadow:0 20px 40px -26px rgba(16,24,20,.8);backdrop-filter:blur(14px);position:sticky;bottom:0}
 .gsl-dock button{flex:1;min-height:44px;border-radius:999px;font-size:13px;font-weight:800;background:var(--bg);border:1px solid var(--line);color:var(--ink);box-shadow:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
 .gsl-dock button.off{background:color-mix(in srgb,#e05252 15%,var(--card));border-color:color-mix(in srgb,#e05252 32%,var(--line));color:#b23b3b}
 .gsl-dock button.gsl-leave{background:#c2410c;border-color:#c2410c;color:#fff;flex:0 0 46px;padding:0}
 .gsl-dock button.gsl-leave svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* leave confirmation */
+#gsroom .gsl-confirm{position:fixed;inset:0;z-index:6;display:grid;place-items:center;padding:24px;background:rgba(10,18,14,.42);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);animation:gslFade .2s var(--ease)}
+#gsroom .gsl-confirm[hidden]{display:none}
+.gsl-confirm-card{width:100%;max-width:340px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 18px 16px;box-shadow:0 30px 60px -30px rgba(12,20,16,.7);animation:gslPop .3s var(--spring)}
+.gsl-confirm-card b{display:block;font-size:16.5px;letter-spacing:-.2px}
+.gsl-confirm-card p{margin:6px 0 16px;font-size:13px;line-height:1.45;color:var(--muted)}
+.gsl-confirm-actions{display:flex;gap:8px}
+.gsl-confirm-actions button{flex:1;min-height:44px;border-radius:12px;font-size:13px;font-weight:800;padding:0 10px}
+.gsl-confirm-actions .danger{background:#c2410c;border-color:#c2410c;color:#fff}
+@keyframes gslFade{from{opacity:0}to{opacity:1}}
+@keyframes gslPop{from{opacity:0;transform:translateY(10px) scale(.95)}to{opacity:1;transform:none}}
+
+/* floating minimized call */
+.gspill{position:fixed;left:14px;right:14px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:955;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:999px;background:color-mix(in srgb,var(--card) 94%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,var(--line));box-shadow:0 22px 44px -22px rgba(16,24,20,.7);-webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);animation:gspillIn .32s var(--spring)}
+.gsdot{flex:none;width:9px;height:9px;border-radius:50%;background:#e05252;box-shadow:0 0 0 3px rgba(224,82,82,.18);animation:gslLive 1.6s ease-in-out infinite}
+.gspill-t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.gspill-t b{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.gspill-t small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gspill button{flex:none;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);color:var(--ink);box-shadow:none}
+.gspill button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.gspill button.off{background:color-mix(in srgb,#e05252 15%,var(--card));border-color:color-mix(in srgb,#e05252 32%,var(--line));color:#b23b3b}
+.gspill button:active{transform:scale(.94)}
+@keyframes gspillIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+/* The floating Quick Add sits in the same corner as the call pill. */
+body.call-mini #qa{opacity:0;pointer-events:none}
 </style>
 <script>
 // Safety net. If the app fails to start, show a recovery card. Once it is running, a stray error only shows a small banner and never wipes the screen or your data.
@@ -2188,10 +2233,10 @@ return BK_ACAD+'<h1 style="margin-top:14px">StudyBuddy AI</h1><p class="sub">Onl
 '<button data-aimode="device" class="'+(mode==='device'?'on':'')+'">On-device<br><small>'+(DEV.state==='ready'?'ready':'free')+'</small></button>'+
 '</div>'+(mode==='device'?devCard():'')+
 '<div class="chat-box" id="chatbox">'+
-(B.chat.length?B.chat.map(m=>'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Ask StudyBuddy to explain a concept, summarize, or quiz you! ('+(mode==='online'?'Online Cloud Mode':mode==='device'?'On-device AI. Runs on your phone, no internet needed':'Instant Offline Mode — works with zero internet')+')</div>')+
+(B.chat.length?B.chat.map(m=>'<div class="bubble '+(m.role==='u'?'u':'a')+'">'+esc(m.text)+'</div>').join(''):'<div class="cb-welcome"><b>What are we working on?</b><p>Tap a starter and StudyBuddy answers right away, or type your own question below.</p><div class="cb-chips">'+['Summarize my notes','Quiz me on a topic','Help me plan my day'].map(x=>'<button type="button" class="cb-chip" data-chip="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div></div>')+
 (B.busy?'<div class="bubble a">Thinking...</div>':'')+
 '</div>'+
-'<div class="chatIn"><input id="bask" placeholder="Ask a question..." value="'+esc(B.q)+'" maxlength="240"'+(B.busy?' disabled':'')+'><button id="bsend"'+(B.busy?' disabled':'')+'>Ask</button></div>'+
+'<div class="chatIn"><div class="askwrap"><button type="button" class="chat-ico" data-bdpick="1" aria-label="Attach image" title="Attach image"'+(B.busy?' disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3.2"/><circle cx="9" cy="10" r="1.5"/><path d="M4.5 17.2 9.4 12.3l3 3 2.5-2.3 4.6 4.2"/></svg></button><input id="bask" placeholder="Ask a question..." value="'+esc(B.q)+'" maxlength="240"'+(B.busy?' disabled':'')+'></div><button id="bsend"'+(B.busy?' disabled':'')+'>Ask</button><input id="bdFile" type="file" accept="image/*" multiple hidden></div>'+
 '<h2>Study Material & Quick Tools</h2>'+
 '<div class="form"><select id="bnote"><option value="">Pick a note for context</option>'+S.notes.map(n=>'<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>').join('')+'</select><textarea id="btext" placeholder="Or paste text here. For quizzes, write one card per line like: Term: definition" style="min-height:18vh">'+esc(B.text)+'</textarea><div class="two"><button class="ghost" id="bsum">Quick Summarize</button><button class="ghost" id="bcards">Quiz me</button></div></div>'+
 (B.sum?'<h2>Key points</h2><div class="card">'+(B.sum.length?B.sum.map(x=>'<div class="row"><div class="t"><div>'+esc(x)+'</div></div></div>').join(''):'<div class="empty">Not enough text to summarize.</div>')+'</div>'+(B.sum.length?'<button class="ghost" id="bsave" style="margin-top:10px;width:100%">Save as note</button>':''):'')}
@@ -2343,7 +2388,8 @@ function lifeBuddyView(){
   const help='<div class="card" style="margin-bottom:12px"><b>Need help now?</b>'+hotlinesHTML()+'</div>';
   if(!S.lb.noted)return head+help+'<div class="card"><b>Before you start</b><p style="margin:8px 0">Your messages are sent to Groq\u2019s AI through this app\u2019s server (attached files in StudyBuddy go to Google\u2019s Gemini). On their free tiers, these providers may have people review messages and use them to improve their products. Please avoid names, addresses, and anything you would not want others to read.</p><p style="margin:8px 0">Your chat history stays only on this phone, and you can clear it any time.</p><button id="lbok" style="width:100%">I understand</button></div>';
   const limited=lbLeft()<=0;
-  const chat=LB.chat.length?LB.chat.map(lbBubble).join(''):'<div class="empty">Hi, I\u2019m Life Buddy. I\u2019m here to listen. How are you feeling today?</div>';
+  const starters=['I\u2019m feeling stressed','I need to vent','Help me feel calm'];
+  const chat=LB.chat.length?LB.chat.map(lbBubble).join(''):'<div class="cb-welcome"><b>Hi, I\u2019m Life Buddy.</b><p>I\u2019m here to listen. Tap a starter to send it right away, or write what is on your mind below.</p><div class="cb-chips">'+starters.map(x=>'<button type="button" class="cb-chip" data-chip="'+x+'">'+x+'</button>').join('')+'</div></div>';
   return head+
   '<div class="two" style="margin-bottom:12px"><button class="ghost" id="lbhelp">'+(LB.help?'Hide help lines':'Need help now?')+'</button><button class="ghost" id="lbbreath">'+(LB.showBreath||limited?'Breathing exercise \u2713':'Breathing exercise')+'</button></div>'+
   (LB.help?help:'')+(limited||LB.showBreath?breathCard():'')+
@@ -2792,7 +2838,7 @@ document.addEventListener('click',e=>{
 audio();
 const t=e.target.closest('button');if(!t)return;
 const d=t.dataset;
-if(d.gs){try{groupStudyOpen(d.gs)}catch(err){banner('Could not open the study room.')}return}
+if(d.gs==='open'){try{groupStudyOpen('open')}catch(err){banner('Could not open the study room.')}return}
 if(d.msub){moreSub=d.msub;render();$('#view').scrollTop=0;return}
 if(d.moreback){moreSub='';render();$('#view').scrollTop=0;return}
 if(d.hlmove){const bits=String(d.hlmove).split(':'),k=bits[0],dir=+bits[1]||0,l=homeLayout(),i=l.order.indexOf(k),j=i+dir;if(i>=0&&j>=0&&j<l.order.length){l.order.splice(i,1);l.order.splice(j,0,k);S.home={order:l.order,hidden:l.hidden};save();HLMOVED={k:k,dir:dir};render();HLMOVED=null}return}
@@ -3716,9 +3762,8 @@ buddyView=function(){
   var i=h.indexOf('<h2>Study Material');
   if(i>0)h=h.slice(0,i);
   var online=(S.ai.mode||'online')==='online';
-  return h+'<div class="thumbs">'+IMGB.map(function(m,k){return '<div><img src="'+m.url+'" alt="Attached image"><button data-bdrm="'+k+'" aria-label="Remove image">×</button></div>'}).join('')+'</div>'+
-    '<button class="ghost" data-bdpick="1" style="width:100%"'+(B.busy?' disabled':'')+'>Attach image</button><input id="bdFile" type="file" accept="image/*" multiple hidden>'+
-    '<small style="display:block;margin:6px 0 14px">'+(online?'Photos of homework, notes or diagrams. Up to 3.':'Images work in Online mode only.')+'</small>'+
+  return h+(IMGB.length?'<div class="thumbs">'+IMGB.map(function(m,k){return '<div><img src="'+m.url+'" alt="Attached image"><button data-bdrm="'+k+'" aria-label="Remove image">×</button></div>'}).join('')+'</div>':'')+
+    '<small class="bd-hint">'+(online?'Use the image button in the message bar to add up to 3 photos of homework, notes or diagrams.':'Images work in Online mode only.')+'</small>'+
     '<label>Use a note as context (optional)<select id="bnote"><option value="">No note</option>'+S.notes.map(function(n){return '<option value="'+n.id+'"'+(B.nid===n.id?' selected':'')+'>'+esc(noteTitle(n))+'</option>'}).join('')+'</select></label>';
 };
 var prevAsk=askStudyBuddy;
@@ -4361,8 +4406,9 @@ document.addEventListener('click',async function(e){
   }
   function seatHTML(id){
     var p=G.people[id]||{},me=id===G.id,muted=!!p.muted||(me&&G.muted);
-    return '<div class="gsp" data-gsp="'+esc(id)+'"><span class="ring" aria-hidden="true"></span>'+
-      '<div class="av">'+esc(initials(p.name))+'</div>'+
+    return '<div class="gsp" data-gsp="'+esc(id)+'">'+
+      '<div class="avw"><span class="ring" aria-hidden="true"></span>'+
+      '<div class="av">'+esc(initials(p.name))+'</div></div>'+
       '<b>'+esc(p.name||'Guest')+(me?' (you)':'')+'</b>'+
       '<span class="tag'+(muted?' mut':'')+'" data-gsl>'+(muted?'Muted':(p.live?'Listening':'Connecting\u2026'))+'</span></div>';
   }
@@ -4371,6 +4417,7 @@ document.addEventListener('click',async function(e){
     for(i=G.order.length;i<5;i++)out+='<div class="gsp empty"><div class="av">+</div><b>Open seat</b><small>Waiting</small></div>';
     var el=q('gspeople');if(el)el.innerHTML=out;
     var c=q('gscount');if(c)c.textContent=G.order.length+'/5';
+    if(G.min)pill();
   }
   function paintTimer(){
     var el=q('gstime');if(!el)return;
@@ -4381,20 +4428,85 @@ document.addEventListener('click',async function(e){
   }
   function stopTimer(){if(G.timer){clearInterval(G.timer)}G.timer=0;G.started=0}
   function startTimer(){stopTimer();G.started=Date.now();paintTimer();G.timer=setInterval(paintTimer,1000)}
+
+  /* ---- leave confirmation ---- */
+  function askLeave(){
+    var d=q('gslconfirm');
+    if(!d)return;
+    d.hidden=false;
+    var b=d.querySelector('[data-gs="leave-yes"]');
+    if(b&&b.focus)b.focus();
+  }
+  function cancelLeave(){
+    var d=q('gslconfirm');
+    if(d)d.hidden=true;
+    var b=q('gsmute');
+    if(b&&b.focus)b.focus();
+  }
+
+  /* ---- minimized call pill ----
+     Hiding the room only hides the UI. The peer connections, microphone
+     tracks, timer and audio analysers all keep running while the rest of the
+     app is used, and the pill expands back into the same live room. */
+  function applyMin(){
+    var r=q('gsroom');
+    if(r)r.style.display=G.min?'none':'flex';
+    if(G.min)pill();else removePill();
+  }
+  function minimize(){if(!G.room)return;G.min=true;applyMin()}
+  function expand(){if(!G.room)return;G.min=false;var r=q('gsroom');if(!r)room();applyMin()}
+  function removePill(){var p=q('gspill');if(p)p.remove();document.body.classList.remove('call-mini')}
+  function speakingName(){
+    for(var i=0;i<G.order.length;i++){
+      var id=G.order[i],c=document.querySelector('[data-gsp="'+id+'"]');
+      if(c&&c.classList.contains('speaking'))return (G.people[id]&&G.people[id].name)||'';
+    }
+    return '';
+  }
+  function pill(){
+    if(!G.room||!G.min){removePill();return}
+    var p=q('gspill');
+    if(!p){
+      p=document.createElement('div');p.id='gspill';p.className='gspill';
+      p.setAttribute('role','region');p.setAttribute('aria-label','Active study room call');
+      p.innerHTML='<span class="gsdot" aria-hidden="true"></span>'+
+        '<span class="gspill-t"><b>Live study room</b><small id="gspill-sub"></small></span>'+
+        '<button type="button" class="gspill-mic" data-gs="mute" aria-label="Mute microphone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button>'+
+        '<button type="button" class="gspill-open" data-gs="expand" aria-label="Expand study room"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14.5l6-6 6 6"/></svg></button>';
+      p.addEventListener('click',function(e){
+        if(e.target.closest&&e.target.closest('button'))return;
+        e.preventDefault();expand();
+      });
+      document.body.appendChild(p);
+    }
+    document.body.classList.add('call-mini');
+    var sub=q('gspill-sub');
+    if(sub){
+      var n=G.order.length,who=speakingName();
+      var text=G.room+' \u00b7 '+n+(n===1?' person':' people')+(who?' \u00b7 '+who+' speaking':'');
+      if(sub.textContent!==text)sub.textContent=text;
+    }
+    var mb=p.querySelector('.gspill-mic');
+    if(mb){
+      mb.classList.toggle('off',G.muted);
+      mb.setAttribute('aria-label',G.muted?'Unmute microphone':'Mute microphone');
+    }
+  }
   function room(){
     var r=shell();
     r.innerHTML='<div class="gsl">'+
       '<div class="gsl-bar"><span class="gsl-live"><i></i>Live study room</span><span class="gsl-time" id="gstime">00:00</span>'+
         '<button type="button" class="gsl-copy" data-gs="copy" aria-label="Copy room code"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>'+esc(G.room)+'</button>'+
-        '<button type="button" class="gsl-x" data-gs="close" style="position:static">Close</button></div>'+
+        '<button type="button" class="gsl-min" data-gs="min" aria-label="Minimize call" title="Minimize call"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg></button></div>'+
       '<div class="gsl-seats" id="gspeople"></div>'+
       '<p class="gsnote" style="text-align:center;margin:0">A glowing ring shows who is speaking. Audio only, max five people.</p>'+
       '<div class="gsl-dock">'+
         '<button type="button" data-gs="mute" id="gsmute">'+(G.muted?'Unmute':'Mute')+'</button>'+
         '<button type="button" data-gs="speaker" id="gsspk"'+(G.spk?'':' class="off"')+'>'+(G.spk?'Speaker':'Speaker off')+'</button>'+
         '<button type="button" class="gsl-leave" data-gs="leave" aria-label="Leave room"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h9"/></svg></button></div>'+
+      '<div class="gsl-confirm" id="gslconfirm" role="alertdialog" aria-modal="true" aria-labelledby="gslcfm-t" aria-describedby="gslcfm-d" hidden><div class="gsl-confirm-card"><b id="gslcfm-t">Leave the study room?</b><p id="gslcfm-d">Your microphone turns off and you disconnect from everyone here.</p><div class="gsl-confirm-actions"><button type="button" class="ghost" data-gs="leave-cancel">Cancel</button><button type="button" class="danger" data-gs="leave-yes">Leave Room</button></div></div></div>'+
       '<div id="gsaudio"></div></div>';
-    paintPeople();paintTimer();
+    paintPeople();paintTimer();applyMin();
   }
 
   /* ---- people ---- */
@@ -4458,7 +4570,8 @@ document.addEventListener('click',async function(e){
         var on=lvl>.035;
         var card=document.querySelector('[data-gsp="'+id+'"]');
         if(!card)return;
-        card.classList.toggle('speaking',on);
+        var was=card.classList.contains('speaking');
+        if(on!==was){card.classList.toggle('speaking',on);if(G.min)pill()}
         try{card.style.setProperty('--lvl',Math.min(1,Math.max(0,(lvl-.008)*7)).toFixed(2))}catch(e){}
         var muted=(id===G.id&&G.muted);
         var l=card.querySelector('[data-gsl]');
@@ -4509,6 +4622,7 @@ document.addEventListener('click',async function(e){
   /* ---- lifecycle ---- */
   function enter(code,people){
     G.room=code;
+    G.min=false;
     room();
     startTimer();
     addPerson(G.id,G.name,true);
@@ -4521,6 +4635,8 @@ document.addEventListener('click',async function(e){
   }
   function cleanup(){
     stopTimer();
+    removePill();
+    G.min=false;
     if(G.raf){try{cancelAnimationFrame(G.raf)}catch(e){}}
     G.raf=0;
     Object.keys(G.an).forEach(stopListen);
@@ -4612,16 +4728,27 @@ document.addEventListener('click',async function(e){
       navigator.clipboard.writeText(code).then(function(){banner('Room code '+code+' copied.')},function(){banner('Room code: '+code)});
     }else banner('Room code: '+code);
   }
+  /* Outgoing and incoming audio are independent. Muting the microphone only
+     flips the local track's enabled flag; the speaker toggle only mutes the
+     remote <audio> elements. Neither direction can silence the other. */
+  function applyMic(){
+    if(!G.stream)return;
+    try{G.stream.getAudioTracks().forEach(function(t){t.enabled=!G.muted})}catch(e){}
+  }
+  function applySpeaker(){
+    [].forEach.call(document.querySelectorAll('#gsaudio audio'),function(a){a.muted=!G.spk});
+  }
   function toggleMute(){
     G.muted=!G.muted;
-    if(G.stream){try{G.stream.getAudioTracks().forEach(function(t){t.enabled=!G.muted})}catch(e){}}
+    applyMic();
     var b=q('gsmute');if(b){b.textContent=G.muted?'Unmute':'Mute';b.classList.toggle('off',G.muted)}
     var tag=document.querySelector('[data-gsp="'+G.id+'"] [data-gsl]');
     if(tag){tag.textContent=G.muted?'Muted':'Listening';tag.classList.toggle('mut',G.muted)}
+    if(G.min)pill();
   }
   function toggleSpeaker(){
     G.spk=!G.spk;
-    [].forEach.call(document.querySelectorAll('#gsaudio audio'),function(a){a.muted=!G.spk});
+    applySpeaker();
     var b=q('gsspk');if(b){b.textContent=G.spk?'Speaker':'Speaker off';b.classList.toggle('off',!G.spk)}
   }
 
@@ -4630,15 +4757,24 @@ document.addEventListener('click',async function(e){
     if(!b)return;
     var a=b.getAttribute('data-gs');
     if(a==='open')return; /* handled by the main app handler */
-    if(a==='close'){if(G.room)leave();else closeOverlay();return}
+    if(a==='close'){closeOverlay();return}
     if(a==='create'){create();return}
     if(a==='join'){join();return}
     if(a==='copy'){copyCode();return}
     if(a==='mute'){toggleMute();return}
     if(a==='speaker'){toggleSpeaker();return}
-    if(a==='leave'){leave('You left the study room.');return}
+    if(a==='min'){minimize();return}
+    if(a==='expand'){expand();return}
+    if(a==='leave'){askLeave();return}
+    if(a==='leave-cancel'){cancelLeave();return}
+    if(a==='leave-yes'){leave('You left the study room.');return}
   });
   document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      var d=q('gslconfirm');
+      if(d&&!d.hidden){e.preventDefault();cancelLeave()}
+      return;
+    }
     if(e.key!=='Enter')return;
     if(e.target&&e.target.id==='gscode'){e.preventDefault();join()}
     else if(e.target&&e.target.id==='gsname'){e.preventDefault()}
@@ -4654,7 +4790,7 @@ document.addEventListener('click',async function(e){
   });
 
   window.groupStudyOpen=function(){
-    if(G.room){room();return}
+    if(G.room){G.min=false;room();return}
     lobby();
   };
 })();

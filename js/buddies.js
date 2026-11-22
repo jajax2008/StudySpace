@@ -19,33 +19,43 @@
         '<path class="sb-m sb-m-sleep" d="M35.6 ' + (y + 1) + 'q4.4 2.3 8.8 0"/>';
     }
 
+    /* A soft, hand-drawn boy: round glasses, a fringe of dark hair and an open
+       book held in both hands. Every moving part uses the same groups as the
+       other buddy (sb-tilt, sb-eyes, sb-eye, sb-hand-r, sb-m*), so the sleep,
+       blink, thinking, listening and performance rules all apply unchanged. */
     function studyArt() {
-      return '<g class="sb-fins">' +
-          '<path class="sb-fin" d="M21 33.5 12.6 29l1.6 13Z"/>' +
-          '<path class="sb-fin" d="M59 33.5 67.4 29l-1.6 13Z"/>' +
-        '</g>' +
-        '<g class="sb-bulb">' +
-          '<path class="sb-stem" d="M40 18.4v-8"/>' +
-          '<circle class="sb-bulb-p" cx="40" cy="7.4" r="3.3"/>' +
-          '<circle class="sb-bulb-c" cx="40" cy="7.4" r="1.2"/>' +
-        '</g>' +
-        '<path class="sb-sk" d="M40 18c13.4 0 21.6 8.6 21.6 21.4v8.3c0 8.7-7 15.8-15.7 15.8H34.1c-8.7 0-15.7-7.1-15.7-15.8v-8.3C18.4 26.6 26.6 18 40 18Z"/>' +
-        '<path class="sb-sheen" d="M27.4 29.4c2.5-4.4 6.5-6.7 11.1-7.1"/>' +
-        '<g class="sb-hand sb-hand-l"><rect x="9.2" y="48.2" width="11.6" height="7.6" rx="3.8"/></g>' +
-        '<g class="sb-hand sb-hand-r"><rect x="59.2" y="48.2" width="11.6" height="7.6" rx="3.8"/></g>' +
+      return '<ellipse class="sb-ear-p" cx="21.4" cy="39" rx="2.9" ry="3.7"/>' +
+        '<ellipse class="sb-ear-p" cx="58.6" cy="39" rx="2.9" ry="3.7"/>' +
+        '<ellipse class="sb-face" cx="40" cy="35.4" rx="18.3" ry="18.5"/>' +
+        '<path class="sb-hair" d="M21.5 36.4C21.5 25 29.8 16.2 40 16.2s18.5 8.8 18.5 20.2c0 2.2-.3 4.3-.9 6.1-2-2.3-3.1-5.2-3.4-8.4-1.9 2-4.3 3.2-7.2 3.4-3.3.2-6.2-1-8.1-3.1-1.9 2.1-4.8 3.3-8.1 3.1-2.9-.2-5.3-1.4-7.2-3.4-.3 3.2-1.4 6.1-3.4 8.4-.6-1.8-.9-3.9-.9-6.1Z"/>' +
+        '<path class="sb-hair-shine" d="M28.4 24.6c2.5-2.8 5.9-4.4 9.5-4.7"/>' +
         '<g class="sb-tilt">' +
-          '<g class="sb-visor">' +
-            '<rect class="sb-visor-p" x="23.4" y="32" width="33.2" height="16" rx="8"/>' +
-            '<path class="sb-visor-shine" d="M28.2 35.4h6.4"/>' +
-            '<g class="sb-eyes">' +
-              '<g class="sb-eye sb-eye-l"><rect class="sb-eye-p" x="29.4" y="34.8" width="5.4" height="10.4" rx="2.7"/><circle class="sb-glint" cx="32.1" cy="38.2" r="1.15"/></g>' +
-              '<g class="sb-eye sb-eye-r"><rect class="sb-eye-p" x="45.2" y="34.8" width="5.4" height="10.4" rx="2.7"/><circle class="sb-glint" cx="47.9" cy="38.2" r="1.15"/></g>' +
+          '<g class="sb-eyes">' +
+            '<g class="sb-eye sb-eye-l"><ellipse class="sb-eye-p" cx="32.4" cy="38.2" rx="2.1" ry="2.6"/><circle class="sb-glint" cx="33.1" cy="37.1" r=".85"/></g>' +
+            '<g class="sb-eye sb-eye-r"><ellipse class="sb-eye-p" cx="47.6" cy="38.2" rx="2.1" ry="2.6"/><circle class="sb-glint" cx="48.3" cy="37.1" r=".85"/></g>' +
+            '<g class="sb-happy-eyes">' +
+              '<path class="sb-happy-eye" d="M28.6 38.6q3.8-4.4 7.6 0"/>' +
+              '<path class="sb-happy-eye" d="M43.8 38.6q3.8-4.4 7.6 0"/>' +
             '</g>' +
           '</g>' +
-          '<ellipse class="sb-blush" cx="27" cy="52.4" rx="4.3" ry="2.4"/>' +
-          '<ellipse class="sb-blush" cx="53" cy="52.4" rx="4.3" ry="2.4"/>' +
-          mouths(55.5) +
-        '</g>';
+          '<g class="sb-glasses">' +
+            '<circle class="sb-lens" cx="32.4" cy="38.2" r="7.1"/>' +
+            '<circle class="sb-lens" cx="47.6" cy="38.2" r="7.1"/>' +
+            '<path class="sb-frame" d="M39.4 37.6q1.4-1.5 2.8 0M25.3 37.4 21.7 36M54.7 37.4 58.3 36"/>' +
+            '<path class="sb-glare" d="M28.3 34.8q1.5-1.8 3.6-1.7"/>' +
+          '</g>' +
+          '<ellipse class="sb-blush" cx="23.9" cy="46.6" rx="4" ry="2.2"/>' +
+          '<ellipse class="sb-blush" cx="56.1" cy="46.6" rx="4" ry="2.2"/>' +
+          mouths(48.6) +
+        '</g>' +
+        '<g class="sb-book">' +
+          '<path class="sb-page" d="M38.8 58.2c-6.2-2.6-13.4-2.9-20.4-1.5.7 4.6.9 9.3.6 13.9 7-1.3 13.8-1 19.8 1.2Z"/>' +
+          '<path class="sb-page" d="M41.2 58.2c6.2-2.6 13.4-2.9 20.4-1.5-.7 4.6-.9 9.3-.6 13.9-7-1.3-13.8-1-19.8 1.2Z"/>' +
+          '<path class="sb-spine" d="M40 58.6v13.2"/>' +
+          '<path class="sb-page-line" d="M23.4 63.8c4-.6 8-.5 11.9.5M23.6 67.6c3.9-.6 7.8-.5 11.6.4M56.6 63.8c-4-.6-8-.5-11.9.5M56.4 67.6c-3.9-.6-7.8-.5-11.6.4"/>' +
+        '</g>' +
+        '<g class="sb-hand sb-hand-l"><ellipse cx="18.7" cy="66.4" rx="4.2" ry="4.9"/></g>' +
+        '<g class="sb-hand sb-hand-r"><ellipse cx="61.3" cy="66.4" rx="4.2" ry="4.9"/></g>';
     }
 
     function lifeArt() {
@@ -380,6 +390,22 @@
         el.__perfT = setTimeout(function (e) { return function () { delete e.dataset.perf } }(el), PERF_MS.nod);
       }
     }
+
+    /* ================= STARTER CHIPS ================= */
+    /* A starter fills the matching composer and sends it in one tap, so a first
+       visitor starts with a real answer instead of an empty screen. */
+    document.addEventListener('click', function (e) {
+      var chip = e.target.closest && e.target.closest('[data-chip]');
+      if (!chip) return;
+      var life = !!document.getElementById('lbask');
+      var inp = document.getElementById(life ? 'lbask' : 'bask');
+      if (!inp || inp.disabled) return;
+      var text = chip.getAttribute('data-chip') || chip.textContent || '';
+      if (!text) return;
+      inp.value = text;
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+      try { (life ? window.askLifeBuddy : window.askStudyBuddy)(); } catch (err) {}
+    });
 
     /* ================= SEND / TYPING HOOKS ================= */
     function listen(kind) {
