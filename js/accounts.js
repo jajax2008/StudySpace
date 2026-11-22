@@ -262,7 +262,10 @@
       if (!/^[a-z0-9._]{3,24}$/.test(user)) {
         return setMsg(msg, 'Usernames are 3–24 characters: letters, numbers, dots or underscores.');
       }
-      if (pass.length < 8) return setMsg(msg, 'Use at least 8 characters for your password.');
+      if (!pass) return setMsg(msg, 'Enter your password.');
+      /* Only new passwords need 8+ characters. Signing in accepts any existing
+         password, including the developer accounts. */
+      if (up && pass.length < 8) return setMsg(msg, 'Use at least 8 characters for your password.');
       if (up) {
         var again = el('accUpPass2').value || '';
         if (pass !== again) return setMsg(msg, 'The two passwords do not match.');
@@ -831,7 +834,11 @@
       state: st,
       syncNow: syncNow,
       signOut: signOut,
-      securityHTML: securityHTML
+      securityHTML: securityHTML,
+      sessionToken: function () { return st.token; },
+      username: function () { return (st.user && st.user.username) || ''; },
+      isDev: function () { return !!(st.user && String(st.user.role || '').toUpperCase() === 'DEV'); },
+      isOwnerDev: function () { return !!(st.user && st.user.username === 'urdevjaja'); }
     };
 
     boot();

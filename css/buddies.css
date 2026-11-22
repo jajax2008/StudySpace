@@ -45,28 +45,19 @@
   stroke-linecap: round;
   opacity: .8;
 }
-/* StudyBuddy: a boy with dark hair, round glasses and an open book. */
-.sb-av .sb-face { fill: #f7d9c2; stroke: #c99570; stroke-width: 1.9; }
-.sb-av .sb-ear-p { fill: #f7d9c2; stroke: #c99570; stroke-width: 1.7; }
-.sb-av .sb-hair { fill: #41312a; }
-.sb-av .sb-hair-shine {
-  fill: none;
-  stroke: color-mix(in srgb, var(--card) 46%, transparent);
-  stroke-width: 2.1;
-  stroke-linecap: round;
-  opacity: .55;
-}
+/* StudyBuddy: LifeBuddy's round body with clean nerd glasses and no hair. */
 .sb-av .sb-lens {
-  fill: color-mix(in srgb, var(--card) 22%, transparent);
-  stroke: #5b4a3f;
-  stroke-width: 1.7;
+  fill: color-mix(in srgb, var(--card) 20%, transparent);
+  stroke: color-mix(in srgb, var(--ink) 74%, transparent);
+  stroke-width: 1.8;
 }
 .sb-av .sb-frame {
   fill: none;
-  stroke: #5b4a3f;
-  stroke-width: 1.7;
+  stroke: color-mix(in srgb, var(--ink) 74%, transparent);
+  stroke-width: 1.8;
   stroke-linecap: round;
 }
+.sb-av[data-kind="study"] .sb-glasses { filter: drop-shadow(0 1px 0 color-mix(in srgb, #fff 30%, transparent)); }
 .sb-av .sb-glare {
   fill: none;
   stroke: color-mix(in srgb, var(--card) 88%, transparent);

@@ -1,6 +1,6 @@
 /* StudySpace live buddies — hand-drawn characters with a full state machine.
    One SVG per buddy, drawn for the mood card upgrade:
-     · StudyBuddy  — sleek visor head, antenna, ear fins, glowing eyes
+     · StudyBuddy  — same round face as LifeBuddy, bald on top, nerdy glasses
      · LifeBuddy   — soft round companion, sprout, scarf, big warm eyes
    States: idle · sleepy (Life Tracker window) · thinking (typing) ·
    listening (message sent) · happy (tap) plus a two-minute performance loop
@@ -19,43 +19,39 @@
         '<path class="sb-m sb-m-sleep" d="M35.6 ' + (y + 1) + 'q4.4 2.3 8.8 0"/>';
     }
 
-    /* A soft, hand-drawn boy: round glasses, a fringe of dark hair and an open
-       book held in both hands. Every moving part uses the same groups as the
-       other buddy (sb-tilt, sb-eyes, sb-eye, sb-hand-r, sb-m*), so the sleep,
-       blink, thinking, listening and performance rules all apply unchanged. */
+    /* StudyBuddy shares LifeBuddy's exact body, head, ears, hands, eyes, brows,
+       blush and mouth, so both buddies read as the same family. He is bald on
+       top (no sprout, no hair) and wears simple round nerdy glasses. The eyes
+       and happy-arc paths keep the same groups as before, so every sleep,
+       blink, thinking, listening and performance rule still applies. */
     function studyArt() {
-      return '<ellipse class="sb-ear-p" cx="21.4" cy="39" rx="2.9" ry="3.7"/>' +
-        '<ellipse class="sb-ear-p" cx="58.6" cy="39" rx="2.9" ry="3.7"/>' +
-        '<ellipse class="sb-face" cx="40" cy="35.4" rx="18.3" ry="18.5"/>' +
-        '<path class="sb-hair" d="M21.5 36.4C21.5 25 29.8 16.2 40 16.2s18.5 8.8 18.5 20.2c0 2.2-.3 4.3-.9 6.1-2-2.3-3.1-5.2-3.4-8.4-1.9 2-4.3 3.2-7.2 3.4-3.3.2-6.2-1-8.1-3.1-1.9 2.1-4.8 3.3-8.1 3.1-2.9-.2-5.3-1.4-7.2-3.4-.3 3.2-1.4 6.1-3.4 8.4-.6-1.8-.9-3.9-.9-6.1Z"/>' +
-        '<path class="sb-hair-shine" d="M28.4 24.6c2.5-2.8 5.9-4.4 9.5-4.7"/>' +
+      return '<circle class="sb-ear" cx="17.8" cy="35" r="5.4"/>' +
+        '<circle class="sb-ear" cx="62.2" cy="35" r="5.4"/>' +
+        '<path class="sb-sk" d="M40 15c14.4 0 24.6 10.3 24.6 24.4C64.6 54.6 53.6 65 40 65S15.4 54.6 15.4 39.4C15.4 25.3 25.6 15 40 15Z"/>' +
+        '<path class="sb-sheen" d="M25.6 30.4c1.8-5 5.3-8 9.6-8.8"/>' +
+        '<g class="sb-hand sb-hand-l"><ellipse cx="14.2" cy="51" rx="5.4" ry="5"/></g>' +
+        '<g class="sb-hand sb-hand-r"><ellipse cx="65.8" cy="51" rx="5.4" ry="5"/></g>' +
         '<g class="sb-tilt">' +
           '<g class="sb-eyes">' +
-            '<g class="sb-eye sb-eye-l"><ellipse class="sb-eye-p" cx="32.4" cy="38.2" rx="2.1" ry="2.6"/><circle class="sb-glint" cx="33.1" cy="37.1" r=".85"/></g>' +
-            '<g class="sb-eye sb-eye-r"><ellipse class="sb-eye-p" cx="47.6" cy="38.2" rx="2.1" ry="2.6"/><circle class="sb-glint" cx="48.3" cy="37.1" r=".85"/></g>' +
-            '<g class="sb-happy-eyes">' +
-              '<path class="sb-happy-eye" d="M28.6 38.6q3.8-4.4 7.6 0"/>' +
-              '<path class="sb-happy-eye" d="M43.8 38.6q3.8-4.4 7.6 0"/>' +
-            '</g>' +
+            '<g class="sb-eye sb-eye-l"><ellipse class="sb-eye-p" cx="31.5" cy="37.6" rx="4.5" ry="5.3"/><circle class="sb-glint" cx="33" cy="35.6" r="1.5"/></g>' +
+            '<g class="sb-eye sb-eye-r"><ellipse class="sb-eye-p" cx="48.5" cy="37.6" rx="4.5" ry="5.3"/><circle class="sb-glint" cx="50" cy="35.6" r="1.5"/></g>' +
           '</g>' +
           '<g class="sb-glasses">' +
-            '<circle class="sb-lens" cx="32.4" cy="38.2" r="7.1"/>' +
-            '<circle class="sb-lens" cx="47.6" cy="38.2" r="7.1"/>' +
-            '<path class="sb-frame" d="M39.4 37.6q1.4-1.5 2.8 0M25.3 37.4 21.7 36M54.7 37.4 58.3 36"/>' +
-            '<path class="sb-glare" d="M28.3 34.8q1.5-1.8 3.6-1.7"/>' +
+            '<circle class="sb-lens" cx="31.5" cy="37.6" r="8.1"/>' +
+            '<circle class="sb-lens" cx="48.5" cy="37.6" r="8.1"/>' +
+            '<path class="sb-frame" d="M39.6 36.9q.9-1.3 1.8 0M23.4 37.1 19.6 35.9M56.6 37.1 60.4 35.9"/>' +
+            '<path class="sb-glare" d="M27.4 34.2q1.7-2.1 4.1-2"/>' +
           '</g>' +
-          '<ellipse class="sb-blush" cx="23.9" cy="46.6" rx="4" ry="2.2"/>' +
-          '<ellipse class="sb-blush" cx="56.1" cy="46.6" rx="4" ry="2.2"/>' +
-          mouths(48.6) +
-        '</g>' +
-        '<g class="sb-book">' +
-          '<path class="sb-page" d="M38.8 58.2c-6.2-2.6-13.4-2.9-20.4-1.5.7 4.6.9 9.3.6 13.9 7-1.3 13.8-1 19.8 1.2Z"/>' +
-          '<path class="sb-page" d="M41.2 58.2c6.2-2.6 13.4-2.9 20.4-1.5-.7 4.6-.9 9.3-.6 13.9-7-1.3-13.8-1-19.8 1.2Z"/>' +
-          '<path class="sb-spine" d="M40 58.6v13.2"/>' +
-          '<path class="sb-page-line" d="M23.4 63.8c4-.6 8-.5 11.9.5M23.6 67.6c3.9-.6 7.8-.5 11.6.4M56.6 63.8c-4-.6-8-.5-11.9.5M56.4 67.6c-3.9-.6-7.8-.5-11.6.4"/>' +
-        '</g>' +
-        '<g class="sb-hand sb-hand-l"><ellipse cx="18.7" cy="66.4" rx="4.2" ry="4.9"/></g>' +
-        '<g class="sb-hand sb-hand-r"><ellipse cx="61.3" cy="66.4" rx="4.2" ry="4.9"/></g>';
+          '<g class="sb-happy-eyes">' +
+            '<path class="sb-happy-eye" d="M26.6 38q4.9-5 9.8 0"/>' +
+            '<path class="sb-happy-eye" d="M43.6 38q4.9-5 9.8 0"/>' +
+          '</g>' +
+          '<path class="sb-brow" d="M27 30.2q4-2.2 8 0"/>' +
+          '<path class="sb-brow" d="M45 30.2q4-2.2 8 0"/>' +
+          '<ellipse class="sb-blush" cx="23.4" cy="45.6" rx="4.6" ry="2.5"/>' +
+          '<ellipse class="sb-blush" cx="56.6" cy="45.6" rx="4.6" ry="2.5"/>' +
+          mouths(49.5) +
+        '</g>';
     }
 
     function lifeArt() {
