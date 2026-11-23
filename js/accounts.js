@@ -9,7 +9,7 @@
     /* Device-local state is deliberately absent: icon theme, home-screen widget
        settings, quick-add position, floating notes and UI colours stay on the
        phone and are never uploaded or replaced by a login. */
-    var SYNC_KEYS = ['subjects', 'tasks', 'sessions', 'exams', 'notes', 'decks', 'res', 'reviews', 'grades', 'wallet', 'journal', 'habits', 'sleep', 'stickies', 'home', 'theme', 'prof', 'cal'];
+    var SYNC_KEYS = ['subjects', 'tasks', 'sessions', 'exams', 'notes', 'decks', 'res', 'reviews', 'grades', 'wallet', 'journal', 'habits', 'sleep', 'stickies', 'home', 'theme', 'prof', 'cal', 'games'];
 
     var st = { token: '', user: null, busy: false, syncing: false, last: 0, err: '', applying: false, onb: false };
     var syncT = null;
