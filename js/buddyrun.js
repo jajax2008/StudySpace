@@ -275,6 +275,8 @@ class BuddyRun {
     this.playing = false;
     this.paused = false;
     this.over = false;
+    this.qOpen = false;
+    this.timeScale = 1;
     this.raf = 0;
     this.lastT = 0;
     this.t = 0;
@@ -406,8 +408,10 @@ class BuddyRun {
       speed: 8.4, travel: 0, hearts: 3, recover: 0, coins: 0, correct: 0,
       skips: 3, lifeUsed: false, invuln: 0, shake: 0, dodged: 0,
       spawnS: 46, gate: 340, level: 1, hitFlash: 0, started: false,
-      intro: 1.15, introY: 6.9, stagger: 0, splash: 0, land: null, nextQ: ''
+      intro: 1.15, introY: 6.9, stagger: 0, splash: 0, land: null, nextQ: '', grace: 0
     };
+    this.timeScale = 1;
+    this.qOpen = false;
     this.sparkCursor = 0;
     this.active = [];
     this.coins = [];
@@ -416,6 +420,8 @@ class BuddyRun {
     this.q = null;
     this.over = false;
     this.paused = false;
+    this.qOpen = false;
+    this.timeScale = 1;
     this.t = 0;
     this.animT = 0;
     this.lastHud = '';
@@ -607,7 +613,8 @@ class BuddyRun {
     const item = this.pickQuestion();
     if (!item) { this.gameOver(); return; }
     if (kind === 'rescue') this.run.lifeUsed = true;
-    this.q = { kind, item, t: 10, locked: true };
+    this.q = { kind, item, t: 10 };
+    this.qOpen = true;
     const el = this.el;
     el.q.hidden = false;
     el.qKind.textContent = kind === 'rescue' ? 'LifeBuddy rescue' : kind === 'bonus' ? 'Bonus question' : 'Recovery question';
@@ -655,14 +662,14 @@ class BuddyRun {
     const r = this.run;
 
     if (q.kind === 'rescue') {
-      this.q = null;
       if (correct) {
         r.hearts = 1;
         r.recover = 0;
-        r.invuln = 2.6;
         this.dying = false;
         this.paintHearts();
         this.toast('LifeBuddy gave you a heart. Keep going!', 2.6);
+        this.resumeRun();
+        r.invuln = Math.max(r.invuln, 2.6);
         this.setBuddy('celebrate', 1.1);
       } else {
         this.gameOver();
@@ -670,31 +677,60 @@ class BuddyRun {
       return;
     }
 
-    if (correct) {
-      r.correct++;
-      const gain = q.kind === 'bonus' ? 15 : 10;
-      r.coins += gain;
-      if (r.hearts < 3) {
-        r.recover++;
-        if (r.recover >= 2) {
-          r.hearts++;
-          r.recover = 0;
-          this.toast('+' + gain + ' coins · heart recovered +1', 2.4);
+    /* Whatever happens in here, the gate must close and the run must resume —
+       otherwise a thrown effect leaves the question open forever. */
+    try {
+      if (correct) {
+        r.correct++;
+        const gain = q.kind === 'bonus' ? 15 : 10;
+        r.coins += gain;
+        if (r.hearts < 3) {
+          r.recover++;
+          if (r.recover >= 2) {
+            r.hearts++;
+            r.recover = 0;
+            this.toast('+' + gain + ' coins · heart recovered +1', 2.4);
+          } else {
+            this.toast('+' + gain + ' coins · recovery ' + r.recover + '/2', 2.2);
+          }
         } else {
-          this.toast('+' + gain + ' coins · recovery ' + r.recover + '/2', 2.2);
+          this.toast('+' + gain + ' coins · correct!', 1.8);
         }
+        this.burstSpark(r.px, 0.85, 0.2);
       } else {
-        this.toast('+' + gain + ' coins · correct!', 1.8);
+        if (!skipped && q.kind === 'hit') r.recover = 0;
+        const tail = q.item.e ? ' ' + q.item.e : '';
+        this.toast((skipped ? 'Skipped. Answer: ' : 'Not quite. Answer: ') + q.item.a + '.' + tail, 4);
       }
-      this.burst(q.kind === 'bonus' ? 0x8b6fb8 : 0x7bc79a);
-    } else {
-      if (!skipped && q.kind === 'hit') r.recover = 0;
-      const tail = q.item.e ? ' ' + q.item.e : '';
-      this.toast((skipped ? 'Skipped. Answer: ' : 'Not quite. Answer: ') + q.item.a + '.' + tail, 4);
+    } catch (e) {
+      try { console.error('Question reward failed', e); } catch (x) {}
+    } finally {
+      this.paintHearts();
+      this.updateHud(true);
+      this.resumeRun();
     }
+  }
+
+  /* Closing the Question Gate hands control straight back to the runner: the
+     stagger slow-motion ends, the world snaps back to full speed, the input
+     lock clears and a short grace window stops the same obstacle hitting again. */
+  resumeRun() {
+    const r = this.run;
+    if (!r) return;
     this.q = null;
-    this.paintHearts();
-    this.updateHud(true);
+    this.qOpen = false;
+    this.paused = false;
+    this.timeScale = 1;
+    r.stagger = 0;
+    r.nextQ = '';
+    r.grace = Math.max(r.grace || 0, 1.5);
+    r.invuln = Math.max(r.invuln || 0, 1.5);
+    r.speed = Math.max(r.speed, 10.5 + Math.min(9.5, r.travel / 210));
+    this.root.classList.remove('gr-qopen');
+    this.el.q.hidden = true;
+    this.lastT = performance.now();
+    const b = this.stage && this.stage.buddies[this.who];
+    if (b) { b.visible = true; b.userData.anim = 'run'; }
   }
 
   setBuddy(anim, ms) {
@@ -759,7 +795,7 @@ class BuddyRun {
 
   /* ---------- actions ---------- */
   act(kind) {
-    if (!this.playing || this.paused || this.over || (this.q && this.q.locked)) return;
+    if (!this.playing || this.paused || this.over || this.q || this.qOpen) return;
     const r = this.run;
     if (r.intro > 0 || r.stagger > 0) return;
     if (kind === 'left') r.lane = clamp(r.lane - 1, 0, 2);
@@ -769,7 +805,7 @@ class BuddyRun {
   }
 
   togglePause() {
-    if (this.over) return;
+    if (this.over || this.q) return;
     if (this.paused) this.resume();
     else this.pause();
   }
@@ -841,7 +877,12 @@ class BuddyRun {
     this.el.recover.hidden = true;
     this.el.toast.style.opacity = '0';
     this.q = null;
+    this.qOpen = false;
+    this.timeScale = 1;
     r.stagger = 0;
+    r.nextQ = '';
+    r.grace = 0;
+    for (const k in this.stage.buddies) this.stage.buddies[k].visible = k === this.who;
     const rows = [
       ['Distance', stats.dist + ' m'],
       ['Coins earned', '+' + stats.coins],
@@ -910,7 +951,7 @@ class BuddyRun {
   /* ---------- loop ---------- */
   frame(now) {
     this.raf = requestAnimationFrame(this.loop);
-    const dt = Math.min(0.05, Math.max(0, (now - this.lastT) / 1000));
+    const dt = Math.min(0.05, Math.max(0, (now - this.lastT) / 1000)) * (this.timeScale || 1);
     this.lastT = now;
     if (!this.playing) { this.renderIdle(dt); return; }
     if (this.paused || this.over) { this.renderIdle(dt); return; }
@@ -952,7 +993,10 @@ class BuddyRun {
 
     const base = 10.5 + Math.min(9.5, r.travel / 210);
     const target = q ? Math.max(3.2, base * 0.32) : r.intro > 0 ? 7.4 : base;
-    r.speed += (target - r.speed) * Math.min(1, dt * (q ? 6 : 2.4));
+    /* Ease down into the gate, but snap back to full speed when it closes so
+       the run never limps along in leftover slow motion. */
+    r.speed += (target - r.speed) * Math.min(1, dt * (q ? 6 : r.speed < target ? 12 : 2.4));
+    if (!q && Math.abs(target - r.speed) < 0.02) r.speed = target;
     const prev = r.travel;
     r.travel += r.speed * sdt;
     r.level = 1 + Math.min(11, Math.floor(r.travel / 210));
@@ -1130,6 +1174,13 @@ class BuddyRun {
     }
     b.userData.bodyGroup.rotation.z += (targetX - r.px) * 0.09;
 
+    /* Post-question grace: blink for ~1.5s so the dodge window is obvious. */
+    if (r.grace > 0) {
+      r.grace = Math.max(0, r.grace - dt);
+      b.visible = r.grace > 0.1 ? Math.floor(r.grace * 9) % 2 === 0 : true;
+      if (r.grace === 0) b.visible = true;
+    }
+
     /* shadow */
     const airY = r.py + r.introY;
     s.shadow.position.set(r.px, 0.035, 0.02);
@@ -1172,16 +1223,16 @@ class BuddyRun {
 
   draw(dt) {
     const r = this.run, s = this.stage, cam = s.camera;
-    const shake = r.shake + (r.intro > 0 ? 0 : 0);
+    /* The camera is anchored during a run: no lane drift, no shake, no jump
+       follow. Only the markers and obstacles scroll, so the road stays planted
+       under the runner's feet for the whole run. Hit feedback lives in the HUD. */
     const k = 1 - Math.exp(-dt * 7.5);
-    const targetCamX = r.px * 0.42 + (Math.random() - 0.5) * shake * 0.22;
-    const targetCamY = 3.55 + r.py * 0.3 + (r.introY || 0) * 0.55 + (Math.random() - 0.5) * shake * 0.18;
-    cam.position.x += (targetCamX - cam.position.x) * k;
-    cam.position.y += (targetCamY - cam.position.y) * k;
+    cam.position.x += (0 - cam.position.x) * k;
+    cam.position.y += (3.55 - cam.position.y) * k;
     cam.position.z += (8.4 - cam.position.z) * Math.min(1, dt * 4);
     this.look = this.look || new THREE.Vector3(0, 1.1, -10);
-    this.look.x += (r.px * 0.5 - this.look.x) * k;
-    this.look.y += (1.15 + r.py * 0.35 + (r.introY || 0) * 0.45 - this.look.y) * k;
+    this.look.x += (0 - this.look.x) * k;
+    this.look.y += (1.15 - this.look.y) * k;
     this.look.z = -10;
     cam.lookAt(this.look);
     s.renderer.render(s.scene, cam);
@@ -1194,8 +1245,9 @@ class BuddyRun {
     const who = this.who || 'study';
     const b = s.buddies[who];
     if (b) {
+      b.visible = true;
       if (this.over || !this.playing) {
-        b.userData.anim = this.over ? 'idle' : 'idle';
+        b.userData.anim = 'idle';
         this.animT = (this.animT || 0) + dt;
         animateMascot(b, this.animT, 0, dt);
       }

@@ -155,23 +155,58 @@ class MascotView {
       this.zzz.push(sp);
     }
 
-    this.applyView();
+    this.applyView(true);
   }
 
-  applyView() {
+  applyView(instant) {
     const duo = this.view === 'duo';
     const showStudy = this.view !== 'life';
     const showLife = this.view !== 'study';
     const s = duo ? 0.66 : 0.82;
+    if (!this.layout) this.layout = {};
     Object.keys(this.models).forEach((k) => {
       const m = this.models[k];
-      m.visible = k === 'study' ? showStudy : showLife;
-      m.scale.setScalar(s);
-      m.position.set(duo ? (k === 'study' ? -0.82 : 0.82) : 0, duo ? -0.12 : 0, duo ? 0.15 : 0);
-      m.rotation.y = duo ? (k === 'study' ? 0.2 : -0.2) : 0;
+      const show = k === 'study' ? showStudy : showLife;
+      /* target pose for this view; the render loop eases the rig towards it so
+         StudyBuddy / LifeBuddy / Duo swap in place without rebuilding models */
+      const L = this.layout[k] = {
+        x: duo ? (k === 'study' ? -0.82 : 0.82) : 0,
+        y: duo ? -0.12 : 0,
+        z: duo ? 0.15 : 0,
+        s,
+        ry: duo ? (k === 'study' ? 0.2 : -0.2) : 0
+      };
+      if (!show) { m.visible = false; return; }
+      if (instant) {
+        m.visible = true;
+        m.position.set(L.x, L.y, L.z);
+        m.rotation.y = L.ry;
+        m.scale.setScalar(L.s);
+      } else if (!m.visible) {
+        /* a newly shown buddy grows into place instead of popping */
+        m.visible = true;
+        m.position.set(L.x, L.y, L.z);
+        m.rotation.y = L.ry;
+        m.scale.setScalar(L.s * 0.6);
+      }
     });
     if (this.pivot) this.pivot.rotation.y = this.yaw;
     this.resize();
+  }
+
+  /* Ease the rigs towards the current view's target pose. */
+  tweenLayout(dt) {
+    if (!this.layout) return;
+    const k = Math.min(1, dt * 9);
+    Object.keys(this.models).forEach((key) => {
+      const m = this.models[key], L = this.layout[key];
+      if (!L || !m.visible) return;
+      m.position.x += (L.x - m.position.x) * k;
+      m.position.y += (L.y - m.position.y) * k;
+      m.position.z += (L.z - m.position.z) * k;
+      m.rotation.y += (L.ry - m.rotation.y) * k;
+      m.scale.setScalar(m.scale.x + (L.s - m.scale.x) * k);
+    });
   }
 
   setView(v) {
@@ -182,7 +217,7 @@ class MascotView {
     this.pitchTarget = 0;
     this.pitch = 0;
     this.auto = 0;
-    this.applyView();
+    this.applyView(true);
   }
 
   setMode(mode) {
@@ -245,8 +280,13 @@ class MascotView {
     const w = Math.max(24, this.host.clientWidth || 80);
     const h = Math.max(24, this.host.clientHeight || 80);
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    this.renderer.setPixelRatio(dpr);
-    this.renderer.setSize(w, h, false);
+    /* only touch the drawing buffer when something actually changed — calling
+       setSize every switch reallocates the canvas and stutters the room */
+    if (this._dpr !== dpr) { this.renderer.setPixelRatio(dpr); this._dpr = dpr; }
+    if (this._w !== w || this._h !== h) {
+      this.renderer.setSize(w, h, false);
+      this._w = w; this._h = h;
+    }
     const aspect = w / h;
     this.camera.aspect = aspect;
     const duo = this.view === 'duo';
@@ -269,8 +309,11 @@ class MascotView {
     const dt = Math.min(0.05, Math.max(0, (now - (this.last || now)) / 1000));
     this.last = now;
 
-    /* Idle mascots only need ~30fps and nothing while off-screen or hidden. */
+    /* Idle mascots only need ~30fps and nothing while off-screen or hidden.
+       While a fitting room is open they pause completely so the room gets the
+       whole GPU. */
     if (this.mode === 'idle' && !this.free) {
+      if (fittingViews > 0) return;
       this.frames++;
       if (this.frames % 2) return;
     }
@@ -288,12 +331,16 @@ class MascotView {
         const idleFor = performance.now() - (this.auto || 0);
         if (idleFor > 2600) this.yawTarget += dt * 0.22;
       }
-      this.yaw += (this.yawTarget - this.yaw) * Math.min(1, dt * 9);
-      this.pitch += (this.pitchTarget - this.pitch) * Math.min(1, dt * 9);
+      /* damped inertia: 0.12 per 60Hz frame, frame-rate independent */
+      const damp = 1 - Math.pow(1 - 0.12, dt * 60);
+      this.yaw += (this.yawTarget - this.yaw) * damp;
+      this.pitch += (this.pitchTarget - this.pitch) * damp;
       this.pivot.rotation.y = this.yaw;
       this.pivot.rotation.x = this.pitch * 0.45;
       this.pitch = clamp(this.pitch, -0.3, 0.3);
     }
+
+    this.tweenLayout(dt);
 
     if (this.sleeping) {
       this.animT += dt;
@@ -373,6 +420,7 @@ class MascotView {
 
   dispose() {
     this.alive = false;
+    if (this.mode === 'fitting' && !this._fitCounted) { this._fitCounted = true; fittingViews = Math.max(0, fittingViews - 1); }
     cancelAnimationFrame(this.raf);
     try { this.io && this.io.disconnect(); } catch (e) {}
     try { this.ro && this.ro.disconnect(); } catch (e) {}
@@ -399,6 +447,9 @@ class MascotView {
 /* ============ manager ============ */
 const live = new Set();
 const explicit = new WeakMap();
+/* How many fitting rooms are currently mounted. Idle mascots stand down while
+   one is open so the room renders at a steady frame rate. */
+let fittingViews = 0;
 
 function makeIdle(el) {
   if (el.__b3d) return el.__b3d;
@@ -434,7 +485,9 @@ function fitting(el, view) {
     try {
       iv = new MascotView(el, { kind: 'study', free: true, mode: 'fitting', view: view || 'study', yaw: 0.2 });
       explicit.set(el, iv);
+      el.__b3dView = iv;
       live.add(iv);
+      fittingViews++;
       el.classList.add('is-3d');
     } catch (e) { el.classList.add('b3d-flat'); return null; }
   }
@@ -465,6 +518,7 @@ function disposeEl(el) {
   if (iv) {
     live.delete(iv);
     try { iv.dispose(); } catch (e) {}
+    if (el.__b3dView === iv) el.__b3dView = null;
     if (el.__b3dPortrait === iv) el.__b3dPortrait = null;
     if (el.__b3d === iv) el.__b3d = null;
   }

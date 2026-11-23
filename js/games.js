@@ -510,7 +510,22 @@
         G.tab = act; G.err = ''; G.msg = ''; renderGame();
         return;
       }
-      if (act === 'char') { G.char = v === 'life' ? 'life' : 'study'; try { saved().char = G.char; persist(); } catch (err) {} renderGame(); return; }
+      if (act === 'char') {
+        /* Toggle in place: both 3D buddy previews stay mounted, so switching
+           never rebuilds WebGL scenes or re-compiles geometry. */
+        var next = v === 'life' ? 'life' : 'study';
+        if (next === G.char) return;
+        G.char = next;
+        try { saved().char = G.char; persist(); } catch (err) {}
+        document.querySelectorAll('[data-games="char"]').forEach(function (b) {
+          var on = b.dataset.v === G.char;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+          var tick = b.querySelector('.g-tick');
+          if (tick) tick.innerHTML = on ? '&#10003;' : '';
+        });
+        return;
+      }
       if (act === 'fit') {
         G.fit = v === 'life' ? 'life' : v === 'duo' ? 'duo' : 'study';
         /* switch in place so the fitting room keeps its rotation and context */
