@@ -1,0 +1,84 @@
+/* StudySpace refinements: flashcard focus mode + global button alignment. */
+
+/* ---------- Flashcards: distraction-free focus ---------- */
+/* The tab bar is hidden only while a deck is being answered. */
+html.fc-focus nav { display: none !important; }
+html.fc-focus #qa { display: none !important; }
+html.fc-focus main { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+
+.fcs { display: flex; flex-direction: column; gap: 12px; }
+.fcs-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.fcs-top .fcs-exit { width: auto; padding: 6px 14px; }
+.fcs-count { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.fcs-stage { perspective: 1400px; }
+.fcs-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+  transition: transform .52s cubic-bezier(.2, .85, .25, 1);
+  will-change: transform;
+  min-height: 200px;
+}
+.fcs-card.flip { transform: rotateY(180deg); }
+.fcs-face {
+  position: relative;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-height: 200px;
+  padding: 22px 20px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+  background: linear-gradient(158deg, color-mix(in srgb, var(--accent) 10%, var(--card)), var(--card) 70%);
+  box-shadow: 0 18px 38px -30px rgba(10, 22, 16, .55);
+}
+.fcs-face small { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.fcs-face h2 { margin: 0; font-size: 21px; line-height: 1.35; letter-spacing: -.3px; overflow-wrap: anywhere; }
+.fcs-face p { margin: 0; font-size: 17px; line-height: 1.5; font-weight: 600; color: var(--accent); overflow-wrap: anywhere; }
+.fcs-back { position: absolute; inset: 0; transform: rotateY(180deg); }
+
+.fcs-choices { display: grid; gap: 8px; }
+.fcs-actions { display: flex; gap: 8px; }
+.fcs-actions > * { flex: 1; min-height: 48px; border-radius: 14px; font-weight: 700; }
+
+/* Exit confirmation */
+.fcs-leave {
+  position: fixed; inset: 0; z-index: 1200;
+  display: grid; place-items: center; padding: 24px;
+  background: rgba(14, 22, 18, .38);
+  -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+  animation: fcsFade .2s ease both;
+}
+.fcs-leave-card {
+  width: min(100%, 380px);
+  background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 20px;
+  padding: 22px 20px 16px;
+  box-shadow: 0 28px 60px -26px rgba(10, 20, 15, .6);
+  animation: fcsPop .26s cubic-bezier(.2, .9, .3, 1) both;
+}
+.fcs-leave-card b { display: block; font-size: 16.5px; line-height: 1.35; letter-spacing: -.2px; }
+.fcs-leave-card p { margin: 7px 0 16px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.fcs-leave-acts { display: flex; gap: 8px; }
+.fcs-leave-acts button { flex: 1; min-height: 46px; border-radius: 13px; font-weight: 700; }
+@keyframes fcsFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fcsPop { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .fcs-card { transition: none; }
+  .fcs-leave, .fcs-leave-card { animation: none; }
+}
+
+/* ---------- Every action button: label + icon centred ---------- */
+/* Card-style buttons (.tile, .mtile, .ht, list rows) keep their own layouts. */
+button:not(.tile):not(.ht):not(.mtile):not(.gtile):not(.subcard):not(.row):not(.ss-row):not(.hlrow button):not(.iconpick):not(.mood):not(.choice-btn):not(.skcard):not(.sk-sw):not(.sn):not(.snminb):not(.skdel):not(.x):not(nav button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+button:not(.tile):not(.ht):not(.mtile):not(.gtile):not(.subcard):not(.ss-row):not(nav button) > svg { flex: none; }
+.chatIn button, .ss-composer button, .acc-primary, .ss-modal-actions button, .gsbtns button, .hlbtns button { justify-content: center; }

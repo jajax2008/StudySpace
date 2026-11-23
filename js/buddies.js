@@ -27,14 +27,17 @@
     function studyArt() {
       return '<circle class="sb-ear" cx="17.8" cy="35" r="5.4"/>' +
         '<circle class="sb-ear" cx="62.2" cy="35" r="5.4"/>' +
-        '<path class="sb-sk" d="M40 15c14.4 0 24.6 10.3 24.6 24.4C64.6 54.6 53.6 65 40 65S15.4 54.6 15.4 39.4C15.4 25.3 25.6 15 40 15Z"/>' +
+                /* One clean, symmetrical head shape: no extra tail, no stray point. */
+        '<path class="sb-sk" d="M40 15c14.4 0 24.6 10.3 24.6 24.4C64.6 53 54 65 40 65S15.4 53 15.4 39.4C15.4 25.3 25.6 15 40 15Z"/>' +
         '<path class="sb-sheen" d="M25.6 30.4c1.8-5 5.3-8 9.6-8.8"/>' +
+        /* Hands use LifeBuddy's exact placement, so they sit flush against
+           the body with no floating gap and no mismatched tone. */
         '<g class="sb-hand sb-hand-l"><ellipse cx="14.2" cy="51" rx="5.4" ry="5"/></g>' +
         '<g class="sb-hand sb-hand-r"><ellipse cx="65.8" cy="51" rx="5.4" ry="5"/></g>' +
         '<g class="sb-tilt">' +
           '<g class="sb-eyes">' +
-            '<g class="sb-eye sb-eye-l"><ellipse class="sb-eye-p" cx="31.5" cy="37.6" rx="4.5" ry="5.3"/><circle class="sb-glint" cx="33" cy="35.6" r="1.5"/></g>' +
-            '<g class="sb-eye sb-eye-r"><ellipse class="sb-eye-p" cx="48.5" cy="37.6" rx="4.5" ry="5.3"/><circle class="sb-glint" cx="50" cy="35.6" r="1.5"/></g>' +
+            '<g class="sb-eye sb-eye-l"><ellipse class="sb-eye-p" cx="31.5" cy="37.6" rx="4.5" ry="5.3"/><circle class="sb-glint" cx="33" cy="35.6" r="1.5"/></g>'
+          + '<g class="sb-eye sb-eye-r"><ellipse class="sb-eye-p" cx="48.5" cy="37.6" rx="4.5" ry="5.3"/><circle class="sb-glint" cx="50" cy="35.6" r="1.5"/></g>' +
           '</g>' +
           '<g class="sb-glasses">' +
             '<circle class="sb-lens" cx="31.5" cy="37.6" r="8.1"/>' +
@@ -501,6 +504,10 @@
       var kind = (t === 'acad' && h === 'buddy') ? 'study' : (t === 'life' && h === 'lifebuddy') ? 'life' : '';
       var old = document.getElementById('ssBuddyHead');
 
+      /* Flashcards are a distraction-free space: no StudyBuddy header. */
+      if (kind === 'study') {
+        try { if (typeof B !== 'undefined' && B && B.mode === 'quiz') { if (old) old.remove(); return } } catch (e) {}
+      }
       if (!kind) { if (old) old.remove(); return }
       if (old) {
         if (old.dataset.kind === kind) { sync(); return }

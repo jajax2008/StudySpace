@@ -9,7 +9,7 @@
     /* Device-local state is deliberately absent: icon theme, home-screen widget
        settings, quick-add position, floating notes and UI colours stay on the
        phone and are never uploaded or replaced by a login. */
-    var SYNC_KEYS = ['subjects', 'tasks', 'sessions', 'exams', 'notes', 'decks', 'res', 'reviews', 'grades', 'wallet', 'journal', 'habits', 'sleep', 'stickies', 'home', 'theme', 'prof'];
+    var SYNC_KEYS = ['subjects', 'tasks', 'sessions', 'exams', 'notes', 'decks', 'res', 'reviews', 'grades', 'wallet', 'journal', 'habits', 'sleep', 'stickies', 'home', 'theme', 'prof', 'cal'];
 
     var st = { token: '', user: null, busy: false, syncing: false, last: 0, err: '', applying: false, onb: false };
     var syncT = null;
@@ -492,9 +492,18 @@
         if (changed) save();
         st.err = '';
       }
+      /* Every sign-in or account switch starts cleanly on Home, never on the
+         tab or modal the previous account left behind. */
+      try {
+        tab = 'home'; hv = null; curSub = null; L = null; moreSub = ''; mv = null;
+        if (typeof B !== 'undefined' && B) { B.mode = ''; B.leave = false; B.fromNotes = false; B.back = ''; B.chat = []; B.q = ''; }
+        if (window.ssSocial && ssSocial.reset) ssSocial.reset();
+      } catch (e) {}
+      try { document.documentElement.classList.remove('fc-focus'); } catch (e) {}
       try { applyTheme(); } catch (e) {}
       try { applyUI(); } catch (e) {}
       try { render(); } catch (e) {}
+      try { var mv2 = document.getElementById('view'); if (mv2) mv2.scrollTop = 0; } catch (e) {}
       paintSync();
       if (st.token) setTimeout(function () { if (st.token && !st.last) syncNow(); }, 1400);
     }

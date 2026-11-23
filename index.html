@@ -534,6 +534,8 @@ window.addEventListener('unhandledrejection',function(e){ssFail((e.reason&&e.rea
 <link rel="stylesheet" href="css/buddies.css">
 <link rel="stylesheet" href="css/accounts.css">
 <link rel="stylesheet" href="css/social.css">
+<link rel="stylesheet" href="css/calendar.css">
+<link rel="stylesheet" href="css/study-extras.css">
 <style id="ss-compat">
 button.x,.rmain,.kh,.chrow{box-shadow:none}
 button.x{min-height:30px}
@@ -623,7 +625,7 @@ const blank=()=>({
   wgs:{size:'medium',note:''},
   icon:{style:'style1',theme:'default'},
   home:{order:[],hidden:[]},
-  stickies:[],quick:{x:null,y:null},
+  stickies:[],quick:{x:null,y:null},cal:{notes:{}},
   spin:{id:'',x:null,y:null,min:false,side:'',py:null},
   note:{date:'',text:'',x:null,y:null,dismissed:false,src:'',min:false,side:'',py:null},
   prof:{name:'',age:'',level:'',done:false},ui:{}
@@ -692,6 +694,16 @@ function load(){
   if(!d.wgs||typeof d.wgs!=='object')d.wgs={size:'medium',note:''};
   if(['small','medium','large'].indexOf(d.wgs.size)<0)d.wgs.size='medium';
   if(typeof d.wgs.note!=='string')d.wgs.note='';
+  if(!d.cal||typeof d.cal!=='object'||!d.cal.notes||typeof d.cal.notes!=='object')d.cal={notes:{}};
+  Object.keys(d.cal.notes).forEach(function(k){
+    var e=d.cal.notes[k];
+    if(!e||typeof e!=='object'){delete d.cal.notes[k];return}
+    e.text=String(e.text||'').slice(0,2000);
+    if(!Array.isArray(e.reminders))e.reminders=[];
+    e.reminders=e.reminders.filter(function(r){return r&&r.time&&r.title}).slice(0,12).map(function(r){
+      return {id:String(r.id||''),title:String(r.title).slice(0,80),time:String(r.time),alarm:r.alarm!==false};
+    });
+  });
   if(!d.quick||typeof d.quick!=='object')d.quick={x:null,y:null};
   if(typeof d.quick.x!=='number')d.quick.x=null;
   if(typeof d.quick.y!=='number')d.quick.y=null;
@@ -825,6 +837,9 @@ function applyAppIcon(){
   save();
   if(!iconNative()){banner('Open the StudySpace Android app to change your icon.');return}
   var ok=iconSet(name);
+  /* Re-schedule calendar alarms so their notification icon matches the newly
+     equipped launcher icon. */
+  try{if(ok&&window.ssCalendar)ssCalendar.sync()}catch(e){}
   banner(ok?'Icon applied. Your home screen may take a few seconds to refresh.':'This build cannot change the app icon yet.');
 }
 document.addEventListener('click',e=>{
@@ -1636,11 +1651,13 @@ function acad(){
 /* LIFE TAB */
 function life(){
   if(hv==='friends'||hv==='friend')return window.ssSocial?ssSocial.friendsView():'';
+  if(hv==='calendar')return window.ssCalendar?ssCalendar.view():'';
   if(hv==='wallet')return walletView();
   if(hv==='journal')return journalView();
   if(hv==='lifetracker')return lifeView();
   if(hv==='lifebuddy')return lifeBuddyView();
   const hd=S.habits.filter(x=>x.days&&x.days[todayStr()]).length,je=S.journal[todayStr()],gCount=S.wallet.goals.length;
+  const calNote=window.ssCalendar?ssCalendar.sub():'';
   return'<h1>Money & Life</h1><p class="sub">Manage your balance, daily journal, habits, and savings goals</p>'+
   '<div class="tiles">'+
   tile('wallet','Wallet',money(walletBal()))+
@@ -1648,6 +1665,7 @@ function life(){
   tile('lifetracker','Life Tracker',(S.habits.length?hd+'/'+S.habits.length+' habits':'Habits')+(gCount?' · '+gCount+' goals':''))+
   tile('lifebuddy','Life Buddy','Someone to talk to')+
   tile('friends','Friends',friendsSub())+
+  tile('calendar','Calendar',calNote||'Notes & alarms')+
   '</div>';
 }
 
@@ -1899,6 +1917,7 @@ function render(){
     if(!views[tab])tab='home';
     document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
     $('#view').innerHTML=(tab==='home'?'':'<button class="ghost" data-t="home" style="width:auto;padding:6px 14px;margin-bottom:10px">\u2039 Home</button>')+views[tab]();
+    try{document.documentElement.classList.toggle('fc-focus',!!(tab==='acad'&&hv==='buddy'&&B&&B.mode==='quiz'&&B.cards&&B.cards[B.i]))}catch(e){document.documentElement.classList.remove('fc-focus')}
     motionAfterRender();
     if(tab==='more'&&$('#theme')){$('#theme').value=S.theme;$('#lead').value=String(S.lead)}
     const cb=$('#chatbox');if(cb)cb.scrollTop=cb.scrollHeight;
@@ -2151,7 +2170,7 @@ return BK_LIFE+'<h1 style="margin-top:14px">Life Tracker</h1><p class="sub">Habi
 '<h2>Sleep schedule</h2><div class="card"><div class="two"><label>Bedtime<input id="sbed" type="time" value="'+S.sleep.bed+'"></label><label>Wake up<input id="swake" type="time" value="'+S.sleep.wake+'"></label></div><p style="margin:10px 0 0">Planned sleep: <b>'+Math.floor(sm/60)+'h '+sm%60+'m</b></p></div>'}
 
 /* STUDYBUDDY DUAL ONLINE / INSTANT OFFLINE AI */
-let B={mode:'',cards:[],i:0,show:false,picked:null,ok:0,miss:[],sum:null,nid:'',text:'',chat:[],q:'',busy:false};
+let B={mode:'',cards:[],i:0,show:false,picked:null,ok:0,miss:[],sum:null,nid:'',text:'',chat:[],q:'',busy:false,leave:false};
 
 const bsrc=()=>{const el=$('#btext');const t=el?el.value.trim():B.text.trim();if(t)return t;const n=S.notes.find(x=>x.id===($('#bnote')?$('#bnote').value:B.nid));return n?n.body:''};
 function summarize(t,n){n=n||4;const ss=splitSents(t).filter(x=>x.length>20);if(ss.length<=n)return ss;
@@ -2242,7 +2261,7 @@ if(B.mode==='quiz'){
   const hasChoices=Array.isArray(c.choices)&&c.choices.length>1;
   let choicesHTML='';
   if(hasChoices){
-    choicesHTML='<div style="margin-top:14px">'+c.choices.map((ch,idx)=>{
+    choicesHTML='<div class="fcs-choices">'+c.choices.map((ch,idx)=>{
       let cls='choice-btn';
       if(B.show){
         if(ch===c.a)cls+=' correct';
@@ -2251,9 +2270,19 @@ if(B.mode==='quiz'){
       return'<button class="'+cls+'" data-pick="'+idx+'"'+(B.show?' disabled':'')+'>'+esc(ch)+'</button>';
     }).join('')+'</div>';
   }
-  return'<button class="ghost" id="bdone">‹ Stop</button><p class="sub" style="margin-top:16px">Card '+(B.i+1)+' of '+B.cards.length+'</p><div class="card" style="min-height:140px"><h1 style="font-size:20px">'+esc(c.q)+'</h1>'+(!hasChoices&&B.show?'<p style="margin-top:12px;font-weight:600;color:var(--accent)">'+esc(c.a)+'</p>':'')+'</div>'+
-  choicesHTML+
-  '<div style="margin-top:12px">'+(hasChoices?(B.show?'<button id="bnext" style="width:100%">Next card ›</button>':''):(B.show?'<div class="two"><button class="ghost" id="bmiss">Missed</button><button id="bgot">Got it</button></div>':'<button id="bshow" style="width:100%">Show answer</button>'))+'</div>';
+  const acts=hasChoices
+    ?(B.show?'<div class="fcs-actions"><button id="bnext">Next card \u203a</button></div>':'')
+    :(B.show?'<div class="fcs-actions"><button class="ghost" id="bmiss">Missed</button><button id="bgot">Got it</button></div>'
+            :'<div class="fcs-actions"><button id="bshow">Show answer</button></div>');
+  return'<div class="fcs">'+
+  '<div class="fcs-top"><button class="ghost fcs-exit" id="bdone">\u2039 Exit</button>'+
+  '<span class="fcs-count">Card '+(B.i+1)+' of '+B.cards.length+'</span></div>'+
+  '<div class="fcs-stage"><div class="fcs-card'+(B.show&&!hasChoices?' flip':'')+'">'+
+  '<div class="fcs-face fcs-front"><small>Question</small><h2>'+esc(c.q)+'</h2></div>'+
+  '<div class="fcs-face fcs-back"><small>Answer</small><p>'+esc(c.a)+'</p></div></div></div>'+
+  choicesHTML+acts+
+  '</div>'+
+  (B.leave?'<div class="fcs-leave" role="dialog" aria-modal="true" aria-label="Leave flashcard session"><div class="fcs-leave-card"><b>Are you sure you want to leave this flashcard session?</b><p>Your progress in this round will not be saved.</p><div class="fcs-leave-acts"><button class="ghost" data-fcstay="1">Stay</button><button data-fcleave="1">Leave</button></div></div></div>':'');
 }
 const mode=S.ai.mode||'online';
 const onLeft=buddyOnlineLeft(),offLeft=buddyOfflineLeft();
@@ -2880,7 +2909,10 @@ if(d.hlreset){
   HLRESETT=0;S.home={order:[],hidden:[]};save();render();banner('Home layout reset to default.');return
 }
 if(t.id==='hardrepair'){ssBackup();localStorage.removeItem('studyspace1');location.reload();return}
-if(d.t){tab=d.t;curSub=null;hv=null;mv=null;L=null;moreSub='';render();$('#view').scrollTop=0;return}
+if(d.t){
+  /* Never leave an active flashcard round without the confirmation dialog. */
+  if(B.mode==='quiz'&&B.cards&&B.cards[B.i]){B.leave=true;render();return}
+  tab=d.t;curSub=null;hv=null;mv=null;L=null;moreSub='';document.documentElement.classList.remove('fc-focus');render();$('#view').scrollTop=0;return}
 if(d.go){tab=d.go;render();return}
 if(d.open){curSub=d.open;render();$('#view').scrollTop=0;return}
 if(d.mode){setMode(d.mode);render();return}
@@ -2896,9 +2928,16 @@ if(d.pick!==undefined){
   }
   return;
 }
+if(d.fcstay){B.leave=false;render();return}
+if(d.fcleave){
+  B.leave=false;B.mode='';B.fromNotes=false;
+  if(B.back){tab='acad';hv='learn';L={k:'flash',i:0,data:{}};B.back=''}
+  try{document.documentElement.classList.remove('fc-focus')}catch(e){}
+  render();return;
+}
 if(d.deldeck){if(sure(t,'Delete?')){S.decks=S.decks.filter(x=>x.id!==d.deldeck);save();render()}return}
 if(d.mod){
-  if(['wallet','journal','lifetracker','lifebuddy','friends'].includes(d.mod)){tab='life';hv=d.mod;}
+  if(['wallet','journal','lifetracker','lifebuddy','friends','calendar'].includes(d.mod)){tab='life';hv=d.mod;}
   else{tab='acad';hv=d.mod;}
   L=null;render();$('#view').scrollTop=0;return;
 }
@@ -3028,7 +3067,9 @@ case'bnext':B.i++;B.show=false;B.picked=null;render();break;
 case'bgot':B.ok++;B.i++;B.show=false;B.picked=null;render();break;
 case'bmiss':B.miss.push(B.cards[B.i]);B.i++;B.show=false;B.picked=null;render();break;
 case'bretry':B.cards=B.miss;B.miss=[];B.i=0;B.ok=0;B.show=false;B.picked=null;render();break;
-case'bdone':B.mode='';if(B.back){tab='acad';hv='learn';L={k:'flash',i:0,data:{}};B.back=''}render();break;
+case'bdone':
+  if(B.mode==='quiz'&&B.cards&&B.cards[B.i]){B.leave=true;render();break}
+  B.mode='';B.leave=false;B.fromNotes=false;if(B.back){tab='acad';hv='learn';L={k:'flash',i:0,data:{}};B.back=''}document.documentElement.classList.remove('fc-focus');render();break;
 case'mvback':hv=null;L=null;render();break;
 case'lback':L=null;hv='learn';render();break;
 case'ldone':L=null;render();break;
@@ -4402,7 +4443,8 @@ document.addEventListener('click',async function(e){
   }
   function mic(){
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return Promise.reject(new Error('no-media'));
-    return navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    /* Continuous, clean voice: no gating, no track restarts. */
+    return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:false});
   }
 
   /* ---- overlay ---- */
@@ -4863,11 +4905,14 @@ document.addEventListener('click',async function(e){
   window.ssRoom={
     code:function(){return G.room},
     inRoom:function(){return !!G.room},
-    join:joinCode
+    join:joinCode,
+    quit:function(){try{if(G.room)leave('');else cleanup()}catch(e){}},
+    muted:function(){return !!G.muted}
   };
 })();
 </script>
 <script src="js/accounts.js"></script>
 <script src="js/social.js"></script>
+<script src="js/calendar.js"></script>
 </body>
 </html>

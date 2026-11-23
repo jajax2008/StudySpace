@@ -48,6 +48,9 @@ jobs:
       - name: Add microphone permissions for Group Study
         run: bash scripts/apply-android-media.sh android
 
+      - name: Add Calendar alarm permissions and notification icons
+        run: bash scripts/apply-android-alarms.sh android
+
       - name: Build debug APK
         working-directory: android
         run: |

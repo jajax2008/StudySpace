@@ -21,7 +21,8 @@
       check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
       close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
       heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
-      users: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 20v-2a4 4 0 0 0-3-3.9M16 2.1a4 4 0 0 1 0 7.8"/></svg>'
+      users: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 20v-2a4 4 0 0 0-3-3.9M16 2.1a4 4 0 0 1 0 7.8"/></svg>',
+      clip: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.4 12.3 19a4.6 4.6 0 0 1-6.5-6.5l7.4-7.4a3.1 3.1 0 0 1 4.4 4.4l-7.3 7.3a1.6 1.6 0 0 1-2.2-2.2l6.7-6.7"/></svg>'
     };
 
     var st = {
@@ -34,6 +35,7 @@
       pokes: null, pokesLoading: false,
       reports: null, reportsLoading: false,
       cat: 'Bug', supportMsg: '', supportNote: '',
+      attach: null,
       inviteOpen: null, inviteReason: '',
       pending: {},
       seenInvite: {}, sentSeen: {},
@@ -109,9 +111,15 @@
     function statBox(v, l) {
       return '<div><b>' + esc(v) + '</b><small>' + esc(l) + '</small></div>';
     }
+    function isPhotoBg(p) { return /^data:image\//.test(String((p && p.bg) || '')); }
     function bgClass(p) {
+      if (isPhotoBg(p)) return 'ss-bg-photo';
       var key = String((p && p.bg) || 'sage');
       return 'ss-bg-' + (BG_KEYS.indexOf(key) >= 0 ? key : 'sage');
+    }
+    function bgStyle(p) {
+      if (!isPhotoBg(p)) return '';
+      return ' style="background-image:linear-gradient(180deg,rgba(10,18,14,.34),rgba(10,18,14,.52)),url(' + esc(String(p.bg)).replace(/"/g, '%22') + ');background-size:cover;background-position:center;color:#fff"';
     }
     /* urdevkk keeps the rose-gold look unless she picks a different background. */
     function kkClass(p) {
@@ -265,9 +273,37 @@
     function applyMessages(list, silent) {
       var same = list.length === st.messages.length;
       if (same) {
-        for (var i = 0; i < list.length; i++) { if (list[i].id !== st.messages[i].id) { same = false; break; } }
+        for (var i = 0; i < list.length; i++) {
+          var a = list[i], b = st.messages[i];
+          if (a.id !== b.id || (a.attachment || '') !== (b.attachment || '') || a.text !== b.text) { same = false; break; }
+        }
       }
       if (same) return;
+
+      /* In an open thread, append only the new bubbles. The composer, the
+         header and the rest of the app are never re-rendered, so typing stays
+         smooth and the keyboard never closes. */
+      var sc = q('ssChatScroll');
+      if (sc && st.thread && list.length >= st.messages.length) {
+        var known = st.messages.map(function (m) { return m.id; }).join(',');
+        var nextIds = list.map(function (m) { return m.id; }).join(',');
+        var grew = nextIds === known || nextIds.indexOf(known + ',') === 0 || (known === '' && list.length > 0);
+        if (grew && st.messages.length) {
+          var added = list.slice(st.messages.length);
+          var stick = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 60;
+          var empty = sc.querySelector('.ss-empty');
+          if (empty) empty.remove();
+          var frag = document.createElement('div');
+          frag.innerHTML = added.map(bubbleHTML).join('');
+          while (frag.firstChild) sc.appendChild(frag.firstChild);
+          sc.setAttribute('data-ids', nextIds);
+          st.messages = list;
+          if (stick) scrollChat();
+          if (!silent) paintCounts();
+          return;
+        }
+      }
+
       var inp = q('ssChatInput');
       var val = inp ? inp.value : '';
       var hadFocus = inp && document.activeElement === inp;
@@ -333,8 +369,10 @@
         username: u.username || '',
         displayName: p.name || u.displayName || u.username || 'StudySpace',
         role: String(u.role || 'USER').toUpperCase(),
-        avatar: p.avatar || u.avatar || '',
-        bg: p.bg || u.bg || 'sage'
+        /* An explicitly cleared photo must stay cleared instead of falling back
+           to the account copy on the server. */
+        avatar: p.avatar === undefined ? (u.avatar || '') : (p.avatar || ''),
+        bg: p.bg === undefined ? (u.bg || 'sage') : (p.bg || 'sage')
       };
     }
 
@@ -348,7 +386,7 @@
       } catch (e) {}
       var kk = p.username === 'urdevkk';
       var activeBg = BG_KEYS.indexOf(String(p.bg)) >= 0 ? p.bg : 'sage';
-      var h = '<div class="ss-prof ' + bgClass(p) + kkClass(p) + '">' + (kk ? heartsHTML() : '') +
+      var h = '<div class="ss-prof ' + bgClass(p) + kkClass(p) + '"' + bgStyle(p) + '>' + (kk ? heartsHTML() : '') +
         '<div class="ss-prof-top">' + avatarHTML(p, 'lg') +
         '<div class="ss-prof-id"><b>' + esc(p.displayName) + devBadge(p) + '</b><small>@' + esc(p.username || 'studyspace') + (kk ? ' · rose gold' : '') + '</small></div></div>' +
         '<div class="ss-prof-stats">' + statBox(focus, 'Focused time') + statBox(days, 'Day streak') + statBox(open, 'Tasks open') + '</div>' +
@@ -359,14 +397,21 @@
           return '<button type="button" class="ss-av-g ' + k + (on ? ' on' : '') + '" data-ss-avatar="' + k + '" aria-label="Avatar ' + (i + 1) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(initials(p.displayName)) + '</button>';
         }).join('') +
         '<button type="button" class="ss-btn ghost" data-ss-avup style="height:36px;min-height:36px">Upload photo</button>' +
+        (p.avatar ? '<button type="button" class="ss-btn ghost" data-ss-avrm style="height:36px;min-height:36px">Remove Photo</button>' : '') +
         '</div>' +
         '<input id="ssAvFile" type="file" accept="image/*" hidden>' +
         '<span class="ss-lbl">Profile background</span><div class="ss-bgpick">' +
         BG_KEYS.map(function (k) {
-          var on = activeBg === k;
+          var on = activeBg === k && !isPhotoBg(p);
           return '<button type="button" class="ss-bg-' + k + (on ? ' on' : '') + '" data-ss-bg="' + k + '" aria-label="' + BG_LABEL[k] + ' background" aria-pressed="' + (on ? 'true' : 'false') + '"></button>';
         }).join('') +
-        '</div></div></div>';
+        '</div>' +
+        '<div class="ss-avpick" style="margin-top:2px">' +
+        '<button type="button" class="ss-btn ghost" data-ss-bgup style="height:36px;min-height:36px;border-radius:12px;font-size:12px">Upload background</button>' +
+        (isPhotoBg(p) || activeBg !== 'sage' ? '<button type="button" class="ss-btn ghost" data-ss-bgrm style="height:36px;min-height:36px;border-radius:12px;font-size:12px">Remove Photo</button>' : '') +
+        '</div>' +
+        '<input id="ssBgFile" type="file" accept="image/*" hidden>' +
+        '</div></div>';
       return h;
     }
 
@@ -380,20 +425,26 @@
       else paintCounts();
       api('/profile/update', { method: 'POST', body: patch }).then(function (d) {
         if (d.user && acc() && acc().state) acc().state.user = d.user;
-      }, function (err) { banner(err.message || 'Could not save your profile.'); });
+        if (inSocial() || (tab === 'more' && moreSub === 'profile')) { try { render(); } catch (e) {} }
+      }, function (err) {
+        banner(err.message || 'Could not save your profile.');
+        if (typeof S !== 'undefined') S.prof = S.prof || {};
+      });
     }
 
-    function shrinkPhoto(file) {
+    function shrinkPhoto(file, maxSide, quality) {
       return new Promise(function (ok, no) {
         var url = URL.createObjectURL(file), img = new Image();
         img.onload = function () {
           try {
-            var k = Math.min(1, 320 / Math.max(img.width, img.height));
+            var cap = Number(maxSide) || 320;
+            var k = Math.min(1, cap / Math.max(img.width, img.height));
             var c = document.createElement('canvas');
             c.width = Math.max(1, Math.round(img.width * k));
             c.height = Math.max(1, Math.round(img.height * k));
-            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-            var data = c.toDataURL('image/jpeg', .72);
+            var ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            var data = c.toDataURL('image/jpeg', Number(quality) || .72);
             URL.revokeObjectURL(url);
             ok(data);
           } catch (e) { URL.revokeObjectURL(url); no(e); }
@@ -504,7 +555,7 @@
       else if (!st.threads.length) h += '<p class="ss-empty">No conversations yet. Pick a friend above to say hello.</p>';
       else h += st.threads.map(function (t) {
         var f = t.friend || {};
-        var preview = t.last ? (t.last.mine ? 'You: ' : '') + t.last.text : 'Say hello';
+        var preview = t.last ? (t.last.mine ? 'You: ' : '') + (t.last.text || (t.last.attachmentName ? '📎 ' + t.last.attachmentName : '')) : 'Say hello';
         return '<button type="button" class="ss-row tap" data-ss-chat="' + esc(f.id) + '">' + avatarHTML(f) +
           '<span class="ss-who"><b>' + esc(f.displayName || f.username) + devBadge(f) + '</b><small>' + esc(preview) + '</small></span>' +
           (t.unread ? '<span class="ss-count" style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#c2410c;color:#fff;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">' + t.unread + '</span>'
@@ -514,21 +565,51 @@
       return h;
     }
 
+    function attachHTML() {
+      if (!st.attach) return '';
+      var a = st.attach;
+      var thumb = a.type === 'image' ? '<img src="' + esc(a.data) + '" alt="">' : SVG.clip;
+      return '<div class="ss-attach-chip">' + thumb + '<span>' + esc(a.name) + '</span>' +
+        '<button type="button" class="ss-attach-x" data-ss-attachrm aria-label="Remove attachment">×</button></div>';
+    }
+
+    function bubbleHTML(m) {
+      var f = st.threadFriend || {};
+      var att = '';
+      if (m.attachment) {
+        if (/^data:image\//.test(m.attachment)) {
+          att = '<a class="ss-img" href="' + esc(m.attachment) + '" target="_blank" rel="noopener" download="' + esc(m.attachmentName || 'photo.jpg') + '"><img src="' + esc(m.attachment) + '" alt="' + esc(m.attachmentName || 'Photo') + '" loading="lazy"></a>';
+        } else {
+          att = '<a class="ss-file" href="' + esc(m.attachment) + '" download="' + esc(m.attachmentName || 'file') + '" target="_blank" rel="noopener">' + SVG.clip + '<span>' + esc(m.attachmentName || 'Attachment') + '</span></a>';
+        }
+      }
+      return '<div class="ss-bub ' + (m.mine ? 'mine' : 'theirs') + (m.pending ? ' pending' : '') + '" data-mid="' + esc(m.id) + '">' +
+        att + (m.text && !/^📎 /.test(m.text) ? '<span class="ss-txt">' + esc(m.text) + '</span>' : '') +
+        '<span class="ss-time">' + esc(fmtTime(m.createdAt)) + (m.pending ? ' · sending' : '') + '</span></div>';
+    }
+
+    function emptyChatHTML() {
+      var f = st.threadFriend || {};
+      return '<p class="ss-empty" style="margin:auto;text-align:center">' + (st.msgLoaded ? 'No messages yet. Say hello to @' + esc(f.username || 'your friend') + '.' : 'Loading messages…') + '</p>';
+    }
+
     function threadPanel() {
       var f = st.threadFriend || st.friends.filter(function (x) { return x.id === st.thread; })[0] || { id: st.thread, username: 'friend', displayName: 'Friend' };
       if (!st.msgLoaded) loadMessages(st.thread);
-      var bubbles = st.messages.length ? st.messages.map(function (m) {
-        return '<div class="ss-bub ' + (m.mine ? 'mine' : 'theirs') + '">' + esc(m.text) + '<span class="ss-time">' + esc(fmtTime(m.createdAt)) + '</span></div>';
-      }).join('') : '<p class="ss-empty" style="margin:auto;text-align:center">' + (st.msgLoaded ? 'No messages yet. Say hello to @' + esc(f.username) + '.' : 'Loading messages…') + '</p>';
+      var bubbles = st.messages.length ? st.messages.map(bubbleHTML).join('') : emptyChatHTML();
       setTimeout(scrollChat, 30);
-      return '<div class="card"><div class="ss-thread-head">' +
+      return '<div class="card ss-thread"><div class="ss-thread-head">' +
         '<button type="button" class="ss-iconbtn" data-ss-threadback aria-label="Back to conversations">' + SVG.back + '</button>' +
         avatarHTML(f, 'sm') +
         '<div class="ss-who"><b>' + esc(f.displayName || f.username) + devBadge(f) + '</b><small>@' + esc(f.username) + '</small></div>' +
         '<button type="button" class="ss-iconbtn poke" data-ss-poke="' + esc(f.id) + '" aria-label="Poke ' + esc(f.displayName || f.username) + '">' + SVG.poke + '</button></div>' +
-        '<div class="ss-chat-scroll" id="ssChatScroll">' + bubbles + '</div>' +
-        '<form class="ss-composer" data-ss-chatform><input id="ssChatInput" placeholder="Message @' + esc(f.username) + '" maxlength="2000" autocomplete="off" enterkeyhint="send">' +
-        '<button type="submit" aria-label="Send message">' + SVG.send + '</button></form></div>';
+        '<div class="ss-chat-scroll" id="ssChatScroll" data-ids="' + esc(st.messages.map(function (m) { return m.id; }).join(',')) + '">' + bubbles + '</div>' +
+        attachHTML() +
+        '<form class="ss-composer" data-ss-chatform>' +
+        '<button type="button" class="ss-attach" data-ss-attach aria-label="Attach a file" title="Attach a file">' + SVG.clip + '</button>' +
+        '<input id="ssChatInput" placeholder="Message @' + esc(f.username) + '" maxlength="2000" autocomplete="off" enterkeyhint="send">' +
+        '<button type="submit" class="ss-send" aria-label="Send message">' + SVG.send + '</button></form>' +
+        '<input id="ssChatFile" type="file" accept="image/*,application/pdf" hidden></div>';
     }
 
     function pokesPanel() {
@@ -568,6 +649,7 @@
       st.thread = id;
       st.threadFriend = f;
       st.messages = [];
+      st.attach = null;
       st.msgLoaded = false;
       st.tab = 'messages';
       nav('acad', 'chat');
@@ -584,24 +666,82 @@
     function sendMessage() {
       var inp = q('ssChatInput');
       var text = inp ? String(inp.value || '').trim() : '';
-      if (!text || !st.thread) return;
+      var att = st.attach;
+      if ((!text && !att) || !st.thread) return;
       if (inp) { inp.value = ''; }
-      var temp = { id: 'tmp' + Date.now(), fromId: (me() || {}).id, toId: st.thread, text: text, createdAt: Date.now(), mine: true };
+      st.attach = null;
+      var temp = {
+        id: 'tmp' + Date.now(), fromId: (me() || {}).id, toId: st.thread, text: text,
+        createdAt: Date.now(), mine: true, pending: true,
+        attachment: att ? att.data : '', attachmentName: att ? att.name : ''
+      };
+      var sc = q('ssChatScroll');
+      var stick = !sc || sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 60;
       st.messages = st.messages.concat([temp]);
-      try { render(); } catch (e) {}
-      scrollChat();
-      api('/chat/send', { method: 'POST', body: { friendId: st.thread, text: text } }).then(function (d) {
-        var msg = d.message || temp;
-        st.messages = st.messages.map(function (m) { return m.id === temp.id ? msg : m; });
-        st.threads = null;
+      /* Optimistic bubble without re-rendering the whole view. */
+      if (sc) {
+        var empty = sc.querySelector('.ss-empty');
+        if (empty) empty.remove();
+        var holder = document.createElement('div');
+        holder.innerHTML = bubbleHTML(temp);
+        if (holder.firstChild) sc.appendChild(holder.firstChild);
+        if (stick) scrollChat();
+      } else {
         try { render(); } catch (e) {}
         scrollChat();
+      }
+      var chip = document.querySelector('.ss-attach-chip');
+      if (chip) chip.remove();
+
+      api('/chat/send', { method: 'POST', body: { friendId: st.thread, text: text, attachment: att ? att.data : '', attachmentName: att ? att.name : '', attachmentType: att ? att.type : '' } }).then(function (d) {
+        var msg = d.message || temp;
+        msg.pending = false;
+        st.messages = st.messages.map(function (m) { return m.id === temp.id ? msg : m; });
+        st.threads = null;
+        var node = sc && sc.querySelector('[data-mid="' + temp.id + '"]');
+        if (node) {
+          var h = document.createElement('div');
+          h.innerHTML = bubbleHTML(msg);
+          if (h.firstChild) node.parentNode.replaceChild(h.firstChild, node);
+          sc.setAttribute('data-ids', st.messages.map(function (m) { return m.id; }).join(','));
+        } else {
+          try { render(); } catch (e) {}
+        }
+        if (stick) scrollChat();
       }, function (err) {
         st.messages = st.messages.filter(function (m) { return m.id !== temp.id; });
-        if (inp) inp.value = text;
+        if (inp && !inp.value) inp.value = text;
+        st.attach = att || null;
         banner(err.message || 'Could not send that message.');
         try { render(); } catch (e) {}
+        scrollChat();
       });
+    }
+
+    /* ---------------- attachments ---------------- */
+    function attachError(msg) { banner(msg); }
+    function pickAttachment(file) {
+      if (!file) return;
+      var isImg = /^image\//.test(file.type || '');
+      var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+      if (!isImg && !isPdf) return attachError('Attach a photo or a PDF.');
+      if (isPdf && file.size > 900 * 1024) return attachError('That PDF is too large. Keep it under 900 KB.');
+      if (isImg) {
+        shrinkPhoto(file, 1280, .72).then(function (data) {
+          st.attach = { data: data, name: (file.name || 'photo.jpg').slice(-60), type: 'image' };
+          try { render(); } catch (e) {}
+          scrollChat();
+        }, function (err) { attachError(err.message || 'That photo could not be read.'); });
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        st.attach = { data: String(reader.result || ''), name: (file.name || 'file.pdf').slice(-60), type: 'file' };
+        try { render(); } catch (e) {}
+        scrollChat();
+      };
+      reader.onerror = function () { attachError('That file could not be read.'); };
+      reader.readAsDataURL(file);
     }
 
     function poke(friendId, btn) {
@@ -682,6 +822,14 @@
       if (bn) bn.remove();
       var draw = q('ssInviteDrawer');
       if (draw) draw.remove();
+      closeModal();
+      /* Leave the live room so no microphone track or peer call survives the
+         account switch. */
+      try { if (window.ssRoom && ssRoom.inRoom && ssRoom.inRoom() && ssRoom.quit) ssRoom.quit(); } catch (e) {}
+      try {
+        var gs = document.getElementById('gsroom'); if (gs) gs.remove();
+        var sheet = document.getElementById('accSheet'); if (sheet) { sheet.hidden = true; sheet.innerHTML = ''; }
+      } catch (e) {}
       st.inviteOpen = null;
       st.seenInvite = {}; st.sentSeen = {}; st.pending = {};
       st.invites = []; st.sentAt = 0; st.inviteAt = 0; st.countsAt = 0; st.msgAt = 0;
@@ -813,6 +961,11 @@
       if ((el = t.closest('[data-ss-avatar]'))) { setProf({ avatar: el.getAttribute('data-ss-avatar') }); return; }
       if ((el = t.closest('[data-ss-bg]'))) { setProf({ bg: el.getAttribute('data-ss-bg') }); return; }
       if (t.closest('[data-ss-avup]')) { var f = q('ssAvFile'); if (f) f.click(); return; }
+      if (t.closest('[data-ss-avrm]')) { setProf({ avatar: '' }); return; }
+      if (t.closest('[data-ss-bgup]')) { var bf = q('ssBgFile'); if (bf) bf.click(); return; }
+      if (t.closest('[data-ss-bgrm]')) { setProf({ bg: 'sage' }); return; }
+      if (t.closest('[data-ss-attach]')) { var af = q('ssChatFile'); if (af) af.click(); return; }
+      if (t.closest('[data-ss-attachrm]')) { st.attach = null; try { render(); } catch (err) {} return; }
       if ((el = t.closest('[data-ss-backfriends]'))) { st.profile = null; nav('life', 'friends'); return; }
       if ((el = t.closest('[data-ss-openfriend]'))) { openFriendProfile(el.getAttribute('data-ss-openfriend')); return; }
       if ((el = t.closest('[data-ss-search]'))) { doSearch(); return; }
@@ -830,7 +983,7 @@
         return;
       }
       if ((el = t.closest('[data-ss-threadback]'))) {
-        st.thread = null; st.threadFriend = null; st.messages = []; st.msgLoaded = false;
+        st.thread = null; st.threadFriend = null; st.messages = []; st.msgLoaded = false; st.attach = null;
         loadThreads(true);
         try { render(); } catch (err) {}
         return;
@@ -886,8 +1039,20 @@
 
     document.addEventListener('change', function (e) {
       var el = e.target;
-      if (el && el.id === 'ssAvFile' && el.files && el.files[0]) {
-        shrinkPhoto(el.files[0]).then(function (data) { setProf({ avatar: data }); }, function (err) { banner(err.message || 'That photo could not be read.'); });
+      if (!el) return;
+      if (el.id === 'ssAvFile' && el.files && el.files[0]) {
+        shrinkPhoto(el.files[0], 320, .72).then(function (data) { setProf({ avatar: data }); }, function (err) { banner(err.message || 'That photo could not be read.'); });
+        el.value = '';
+      }
+      if (el.id === 'ssBgFile' && el.files && el.files[0]) {
+        shrinkPhoto(el.files[0], 1100, .7).then(function (data) {
+          if (data.length > 320000) return banner('That background is too detailed. Try a simpler or smaller photo.');
+          setProf({ bg: data });
+        }, function (err) { banner(err.message || 'That photo could not be read.'); });
+        el.value = '';
+      }
+      if (el.id === 'ssChatFile' && el.files && el.files[0]) {
+        pickAttachment(el.files[0]);
         el.value = '';
       }
     });
@@ -1028,6 +1193,11 @@
       profileHero: profileHero,
       openFriendChat: openFriendChat,
       roomInviteDrawer: roomInviteDrawer,
+      reset: function () {
+        st.thread = null; st.threadFriend = null; st.messages = []; st.msgLoaded = false;
+        st.attach = null; st.tab = 'messages'; st.profile = null; st.search = ''; st.results = null;
+        st.inviteOpen = null;
+      },
       unreadCount: unreadCount,
       friendCount: friendCount,
       requestCount: requestCount

@@ -452,3 +452,48 @@ html.ss-out #app { transition: opacity .24s ease, transform .24s ease; opacity: 
   #view.ss-swap > *, .ss-modal-card, .ss-drawer-card, .ss-modal-bk, .ss-drawer-bk { animation: none !important; }
   html.ss-out #app { transition: none; }
 }
+
+/* ---------- profile photo background ---------- */
+.ss-prof.ss-bg-photo { background-size: cover; background-position: center; color: #fff; }
+.ss-prof.ss-bg-photo .ss-prof-id small,
+.ss-prof.ss-bg-photo .ss-prof-stats small,
+.ss-prof.ss-bg-photo .ss-prof-tools .ss-lbl { color: rgba(255, 255, 255, .8); }
+.ss-prof.ss-bg-photo .ss-prof-stats div { background: rgba(16, 26, 20, .34); border-color: rgba(255, 255, 255, .22); }
+.ss-prof.ss-bg-photo .ss-avpick .ss-btn { color: #fff; border-color: rgba(255, 255, 255, .45); background: rgba(16, 26, 20, .28); }
+.ss-prof.ss-bg-photo .ss-bgpick button { border-color: rgba(255, 255, 255, .5); }
+
+/* ---------- chat attachments ---------- */
+.ss-composer { align-items: center; }
+.ss-composer .ss-attach {
+  flex: none; width: 40px; height: 40px; min-height: 40px; padding: 0;
+  border-radius: 12px; background: transparent; border: 1px solid transparent;
+  color: var(--muted); box-shadow: none;
+}
+.ss-composer .ss-attach:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.ss-composer .ss-send { flex: none; width: 44px; min-height: 44px; border-radius: 14px; }
+.ss-attach-chip {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 8px; padding: 6px 8px 6px 6px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--line));
+  border-radius: 12px; background: color-mix(in srgb, var(--accent) 7%, var(--card));
+  font-size: 11.5px; font-weight: 600; color: var(--ink);
+}
+.ss-attach-chip img { width: 30px; height: 30px; object-fit: cover; border-radius: 8px; flex: none; }
+.ss-attach-chip > svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ss-attach-chip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-attach-x { flex: none; width: 22px; height: 22px; min-height: 22px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 15px; line-height: 1; box-shadow: none; }
+
+.ss-bub .ss-txt { display: block; white-space: pre-wrap; }
+.ss-bub.pending { opacity: .72; }
+.ss-img { display: block; margin: 0 0 4px; border-radius: 11px; overflow: hidden; max-width: 100%; }
+.ss-img img { display: block; width: 100%; max-width: 220px; max-height: 240px; object-fit: cover; border-radius: 11px; }
+.ss-bub.mine .ss-img img { border: 1px solid rgba(255, 255, 255, .28); }
+.ss-file {
+  display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
+  margin: 0 0 4px; padding: 8px 10px; border-radius: 10px;
+  background: rgba(255, 255, 255, .22); color: inherit; text-decoration: none;
+  font-size: 11.5px; font-weight: 700;
+}
+.ss-bub.theirs .ss-file { background: color-mix(in srgb, var(--card) 70%, transparent); border: 1px solid var(--line); }
+.ss-file svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ss-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

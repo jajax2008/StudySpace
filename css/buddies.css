@@ -86,7 +86,11 @@
   stroke: var(--bc);
   stroke-width: 2.1;
 }
-.sb-av[data-kind="study"] .sb-hand { fill: #f7d9c2; stroke: #c99570; stroke-width: 1.8; }
+.sb-av[data-kind="study"] .sb-hand {
+  /* Hands use the exact same skin fill as StudyBuddy's face. */
+  fill: color-mix(in srgb, var(--bc, var(--accent)) 17%, var(--card));
+  stroke: none;
+}
 .sb-av .sb-hand-l { transform-origin: 100% 50%; }
 .sb-av .sb-hand-r { transform-origin: 0% 50%; }
 .sb-av .sb-scarf-band {
