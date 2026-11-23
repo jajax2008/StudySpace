@@ -14,13 +14,14 @@
       msg: '',
       err: '',
       cache: {},           // file questions cached per file signature
-      qs: null
+      qs: null,
+      fit: 'study'         // fitting-room view: study | life | duo
     };
 
     var ICON = {
       run: '<path d="M6 20l3-7 3 2 2 5M9 13 6.5 9.5 9.5 7l3.5 1 2.5-3M15 4.2h.01M13.5 8.5 17 11l2.5-1.5"/>',
       lock: '<path d="M7 11V8.5a5 5 0 0 1 10 0V11M5 11h14v10H5zM12 15v2.5"/>',
-      coins: '<circle cx="9" cy="9" r="5.2"/><path d="M11.5 8.2c-.6-1-2.6-1-2.6.4s2.6.9 2.6 2.2-2.2 1.3-2.7.3"/><path d="M9.9 6.4v1M9.9 11.6v1"/><path d="M14.5 12.8a5.2 5.2 0 1 1-6.3 6.3"/>',
+      coins: '<circle cx="12" cy="12" r="8.7" style="fill:#e8b349;stroke:#a8741f"/><circle cx="12" cy="12" r="5.9" style="fill:none;stroke:#fff8e2;stroke-width:1.2;opacity:.78"/><path d="M8.3 9.7c1.1-1.7 3.5-2.1 5.2-1" style="fill:none;stroke:#fff;stroke-width:1.3;opacity:.85"/>',
       tasks: '<path d="M5 4h14v16H5zM9 9l1.6 1.6L14 7.2M9 16h6"/>',
       store: '<path d="M4 9h16l-1.2-4.2H5.2zM5.5 9v10h13V9M9.5 19v-5h5v5"/>',
       arrow: '<path d="M5 12h13M13 6.5 18.5 12 13 17.5"/>',
@@ -357,16 +358,24 @@
       var g = saved();
       return '<button class="ghost g-back" type="button" data-games="back">' + ico('back') + 'Techniques</button>' +
         '<div class="g-head"><div><h1>Study Games</h1><p class="sub">Run, answer, and earn coins for your buddy</p></div>' + coinChip(g) + '</div>' +
-        '<div class="g-tiles">' +
-          '<button type="button" class="g-tile g-tile-live" data-games="lobby">' +
-            '<span class="g-tile-art">' + ico('run') + '<i class="g-tile-dot"></i></span>' +
-            '<b>Buddy Run</b><small>3-lane quiz runner</small><span class="g-badge">Play</span></button>' +
-          '<button type="button" class="g-tile is-soon" disabled><span class="g-tile-art">' + ico('lock') + '</span><b>Coming Soon</b><small>New study game</small></button>' +
-          '<button type="button" class="g-tile is-soon" disabled><span class="g-tile-art">' + ico('lock') + '</span><b>Coming Soon</b><small>New study game</small></button>' +
+        '<div class="g-top">' +
+          '<button type="button" class="g-quick" data-games="tasks"><span class="g-quick-art">' + ico('tasks') + '</span><span class="g-quick-txt"><b>Tasks</b><small>Earn coins</small></span><span class="g-quick-go" aria-hidden="true">' + ico('arrow') + '</span></button>' +
+          '<button type="button" class="g-quick" data-games="store"><span class="g-quick-art">' + ico('store') + '</span><span class="g-quick-txt"><b>Accessories</b><small>Try it on</small></span><span class="g-quick-go" aria-hidden="true">' + ico('arrow') + '</span></button>' +
         '</div>' +
-        '<div class="g-shortcuts">' +
-          '<button type="button" class="g-short" data-games="tasks">' + ico('tasks') + '<span><b>Tasks</b><small>Earn coins</small></span></button>' +
-          '<button type="button" class="g-short" data-games="store">' + ico('store') + '<span><b>Accessories</b><small>Coming soon</small></span></button>' +
+        '<div class="g-lbl">Games</div>' +
+        '<div class="g-games">' +
+          '<button type="button" class="g-run" data-games="lobby" style="background-image:linear-gradient(90deg,rgba(17,30,24,.9) 0%,rgba(17,30,24,.56) 48%,rgba(17,30,24,0) 72%),url(\'./icons/buddy-run-thumb.png\')" aria-label="Buddy Run, 3-lane quiz runner">' +
+            '<span class="g-run-txt"><small>3-lane quiz runner</small><b>Buddy Run</b><span class="g-run-cta">Play</span></span>' +
+            '<span class="g-run-fade" aria-hidden="true"></span>' +
+          '</button>' +
+          '<div class="g-wide is-soon" role="img" aria-label="Coming Soon, new study game">' +
+            '<span class="g-wide-art">' + ico('lock') + '</span>' +
+            '<span class="g-wide-txt"><b>Coming Soon</b><small>New study game</small></span>' +
+          '</div>' +
+          '<div class="g-wide is-soon" role="img" aria-label="Coming Soon, new study game">' +
+            '<span class="g-wide-art">' + ico('lock') + '</span>' +
+            '<span class="g-wide-txt"><b>Coming Soon</b><small>New study game</small></span>' +
+          '</div>' +
         '</div>' +
         '<p class="g-note">' + ico('spark') + '<span>Coins are earned by running and by studying. Best run: <b>' + (g.best || 0) + ' m</b></p>';
     }
@@ -399,11 +408,11 @@
         (G.msg ? '<p class="g-ok">' + esc(G.msg) + '</p>' : '') +
         (G.err ? '<p class="g-err" role="alert">' + esc(G.err) + '</p>' : '') +
         '<div class="g-actions"><button type="button" class="g-play" id="gPlay" data-games="play"' + (G.loading ? ' disabled' : '') + '>' +
-          (G.loading ? '<i class="g-spin" aria-hidden="true"></i>Preparing your run' : ico('run') + 'Start running') + '</button></div>' +
+          (G.loading ? '<i class="g-spin" aria-hidden="true"></i>Preparing your run' : 'Play') + '</button></div>' +
         '<div class="g-facts"><span><b>' + (g.best || 0) + ' m</b>best run</span><span><b>' + (g.runs || 0) + '</b>runs played</span><span><b>' + g.coins + '</b>coins</span></div>' +
         '<div class="g-shortcuts">' +
           '<button type="button" class="g-short" data-games="tasks">' + ico('tasks') + '<span><b>Tasks</b><small>Earn coins</small></span></button>' +
-          '<button type="button" class="g-short" data-games="store">' + ico('store') + '<span><b>Accessories</b><small>Coming soon</small></span></button>' +
+          '<button type="button" class="g-short" data-games="store">' + ico('store') + '<span><b>Accessories</b><small>Fitting room</small></span></button>' +
         '</div>' +
         '<p class="g-tip">Lives: <b>3 hearts</b> · <b>2/2</b> correct answers win a heart back · <b>3 skips</b> per run · LifeBuddy rescues you once.</p>';
     }
@@ -433,9 +442,19 @@
       var slots = ['Caps', 'Glasses', 'Scarf', 'Backpack', 'Aura', 'Trail'].map(function (n) {
         return '<div class="g-slot"><span class="g-slot-art">' + ico('lock') + '</span><b>' + n + '</b><small>Coming soon</small></div>';
       }).join('');
+      var fitName = G.fit === 'life' ? 'LifeBuddy' : G.fit === 'duo' ? 'StudyBuddy &amp; LifeBuddy' : 'StudyBuddy';
       return '<button class="ghost g-back" type="button" data-games="lobby">' + ico('back') + 'Buddy Run</button>' +
-        '<div class="g-head"><div><h1>Accessories</h1><p class="sub">Looks for StudyBuddy and LifeBuddy</p></div>' + coinChip(g) + '</div>' +
-        '<div class="g-soon"><span class="g-soon-art">' + ico('spark') + '</span><b>Coming soon</b><small>The fitting room is being built. Keep earning coins and you will be first in line.</small></div>' +
+        '<div class="g-head"><div><h1>Accessories</h1><p class="sub">Spin your buddies in the fitting room</p></div>' + coinChip(g) + '</div>' +
+        '<div class="g-fit">' +
+          '<div class="g-fit-stage" id="gFit" data-b3d-manual aria-label="3D fitting room preview"><span class="g-fit-glow" aria-hidden="true"></span></div>' +
+          '<div class="g-fit-views" role="group" aria-label="Fitting room view">' +
+            '<button type="button" data-games="fit" data-v="study" class="' + (G.fit === 'study' ? 'on' : '') + '" aria-pressed="' + (G.fit === 'study') + '">StudyBuddy</button>' +
+            '<button type="button" data-games="fit" data-v="life" class="' + (G.fit === 'life' ? 'on' : '') + '" aria-pressed="' + (G.fit === 'life') + '">LifeBuddy</button>' +
+            '<button type="button" data-games="fit" data-v="duo" class="' + (G.fit === 'duo' ? 'on' : '') + '" aria-pressed="' + (G.fit === 'duo') + '">Duo View</button>' +
+          '</div>' +
+          '<div class="g-fit-meta"><b>' + fitName + '</b><small>Drag to spin</small></div>' +
+        '</div>' +
+        '<div class="g-soon"><span class="g-soon-art">' + ico('spark') + '</span><b>Accessories coming soon</b><small>Try the fitting room now. Caps, glasses, scarves and trails arrive in a later update.</small></div>' +
         '<div class="g-grid">' + slots + '</div>' +
         '<p class="g-tip">Nothing is for sale yet, so no coins can be spent by mistake.</p>';
     }
@@ -449,8 +468,34 @@
       return hubView();
     }
 
+    /* The Buddy Run lobby takes over the screen: the tab bar is out of the way
+       while you pick a buddy and start a run. */
+    function syncNav() {
+      try {
+        var on = typeof hv !== 'undefined' && hv === 'games' && G.tab === 'lobby';
+        document.documentElement.classList.toggle('gr-navless', !!on);
+      } catch (e) {}
+    }
+
+    function mountFit() {
+      if (G.tab !== 'store') return;
+      var tries = 0;
+      (function go() {
+        var el = document.getElementById('gFit');
+        if (!el) return;
+        if (window.ssMascot) {
+          try { window.ssMascot.fitting(el, G.fit); } catch (e) {}
+          return;
+        }
+        if (tries++ > 50) return;
+        setTimeout(go, 100);
+      })();
+    }
+
     function renderGame() {
       try { if (typeof render === 'function') render(); } catch (e) {}
+      syncNav();
+      mountFit();
       try { var v = document.getElementById('view'); if (v) v.scrollTop = 0; } catch (e) {}
     }
 
@@ -459,13 +504,27 @@
       var b = e.target.closest ? e.target.closest('[data-games]') : null;
       if (!b) return;
       var act = b.dataset.games, v = b.dataset.v;
-      if (act === 'open') { try { hv = 'games'; G.tab = 'hub'; render(); var el = document.getElementById('view'); if (el) el.scrollTop = 0; } catch (err) {} return; }
-      if (act === 'back') { try { hv = 'learn'; L = null; render(); } catch (err) {} return; }
+      if (act === 'open') { try { hv = 'games'; G.tab = 'hub'; render(); syncNav(); var el = document.getElementById('view'); if (el) el.scrollTop = 0; } catch (err) {} return; }
+      if (act === 'back') { try { hv = 'learn'; L = null; render(); syncNav(); } catch (err) {} return; }
       if (act === 'hub' || act === 'lobby' || act === 'tasks' || act === 'store') {
         G.tab = act; G.err = ''; G.msg = ''; renderGame();
         return;
       }
       if (act === 'char') { G.char = v === 'life' ? 'life' : 'study'; try { saved().char = G.char; persist(); } catch (err) {} renderGame(); return; }
+      if (act === 'fit') {
+        G.fit = v === 'life' ? 'life' : v === 'duo' ? 'duo' : 'study';
+        /* switch in place so the fitting room keeps its rotation and context */
+        var stage = document.getElementById('gFit');
+        if (stage && window.ssMascot) { try { window.ssMascot.fitting(stage, G.fit); } catch (err) {} }
+        document.querySelectorAll('[data-games="fit"]').forEach(function (b) {
+          var on = b.dataset.v === G.fit;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        var meta = document.querySelector('.g-fit-meta b');
+        if (meta) meta.textContent = G.fit === 'life' ? 'LifeBuddy' : G.fit === 'duo' ? 'StudyBuddy & LifeBuddy' : 'StudyBuddy';
+        return;
+      }
       if (act === 'tab') { G.tab = v || 'hub'; renderGame(); return; }
       if (act === 'src') { G.src = ['gk', 'cards', 'notes', 'file'].indexOf(v) >= 0 ? v : 'gk'; G.err = ''; G.msg = ''; renderGame(); return; }
       if (act === 'play') { play(); return; }
@@ -513,6 +572,8 @@
       try {
         if (window.ssRun && window.ssRun.current && !document.getElementById('gr')) window.ssRun.stop();
         if (!document.getElementById('gr')) document.documentElement.classList.remove('gr-lock');
+        var inLobby = typeof hv !== 'undefined' && hv === 'games' && G.tab === 'lobby';
+        document.documentElement.classList.toggle('gr-navless', !!inLobby);
       } catch (e) {}
     }
 
@@ -520,7 +581,7 @@
       view: function () { try { return gameView(); } catch (e) { return '<div class="card">Study Games could not load.</div>'; } },
       tab: function (t) { G.tab = t || 'hub'; },
       open: function () { G.tab = 'hub'; },
-      reset: function () { G.tab = 'hub'; G.loading = false; G.err = ''; G.msg = ''; try { watchdog(); } catch (e) {} },
+      reset: function () { G.tab = 'hub'; G.loading = false; G.err = ''; G.msg = ''; try { syncNav(); } catch (e) {} try { watchdog(); } catch (e) {} },
       coins: function () { return saved().coins; },
       watchdog: watchdog
     };

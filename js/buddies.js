@@ -90,19 +90,12 @@
         '</g>';
     }
 
+    /* The live buddy faces are the 3D mascots from js/mascots.js. This keeps
+       the chat header and Home cards on the same characters, and the old SVG
+       tap / pet / orbit behaviour is gone with them. */
     function avatar(kind) {
-      var life = kind === 'life';
-      return '<svg class="sb-av" viewBox="0 0 80 80" data-kind="' + (life ? 'life' : 'study') +
-        '" data-mood="idle" data-sleep="0" role="img" aria-label="' + (life ? 'LifeBuddy' : 'StudyBuddy') + '">' +
-        '<ellipse class="sb-ground" cx="40" cy="73.6" rx="14.8" ry="2.4"/>' +
-        '<g class="sb-body">' + (life ? lifeArt() : studyArt()) + '</g>' +
-        '<g class="sb-fx" aria-hidden="true">' +
-          '<circle class="sb-ring" cx="40" cy="39" r="27"/>' +
-          '<circle class="sb-ring sb-ring-b" cx="40" cy="39" r="27"/>' +
-          '<g class="sb-think"><circle cx="59" cy="24" r="2.1"/><circle cx="64" cy="18.5" r="1.7"/><circle cx="68" cy="13.5" r="1.3"/></g>' +
-          '<g class="sb-zzz"><text x="55" y="23">z</text><text x="60" y="16">z</text><text x="65" y="9">z</text></g>' +
-        '</g>' +
-        '</svg>';
+      try { if (typeof buddy3D === 'function') return buddy3D(kind); } catch (e) {}
+      return '';
     }
 
     /* The app builds the home cards through budSVG(), so overriding it swaps

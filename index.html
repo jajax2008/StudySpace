@@ -108,7 +108,7 @@ button,textarea{font-family:inherit}
 .bcard{position:relative;overflow:visible;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;background:linear-gradient(172deg,color-mix(in srgb,var(--bc,var(--accent)) 9%,var(--card)),var(--card) 62%);color:var(--ink);border:1px solid color-mix(in srgb,var(--bc,var(--accent)) 24%,var(--line));border-radius:20px;padding:16px 12px 13px;min-height:186px;transition:transform .22s var(--spring),border-color .3s var(--ease),box-shadow .3s var(--ease)}
 .bcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120px 70px at 50% 4%,color-mix(in srgb,var(--bc,var(--accent)) 17%,transparent),transparent 72%)}
 .bcard:active{transform:scale(.975)}
-.bcard>.sb-av,.bcard>b,.bcard>small,.bcard>.bgo{position:relative;z-index:1}
+.bcard>.sb-av,.bcard>.b3d,.bcard>b,.bcard>small,.bcard>.bgo{position:relative;z-index:1}
 .bcard>.ss-ripple{display:none}
 .bcard b{display:block;margin-top:9px;font-size:14.5px;font-weight:700;letter-spacing:-.1px;line-height:1.2}
 .bcard small{display:block;margin-top:4px;min-height:2.8em;color:var(--muted);font-size:11.5px;line-height:1.4;max-width:16em}
@@ -541,6 +541,7 @@ window.addEventListener('unhandledrejection',function(e){ssFail((e.reason&&e.rea
 <link rel="stylesheet" href="css/calendar.css">
 <link rel="stylesheet" href="css/study-extras.css">
 <link rel="stylesheet" href="css/games.css">
+<link rel="stylesheet" href="css/mascots.css">
 <style id="ss-compat">
 button.x,.rmain,.kh,.chrow{box-shadow:none}
 button.x{min-height:30px}
@@ -895,11 +896,14 @@ function sleepTime(){
   const h=new Date().getHours();return h>=22||h<5;
 }
 window.sleepTime=sleepTime;
-function budSVG(kind){
-  const slp=sleepTime();
-  const cap=kind==='s'?'<path class="ac" d="M20 17 32 11 44 17 32 23Z"/><path d="M44 17v7" stroke="var(--bc)" stroke-width="2" stroke-linecap="round"/>':'';
-  const cheeks=kind==='l'?'<ellipse class="ck" cx="21" cy="40" rx="3.5" ry="2.4"/><ellipse class="ck" cx="43" cy="40" rx="3.5" ry="2.4"/>':'';
-  return'<svg class="bud'+(slp?' sleepy':'')+'" viewBox="0 0 64 64" aria-hidden="true"><circle class="bd" cx="32" cy="36" r="19"/>'+cap+cheeks+'<ellipse class="ey" cx="25" cy="34" rx="2.4" ry="3.2"/><ellipse class="ey b" cx="39" cy="34" rx="2.4" ry="3.2"/><path class="mo" d="'+(slp?'M28 43q4 1.8 8 0':'M27 42Q32 46.5 37 42')+'"/><g class="wv"><ellipse cx="53" cy="36" rx="4" ry="7"/></g><text class="zz" x="44" y="16">z</text></svg>'}
+/* Every buddy face in the app is the real 3D mascot. The host is a light
+   placeholder that js/mascots.js fills with a canvas; it is decorative only. */
+function buddy3D(kind,cls){
+  const life=kind==='life'||kind==='l';
+  return '<span class="b3d'+(cls?' '+cls:'')+'" data-buddy3d="'+(life?'life':'study')+'" role="img" aria-label="'+(life?'LifeBuddy':'StudyBuddy')+'"><span class="b3d-glow"></span></span>';
+}
+window.buddy3D=buddy3D;
+function budSVG(kind){ return buddy3D(kind==='l'?'life':'study'); }
 function buddyBoxes(){
   return'<div class="buddies">'+
     '<button class="bcard" data-mod="buddy" data-kind="study" style="--bc:var(--accent)" aria-label="StudyBuddy, ask me anything">'+budSVG('s')+'<b>StudyBuddy</b><small>Ask me anything</small><span class="bgo">Open chat<span aria-hidden="true">\u203a</span></span></button>'+
@@ -4955,5 +4959,6 @@ document.addEventListener('click',async function(e){
 <script src="js/social.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/games.js"></script>
+<script type="module" src="js/mascots.js"></script>
 </body>
 </html>

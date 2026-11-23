@@ -74,7 +74,7 @@ html.fc-focus main { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px
 
 /* ---------- Every action button: label + icon centred ---------- */
 /* Card-style buttons (.tile, .mtile, .ht, list rows) keep their own layouts. */
-button:not(.tile):not(.ht):not(.mtile):not(.gtile):not(.subcard):not(.row):not(.ss-row):not(.hlrow button):not(.iconpick):not(.mood):not(.choice-btn):not(.skcard):not(.sk-sw):not(.sn):not(.snminb):not(.skdel):not(.x):not(nav button) {
+button:not(.tile):not(.ht):not(.mtile):not(.gtile):not(.subcard):not(.row):not(.ss-row):not(.hlrow button):not(.iconpick):not(.mood):not(.choice-btn):not(.skcard):not(.sk-sw):not(.sn):not(.snminb):not(.skdel):not(.x):not(.g-run):not(.g-wide):not(.g-quick):not(nav button) {
   display: inline-flex;
   align-items: center;
   justify-content: center;

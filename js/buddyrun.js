@@ -1,9 +1,9 @@
 /* Buddy Run — StudySpace 3D endless runner.
-   The StudyBuddy and LifeBuddy models below are the app's approved mascot
-   models, copied verbatim (geometry, materials, face, glasses, sprout and
-   bandana are untouched). Only the running stage, camera, controls and HUD are
-   new: pooled meshes, delta-time movement, damped lane changes and a camera
-   that trails the buddy with a smooth spring.
+   The approved StudyBuddy and LifeBuddy models live in mascotmodels.js and
+   keep their exact geometry, materials, face, glasses, sprout and bandana.
+   The running stage, camera, controls and HUD are new: an anchored ground,
+   scrolling lane markers, pooled obstacles, instanced coins, an intro drop,
+   delta-time movement, damped lane changes and a trailing spring camera.
 
    Loaded lazily as a module by js/games.js. Exposes window.ssRun. */
 import * as THREE from './vendor/three.module.js';
@@ -12,162 +12,18 @@ const TAU = Math.PI * 2;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 
-/* ================= MASCOTS (unchanged) ================= */
-function createCuteFace({ eyeColor = 0x382c30, browColor = 0x8c6d76 }) {
-  const faceGroup = new THREE.Group();
-  const eyeMat = new THREE.MeshPhysicalMaterial({ color: eyeColor, roughness: 0.12, clearcoat: 1.0 });
-  const shineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const eyeGeo = new THREE.SphereGeometry(0.115, 32, 32);
-  const shineBigGeo = new THREE.SphereGeometry(0.038, 16, 16);
-  const shineSmallGeo = new THREE.SphereGeometry(0.018, 16, 16);
-
-  [-1, 1].forEach((side) => {
-    const eyeHolder = new THREE.Group();
-    eyeHolder.position.set(side * 0.25, 0.07, 0.88);
-    const eye = new THREE.Mesh(eyeGeo, eyeMat); eye.scale.set(0.92, 1.08, 0.55); eyeHolder.add(eye);
-    const shine1 = new THREE.Mesh(shineBigGeo, shineMat); shine1.position.set(-0.032, 0.042, 0.055); eyeHolder.add(shine1);
-    const shine2 = new THREE.Mesh(shineSmallGeo, shineMat); shine2.position.set(0.035, -0.035, 0.055); eyeHolder.add(shine2);
-    eyeHolder.name = side === -1 ? "leftEye" : "rightEye";
-    faceGroup.add(eyeHolder);
-
-    const brow = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.018, 16, 32, Math.PI * 0.65), new THREE.MeshStandardMaterial({ color: browColor, roughness: 0.5 }));
-    brow.position.set(side * 0.25, 0.23, 0.87);
-    brow.rotation.z = Math.PI * 0.18 + side * -0.08;
-    faceGroup.add(brow);
-  });
-
-  const blushGeo = new THREE.SphereGeometry(0.09, 24, 24);
-  const blushMat = new THREE.MeshBasicMaterial({ color: 0xff8da6, transparent: true, opacity: 0.35 });
-  [-1, 1].forEach((side) => {
-    const blush = new THREE.Mesh(blushGeo, blushMat);
-    blush.scale.set(1.3, 0.75, 0.3); blush.position.set(side * 0.42, -0.06, 0.83); blush.rotation.y = side * 0.35;
-    faceGroup.add(blush);
-  });
-
-  const smile = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.024, 16, 32, Math.PI * 0.82), new THREE.MeshStandardMaterial({ color: eyeColor, roughness: 0.3 }));
-  smile.position.set(0, -0.05, 0.91);
-  smile.rotation.z = Math.PI + Math.PI * 0.09;
-  smile.rotation.x = -0.15;
-  smile.name = "smile";
-  faceGroup.add(smile);
-  return faceGroup;
-}
-
-function createShadowDisc(colorHex) {
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(0.75, 48), new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.22 }));
-  disc.rotation.x = -Math.PI / 2; disc.position.y = -1.25;
-  return disc;
-}
-
-function baseBody(bodyMat, earMat, earScale, earY, handMat, handR, handPos, shineMatOpacity = 0.45) {
-  const root = new THREE.Group(), bodyGroup = new THREE.Group();
-  bodyGroup.rotation.order = "YXZ"; root.add(bodyGroup);
-  const mainBody = new THREE.Mesh(new THREE.SphereGeometry(0.95, 64, 64), bodyMat); mainBody.scale.set(1.03, 0.97, 0.96); bodyGroup.add(mainBody);
-  const shine = new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: shineMatOpacity }));
-  shine.scale.set(1.5, 0.55, 0.2); shine.position.set(-0.26, 0.55, 0.76); shine.rotation.z = 0.35; shine.rotation.x = -0.5; bodyGroup.add(shine);
-  const ears = [];
-  [-1, 1].forEach((side) => { const ear = new THREE.Mesh(new THREE.SphereGeometry(earScale[0], 32, 32), earMat);
-    ear.scale.set(0.55, earScale[1], 0.75); ear.position.set(side * 0.96, earY, 0); bodyGroup.add(ear); ears.push(ear); });
-  const handGeo = new THREE.SphereGeometry(handR, 32, 32);
-  const leftHand = new THREE.Mesh(handGeo, handMat), rightHand = new THREE.Mesh(handGeo, handMat);
-  leftHand.position.set(-handPos[0], handPos[1], handPos[2]); rightHand.position.set(handPos[0], handPos[1], handPos[2]);
-  bodyGroup.add(leftHand, rightHand);
-  return { root, bodyGroup, ears, leftHand, rightHand };
-}
-
-function createStudyBuddy() {
-  const bodyMat = new THREE.MeshPhysicalMaterial({ color: 0xf9cedf, emissive: 0xd95f8c, emissiveIntensity: 0.08, roughness: 0.24, metalness: 0.02, clearcoat: 0.75, clearcoatRoughness: 0.18 });
-  const accent = new THREE.MeshPhysicalMaterial({ color: 0xe6739f, roughness: 0.3, clearcoat: 0.5 });
-  const handMat = new THREE.MeshPhysicalMaterial({ color: 0xfadce8, roughness: 0.25, clearcoat: 0.6 });
-  const { root, bodyGroup, ears, leftHand, rightHand } = baseBody(bodyMat, accent, [0.22, 1.05], 0.06, handMat, 0.17, [0.92, -0.34, 0.38]);
-
-  const face = createCuteFace({ eyeColor: 0x3b3236, browColor: 0xc97b98 }); bodyGroup.add(face);
-
-  const glasses = new THREE.Group();
-  const frameMat = new THREE.MeshPhysicalMaterial({ color: 0x3b3538, roughness: 0.22, metalness: 0.2, clearcoat: 0.9 });
-  const lensMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, clearcoat: 1.0, depthWrite: false });
-  [-1, 1].forEach((side) => {
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.032, 24, 48), frameMat); rim.position.set(side * 0.27, 0.07, 0.95); glasses.add(rim);
-    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.22, 36), lensMat); lens.position.set(side * 0.27, 0.07, 0.955); glasses.add(lens);
-    const temple = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.55, 16), frameMat);
-    temple.rotation.x = Math.PI / 2; temple.rotation.z = side * -0.18; temple.position.set(side * 0.54, 0.08, 0.72); glasses.add(temple);
-  });
-  const bridge = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.026, 16, 24, Math.PI), frameMat); bridge.position.set(0, 0.08, 0.96); glasses.add(bridge);
-  bodyGroup.add(glasses);
-
-  const shadow = createShadowDisc(0xd96b96); root.add(shadow);
-  root.userData = { bodyGroup, leftHand, rightHand, ears, face, shadow, sprout: null, tails: [] };
-  return root;
-}
-
-function createLifeBuddy() {
-  const bodyMat = new THREE.MeshPhysicalMaterial({ color: 0xf7dfc6, emissive: 0xd98236, emissiveIntensity: 0.08, roughness: 0.25, metalness: 0.02, clearcoat: 0.75, clearcoatRoughness: 0.18 });
-  const amber = new THREE.MeshPhysicalMaterial({ color: 0xd18741, roughness: 0.32, clearcoat: 0.5 });
-  const handMat = new THREE.MeshPhysicalMaterial({ color: 0xf5d4b3, roughness: 0.26, clearcoat: 0.6 });
-  const { root, bodyGroup, ears, leftHand, rightHand } = baseBody(bodyMat, amber, [0.21, 1.0], 0.08, handMat, 0.175, [0.88, -0.36, 0.42]);
-
-  const face = createCuteFace({ eyeColor: 0x382b24, browColor: 0xb5835a }); bodyGroup.add(face);
-
-  const sprout = new THREE.Group(); sprout.position.set(0, 0.91, 0);
-  const sproutMat = new THREE.MeshPhysicalMaterial({ color: 0xc97f38, emissive: 0x8fba4b, emissiveIntensity: 0.12, roughness: 0.28, clearcoat: 0.65 });
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.045, 0.22, 16), sproutMat); stem.position.y = 0.09; sprout.add(stem);
-  [-1, 1].forEach((side) => { const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 28, 28), sproutMat);
-    leaf.scale.set(1.25, 0.45, 0.7); leaf.position.set(side * 0.16, 0.21, 0); leaf.rotation.z = side * 0.42; sprout.add(leaf); });
-  bodyGroup.add(sprout);
-
-  const bandana = new THREE.Group();
-  const bandanaMat = new THREE.MeshPhysicalMaterial({ color: 0xe6be96, roughness: 0.42, clearcoat: 0.25 });
-  const trimMat = new THREE.MeshStandardMaterial({ color: 0xc97f38, roughness: 0.4 });
-  const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.73, 0.13, 24, 48), bandanaMat);
-  scarf.rotation.x = Math.PI / 2 + 0.08; scarf.position.set(0, -0.58, 0.03); bandana.add(scarf);
-  const knotTail = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.26, 24), trimMat);
-  knotTail.position.set(0.56, -0.74, 0.36); knotTail.rotation.z = -0.85; knotTail.rotation.x = 0.35; knotTail.userData.rz = -0.85; bandana.add(knotTail);
-  bodyGroup.add(bandana);
-
-  const shadow = createShadowDisc(0xc97f38); root.add(shadow);
-  root.userData = { bodyGroup, leftHand, rightHand, ears, face, shadow, sprout, tails: [knotTail] };
-  return root;
-}
-
-/* Pose blending, identical to the mascot design. */
-function poses(time) {
-  const j = Math.abs(Math.sin(time * 3.4));
-  return {
-    idle: { y: Math.sin(time * 1.7) * 0.1, sy: 1 + 0.03 * Math.sin(time * 2.3), tx: 0, tz: Math.sin(time * 0.9) * 0.05, ear: Math.sin(time * 3) * 0.12, hb: Math.sin(time * 2) * 0.06, hz: 0, hu: 0, sway: 0.07, smile: 1 },
-    run: { y: Math.abs(Math.sin(time * 10)) * 0.13, sy: 1 + 0.05 * Math.cos(time * 20), tx: 0.35, tz: Math.sin(time * 10) * 0.06, ear: -0.3 + Math.sin(time * 16) * 0.25, hb: Math.sin(time * 10) * 0.12, hz: Math.sin(time * 10) * 0.3, hu: 0, sway: 0.22, smile: 1.5 },
-    celebrate: { y: j * 0.8, sy: 0.9 + 0.2 * j, tx: -0.05, tz: Math.sin(time * 6.8) * 0.08, ear: 0.5 + Math.sin(time * 14) * 0.3, hb: 0, hz: 0, hu: 0.5, sway: 0.16, smile: 1.6 },
-  };
-}
-function animateMascot(m, t, phase, dt) {
-  const u = m.userData, time = t + phase;
-  if (!u.w) { u.w = { idle: 1, run: 0, celebrate: 0 }; u.spin = 0; u.hb0 = [u.leftHand.position.clone(), u.rightHand.position.clone()]; u.eyes = [u.face.getObjectByName("leftEye"), u.face.getObjectByName("rightEye")]; u.smile = u.face.getObjectByName("smile"); }
-  for (const k in u.w) u.w[k] += ((k === u.anim ? 1 : 0) - u.w[k]) * Math.min(1, dt * 7);
-  const ps = poses(time), P = {};
-  for (const key in ps.idle) { P[key] = 0; for (const k in u.w) P[key] += u.w[k] * ps[k][key]; }
-
-  u.spin += dt * 6.8 * u.w.celebrate;
-  u.spin += (Math.round(u.spin / TAU) * TAU - u.spin) * Math.min(1, dt * 5) * (1 - u.w.celebrate);
-  u.bodyGroup.position.y = P.y; u.bodyGroup.rotation.set(P.tx, u.spin, P.tz);
-  const sx = 1 / Math.sqrt(P.sy); u.bodyGroup.scale.set(sx, P.sy, sx);
-
-  u.ears.forEach((e, i) => { const s = i ? 1 : -1; e.rotation.z = s * (P.ear + (i ? 0.5 : 0) * 0.0 + Math.sin(time * 3.4 + (i ? 1.6 : 0)) * 0.05); });
-  [u.leftHand, u.rightHand].forEach((h, i) => { const s = i ? 1 : -1, b = u.hb0[i];
-    h.position.set(b.x + s * P.hu * 0.15, b.y + P.hb * s + P.hu, b.z + P.hz * s); });
-
-  const blinkScaleY = (time % 3.8) > 3.62 ? 0.12 : 1.0;
-  u.eyes.forEach((e) => (e.scale.y += (blinkScaleY - e.scale.y) * Math.min(1, dt * 20)));
-  u.smile.scale.set(1, P.smile, 1);
-
-  if (u.sprout) { u.sprout.rotation.z = Math.sin(time * 2.1) * P.sway; u.sprout.rotation.x = Math.sin(time * 1.7 + 1) * P.sway * 0.4; }
-  u.tails.forEach((tl) => (tl.rotation.z = tl.userData.rz + Math.sin(time * (3 + u.w.run * 9)) * (0.08 + u.w.run * 0.3)));
-
-  u.shadow.scale.setScalar(1 - P.y * 0.28); u.shadow.material.opacity = 0.22 - P.y * 0.12;
-}
+/* The approved mascot models live in mascotmodels.js and are shared with the
+   rest of the app, unchanged. */
+import { createStudyBuddy, createLifeBuddy, animateMascot } from './mascotmodels.js';
+import { mountPortrait } from './mascots.js';
 
 /* ================= STAGE ================= */
 const LANE = 2.15;
 const PLAYER_SCALE = 0.6;
 const PLAYER_Y = 1.25 * PLAYER_SCALE;
+/* A slight three-quarter back view keeps the buddy readable from behind and
+   hides the edge-on glasses arms that a straight back view exposed. */
+const RUN_YAW = Math.PI - 0.42;
 
 const PAL = [
   { n: 'Sage Meadow', sky: 0xbfe6d3, ground: 0x8ed3a6, track: 0x64759b, rail: 0xf3e2b0, leafA: 0x53a477, leafB: 0x79c79a },
@@ -197,7 +53,7 @@ function buildStage() {
   const rim = new THREE.DirectionalLight(0xffc2dd, 0.85); rim.position.set(-6, 5, -7); scene.add(rim);
 
   const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 260);
-  camera.position.set(0, 4.4, 8.6);
+  camera.position.set(0, 3.6, 8.6);
   camera.lookAt(0, 1.1, -10);
 
   const M = {
@@ -266,15 +122,66 @@ function buildStage() {
     obstaclePool.jump.push(j); obstaclePool.slide.push(s); obstaclePool.wall.push(w);
   }
 
-  /* coins — one instanced mesh for the whole pool */
-  const coinGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.075, 18).rotateX(Math.PI / 2);
-  const coinMat = new THREE.MeshStandardMaterial({ color: 0xffcc4d, metalness: 0.75, roughness: 0.25, emissive: 0x6b4700, emissiveIntensity: 0.35 });
+  /* Coins: a bevelled gold disc with a raised rim and a soft centre boss.
+     Three instanced meshes (disc, rim, boss) keep the whole pool at 3 draws. */
+  const coinProfile = [
+    new THREE.Vector2(0.0, 0.052), new THREE.Vector2(0.2, 0.052),
+    new THREE.Vector2(0.245, 0.036), new THREE.Vector2(0.285, 0.018),
+    new THREE.Vector2(0.3, 0.0), new THREE.Vector2(0.285, -0.018),
+    new THREE.Vector2(0.245, -0.036), new THREE.Vector2(0.2, -0.052),
+    new THREE.Vector2(0.0, -0.052)
+  ];
+  const coinGeo = new THREE.LatheGeometry(coinProfile, 40).rotateX(Math.PI / 2);
+  const coinMat = new THREE.MeshPhysicalMaterial({ color: 0xffd35a, metalness: 0.55, roughness: 0.24, clearcoat: 1.0, clearcoatRoughness: 0.1, emissive: 0x9a5c00, emissiveIntensity: 0.4 });
   const coins = new THREE.InstancedMesh(coinGeo, coinMat, 80);
   coins.frustumCulled = false;
   coins.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   scene.add(coins);
+
+  const rimMat = new THREE.MeshPhysicalMaterial({ color: 0xffeaa0, metalness: 0.6, roughness: 0.18, clearcoat: 1.0, emissive: 0xa86a00, emissiveIntensity: 0.45 });
+  const coinRims = new THREE.InstancedMesh(new THREE.TorusGeometry(0.262, 0.017, 8, 36), rimMat, 80);
+  coinRims.frustumCulled = false;
+  coinRims.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(coinRims);
+
+  const bossMat = new THREE.MeshPhysicalMaterial({ color: 0xffe08a, metalness: 0.5, roughness: 0.26, clearcoat: 0.8, emissive: 0x8a5600, emissiveIntensity: 0.4 });
+  const coinBoss = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.11, 0.13, 0.03, 24).rotateX(Math.PI / 2), bossMat, 80);
+  coinBoss.frustumCulled = false;
+  coinBoss.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(coinBoss);
+
   const hideAll = new THREE.Matrix4().makeScale(0, 0, 0);
-  for (let i = 0; i < 80; i++) coins.setMatrixAt(i, hideAll);
+  for (let i = 0; i < 80; i++) { coins.setMatrixAt(i, hideAll); coinRims.setMatrixAt(i, hideAll); coinBoss.setMatrixAt(i, hideAll); }
+
+  /* Collect sparkle: one Points cloud, recycled per pickup. */
+  const sparkCanvas = document.createElement('canvas');
+  sparkCanvas.width = sparkCanvas.height = 64;
+  const sctx = sparkCanvas.getContext('2d');
+  const grad = sctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,248,214,1)');
+  grad.addColorStop(0.35, 'rgba(255,214,98,.9)');
+  grad.addColorStop(1, 'rgba(255,180,40,0)');
+  sctx.fillStyle = grad; sctx.fillRect(0, 0, 64, 64);
+  const sparkTex = new THREE.CanvasTexture(sparkCanvas);
+  sparkTex.colorSpace = THREE.SRGBColorSpace;
+  const sparkN = 64;
+  const sparkGeo = new THREE.BufferGeometry();
+  const sparkPos = new Float32Array(sparkN * 3);
+  for (let i = 0; i < sparkN; i++) { sparkPos[i * 3 + 1] = -999; }
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+  const sparkMat = new THREE.PointsMaterial({ size: 0.34, map: sparkTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true, opacity: 0.95 });
+  const sparks = new THREE.Points(sparkGeo, sparkMat);
+  sparks.frustumCulled = false;
+  scene.add(sparks);
+  const sparkLife = new Float32Array(sparkN);
+  const sparkVel = new Float32Array(sparkN * 3);
+  let sparkAt = 0;
+
+  /* extra scrolling markers on the shoulders keep the world moving while the
+     ground mesh itself stays perfectly still */
+  const shoulderDashes = new THREE.InstancedMesh(new THREE.BoxGeometry(0.18, 0.015, 0.7), M.hudLine, 44);
+  shoulderDashes.frustumCulled = false;
+  scene.add(shoulderDashes);
 
   /* question gates */
   const gateMat = new THREE.MeshLambertMaterial({ color: 0x8b6fb8 });
@@ -282,9 +189,9 @@ function buildStage() {
   const gatePool = [];
   for (let i = 0; i < 2; i++) {
     const g = new THREE.Group();
-    mk(BOX, gateMat, 0.26, 3.2, 0.26, -3.2, 1.6, 0, g);
-    mk(BOX, gateMat, 0.26, 3.2, 0.26, 3.2, 1.6, 0, g);
-    mk(BOX, gateMat, 6.7, 0.34, 0.3, 0, 3.2, 0, g);
+    mk(BOX, gateMat, 0.26, 3.2, 0.26, -3.95, 1.6, 0, g);
+    mk(BOX, gateMat, 0.26, 3.2, 0.26, 3.95, 1.6, 0, g);
+    mk(BOX, gateMat, 8.2, 0.34, 0.3, 0, 3.2, 0, g);
     mk(new THREE.PlaneGeometry(6.4, 2.9).rotateX(-Math.PI / 2), gateGlow, 1, 1, 1, 0, 0.04, 0, g);
     g.visible = false; scene.add(g); gatePool.push(g);
   }
@@ -326,18 +233,25 @@ function buildStage() {
     b.scale.setScalar(PLAYER_SCALE);
     b.userData.anim = 'idle';
     b.userData.shadow.visible = false;
-    b.rotation.y = Math.PI;
+    b.rotation.y = RUN_YAW;
     b.position.set(0, PLAYER_Y, 0);
     scene.add(b);
   }
 
-  return { renderer, scene, camera, M, laneDashes, edgeDashes, coins, coinDummy: new THREE.Object3D(), obstaclePool, gatePool, decor, shadow, buddies, pal: { i: 0, t: null }, sun };
+  function newObstacle(kind) {
+    const m = kind === 'jump' ? makeJump() : kind === 'slide' ? makeSlide() : makeWall();
+    m.visible = false;
+    obstaclePool[kind].push(m);
+    return m;
+  }
+
+  return { renderer, scene, camera, M, laneDashes, edgeDashes, shoulderDashes, coins, coinRims, coinBoss, coinDummy: new THREE.Object3D(), obstaclePool, gatePool, decor, shadow, buddies, pal: { i: 0, t: null }, sun, newObstacle, sparks, sparkGeo, sparkLife, sparkVel };
 }
 
 /* ================= ENGINE ================= */
 const ICON = {
   heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.4-4.6-7.4-9.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.4 3.1C19.4 15.4 12 20 12 20Z"/></svg>',
-  coin: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.8v8.4M9.6 10.2h4.8M9.6 13.8h4.8"/></svg>',
+  coin: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.7" style="fill:#e8b349;stroke:#a8741f"/><circle cx="12" cy="12" r="5.9" style="fill:none;stroke:#fff8e2;stroke-width:1.2;opacity:.78"/><path d="M8.3 9.7c1.1-1.7 3.5-2.1 5.2-1" style="fill:none;stroke:#fff;stroke-width:1.3;opacity:.85"/></svg>',
   pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>',
   left: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>',
   right: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>',
@@ -387,6 +301,7 @@ class BuddyRun {
         '<button class="gr-round" id="grPause" type="button" aria-label="Pause" title="Pause">' + ICON.pause + '</button>' +
       '</div>' +
       '<div class="gr-recover" id="grRecover" hidden><b id="grRecoverTxt">Recovery 0/2</b><i><b></b></i></div>' +
+      '<div class="gr-hurt" id="grHurt" aria-hidden="true"><b>-1</b><span>heart</span></div>' +
       '<div class="gr-toast" id="grToast" aria-live="polite"></div>' +
       '<div class="gr-question" id="grQ" hidden>' +
         '<div class="gr-q-top"><span class="gr-q-kind" id="grQKind">Question</span><span class="gr-q-time" id="grQTime">10</span></div>' +
@@ -407,7 +322,7 @@ class BuddyRun {
       scene: root.querySelector('.gr-scene'), hearts: root.querySelector('#grHearts'),
       coins: root.querySelector('#grCoins b'), dist: root.querySelector('#grDist b'),
       lvl: root.querySelector('#grLvl'), pause: root.querySelector('#grPause'),
-      recover: root.querySelector('#grRecover'), recoverTxt: root.querySelector('#grRecoverTxt'),
+      recover: root.querySelector('#grRecover'), recoverTxt: root.querySelector('#grRecoverTxt'), hurt: root.querySelector('#grHurt'),
       toast: root.querySelector('#grToast'), q: root.querySelector('#grQ'),
       qKind: root.querySelector('#grQKind'), qTime: root.querySelector('#grQTime'),
       qText: root.querySelector('#grQText'), choices: root.querySelector('#grChoices'),
@@ -488,10 +403,12 @@ class BuddyRun {
     const s = this.stage;
     this.run = {
       px: 0, targetX: 0, lane: 1, py: 0, vy: 0, slideT: 0,
-      speed: 10.5, travel: 0, hearts: 3, recover: 0, coins: 0, correct: 0,
+      speed: 8.4, travel: 0, hearts: 3, recover: 0, coins: 0, correct: 0,
       skips: 3, lifeUsed: false, invuln: 0, shake: 0, dodged: 0,
-      spawnS: 16, gate: 340, level: 1, hitFlash: 0, started: false
+      spawnS: 46, gate: 340, level: 1, hitFlash: 0, started: false,
+      intro: 1.15, introY: 6.9, stagger: 0, splash: 0, land: null, nextQ: ''
     };
+    this.sparkCursor = 0;
     this.active = [];
     this.coins = [];
     this.coinUsed = new Array(80).fill(0);
@@ -531,8 +448,12 @@ class BuddyRun {
     for (const k in s.obstaclePool) s.obstaclePool[k].forEach((m) => { m.visible = false; });
     this.coinUsed = new Array(80).fill(0);
     const hideCoin = new THREE.Matrix4().makeScale(0, 0, 0);
-    for (let i = 0; i < 80; i++) s.coins.setMatrixAt(i, hideCoin);
+    for (let i = 0; i < 80; i++) { s.coins.setMatrixAt(i, hideCoin); s.coinRims.setMatrixAt(i, hideCoin); s.coinBoss.setMatrixAt(i, hideCoin); }
     s.coins.instanceMatrix.needsUpdate = true;
+    s.coinRims.instanceMatrix.needsUpdate = true;
+    s.coinBoss.instanceMatrix.needsUpdate = true;
+    for (let i = 0; i < 64; i++) { s.sparkLife[i] = 0; s.sparkGeo.attributes.position.array[i * 3 + 1] = -999; }
+    s.sparkGeo.attributes.position.needsUpdate = true;
     s.gatePool.forEach((g) => { g.visible = false; });
     s.decor.forEach((d, i) => { d.s = 20 + i * 12; d.side = i % 2 ? 1 : -1; d.x = 5.4 + Math.random() * 9; });
 
@@ -541,7 +462,7 @@ class BuddyRun {
       const b = s.buddies[k];
       b.visible = k === who;
       b.position.set(0, PLAYER_Y, 0);
-      b.rotation.y = Math.PI;
+      b.rotation.y = RUN_YAW;
       b.userData.anim = 'idle';
     }
     this.who = who;
@@ -551,7 +472,9 @@ class BuddyRun {
     this.el.q.hidden = true;
     this.el.sheet.hidden = true;
     this.el.sheet.innerHTML = '';
+    this.disposeHero();
     this.root.classList.remove('gr-over', 'gr-pause', 'gr-qopen');
+    this.el.hurt && this.el.hurt.classList.remove('on');
     this.paintHearts();
     this.paintSkip();
     this.updateHud(true);
@@ -561,7 +484,11 @@ class BuddyRun {
     if (!this.root) this.mount();
     this.resetRun();
     this.playing = true;
-    this.toast('Swipe ←→ to change lanes · ↑ jump · ↓ slide', 3.2);
+    this.toast('', 0.1);
+    clearTimeout(this._introT);
+    this._introT = setTimeout(() => {
+      if (this.root && this.playing && !this.over) this.toast('Swipe ←→ to change lanes · ↑ jump · ↓ slide', 3.2);
+    }, 1150);
   }
 
   applyPalette(i, instant) {
@@ -587,12 +514,12 @@ class BuddyRun {
   spawn(kind, lane, s) {
     const pool = this.stage.obstaclePool[kind];
     let mesh = pool.find((m) => !m.visible);
-    if (!mesh) {
-      const oldest = this.active.find((a) => a.kind === kind);
-      if (oldest) { mesh = oldest.mesh; this.active.splice(this.active.indexOf(oldest), 1); }
-      else return;
-    }
+    /* Grow the pool instead of stealing a mesh that is still on screen: that
+       steal was what made obstacles disappear mid-lane. */
+    if (!mesh) mesh = this.stage.newObstacle(kind);
+    if (!mesh) return;
     mesh.visible = true;
+    mesh.scale.set(1, 1, 1);
     mesh.position.set((lane - 1) * LANE, 0, -(s - this.run.travel));
     this.active.push({ kind, lane, s, mesh, judged: false, flash: 0, baseY: 0 });
   }
@@ -603,8 +530,12 @@ class BuddyRun {
       let slot = -1;
       for (let k = 0; k < 80; k++) { if (!this.coinUsed[k]) { slot = k; break; } }
       if (slot < 0) return;
-      this.coinUsed[slot] = 1;
       const cs = s + i * 1.35;
+      /* never bury a coin inside an obstacle that occupies this lane */
+      const blocked = this.active.some((o) => o.lane === lane && Math.abs(o.s - cs) < 3.2) ||
+        this.gates.some((g) => Math.abs(g.s - cs) < 5);
+      if (blocked) continue;
+      this.coinUsed[slot] = 1;
       const y = arc ? 0.55 + Math.sin((i / Math.max(1, count - 1)) * Math.PI) * 1.05 : 0.75;
       this.coins.push({ slot, x, y, s: cs, got: false, lane, rot: 0 });
     }
@@ -623,6 +554,8 @@ class BuddyRun {
     const gap = lerp(27, 17, d) + Math.random() * 4;
     r.spawnS += gap;
     const s = r.spawnS;
+    /* keep the question gate clear of obstacle rows */
+    if (s > r.gate - 16 && s < r.gate + 26) return;
     const roll = Math.random();
     if (roll < 0.2) {
       const lane = Math.floor(Math.random() * 3);
@@ -718,7 +651,6 @@ class BuddyRun {
     if (!q || q.done) return;
     q.done = true;
     this.el.q.hidden = true;
-    this.el.q.hidden = true;
     this.root.classList.remove('gr-qopen');
     const r = this.run;
 
@@ -773,14 +705,63 @@ class BuddyRun {
     if (ms) this._animT = setTimeout(() => { if (b) b.userData.anim = 'run'; }, ms * 1000);
   }
 
-  burst(color) {
-    // small coin sparkle reuses the toast only; kept lightweight on purpose
+  /* Heart-loss feedback: a short floating "-1 heart" and a pulse on the HUD. */
+  hurt() {
+    const el = this.el.hurt;
+    if (el) {
+      el.classList.remove('on');
+      void el.offsetWidth;
+      el.classList.add('on');
+    }
+    const h = this.el.hearts;
+    if (h) {
+      h.classList.remove('gr-hpulse');
+      void h.offsetWidth;
+      h.classList.add('gr-hpulse');
+    }
+  }
+
+  /* Gold sparkle burst when a coin is collected. */
+  burstSpark(x, y, z) {
+    const s = this.stage;
+    if (!s || !s.sparkGeo) return;
+    const arr = s.sparkGeo.attributes.position.array;
+    for (let n = 0; n < 9; n++) {
+      const i = (this.sparkCursor = (this.sparkCursor + 1) % 64);
+      s.sparkLife[i] = 0.5 + Math.random() * 0.28;
+      arr[i * 3] = x + (Math.random() - 0.5) * 0.28;
+      arr[i * 3 + 1] = y + (Math.random() - 0.5) * 0.28;
+      arr[i * 3 + 2] = z + (Math.random() - 0.5) * 0.28;
+      s.sparkVel[i * 3] = (Math.random() - 0.5) * 2.4;
+      s.sparkVel[i * 3 + 1] = 1.2 + Math.random() * 1.9;
+      s.sparkVel[i * 3 + 2] = (Math.random() - 0.5) * 2.4;
+    }
+    s.sparkGeo.attributes.position.needsUpdate = true;
+  }
+
+  updateSparks(dt) {
+    const s = this.stage;
+    if (!s || !s.sparkGeo) return;
+    const a = s.sparkGeo.attributes.position.array;
+    let any = false;
+    for (let i = 0; i < 64; i++) {
+      if (s.sparkLife[i] <= 0) continue;
+      any = true;
+      s.sparkLife[i] -= dt;
+      if (s.sparkLife[i] <= 0) { a[i * 3 + 1] = -999; continue; }
+      a[i * 3] += s.sparkVel[i * 3] * dt;
+      a[i * 3 + 1] += s.sparkVel[i * 3 + 1] * dt;
+      a[i * 3 + 2] += s.sparkVel[i * 3 + 2] * dt;
+      s.sparkVel[i * 3 + 1] -= 5.2 * dt;
+    }
+    if (any) s.sparkGeo.attributes.position.needsUpdate = true;
   }
 
   /* ---------- actions ---------- */
   act(kind) {
     if (!this.playing || this.paused || this.over || (this.q && this.q.locked)) return;
     const r = this.run;
+    if (r.intro > 0 || r.stagger > 0) return;
     if (kind === 'left') r.lane = clamp(r.lane - 1, 0, 2);
     else if (kind === 'right') r.lane = clamp(r.lane + 1, 0, 2);
     else if (kind === 'jump') { if (r.py <= 0.001) { r.vy = 7.6; r.slideT = 0; } }
@@ -818,7 +799,7 @@ class BuddyRun {
   sheetAction(kind) {
     if (kind === 'resume') this.resume();
     else if (kind === 'quit') this.quit();
-    else if (kind === 'again') { this.el.sheet.hidden = true; this.start(); }
+    else if (kind === 'again') { this.disposeHero(); this.el.sheet.hidden = true; this.start(); }
     else if (kind === 'hub') this.quit();
   }
 
@@ -846,32 +827,48 @@ class BuddyRun {
     this.over = true;
     this.playing = false;
     const r = this.run;
+    const prevBest = this.best || 0;
     if (r.travel > this.best) this.best = Math.floor(r.travel);
     const stats = { dist: Math.floor(r.travel), coins: r.coins, correct: r.correct, dodged: r.dodged, level: r.level, character: this.who, best: this.best };
     let extra = null;
     try { if (this.opts.onEnd) extra = this.opts.onEnd(stats) || null; } catch (e) { try { console.error(e); } catch (x) {} }
-    const best = stats.dist >= (this.best || 0);
+    const best = stats.dist > prevBest;
     this.root.classList.add('gr-over');
     this.root.classList.remove('gr-qopen');
     this.el.dock.hidden = true;
     this.el.pause.hidden = true;
     this.el.q.hidden = true;
     this.el.recover.hidden = true;
+    this.el.toast.style.opacity = '0';
     this.q = null;
+    r.stagger = 0;
     const rows = [
       ['Distance', stats.dist + ' m'],
-      ['Correct answers', stats.correct],
-      ['Coins earned', '+' + stats.coins]
+      ['Coins earned', '+' + stats.coins],
+      ['Questions answered', stats.correct]
     ];
-    let html = '<div class="gr-over-top"><span class="gr-badge">Run complete</span><h2>' + (best ? 'New best distance!' : 'Nice run') + '</h2></div>' +
+    let html = '<div class="gr-hero" id="grHero" aria-hidden="true"></div>' +
+      '<div class="gr-over-top"><span class="gr-badge">Run complete</span><h2>' + (best ? 'New best distance!' : 'Great run, buddy') + '</h2>' +
+      '<p class="gr-sub">' + (this.who === 'life' ? 'LifeBuddy' : 'StudyBuddy') + ' is proud of you.</p></div>' +
       '<div class="gr-stats">' + rows.map((row) => '<div><b>' + row[1] + '</b><span>' + row[0] + '</span></div>').join('') + '</div>';
     if (extra && extra.tasks && extra.tasks.length) {
       html += '<div class="gr-rewards"><b>Task rewards</b>' + extra.tasks.map((t) => '<div class="gr-rw"><span>' + escapeHtml(t.t) + '</span><b>+' + t.r + '</b></div>').join('') + '</div>';
     }
     if (extra && extra.bank) html += '<p class="gr-sub">Wallet: ' + extra.bank + ' coins</p>';
-    html += '<div class="gr-sheet-btns"><button class="gr-btn" type="button" data-sheet="again">Run again</button>' +
-      '<button class="gr-btn ghost" type="button" data-sheet="hub">Back to hub</button></div>';
+    html += '<div class="gr-sheet-btns"><button class="gr-btn" type="button" data-sheet="again">Play Again</button>' +
+      '<button class="gr-btn ghost" type="button" data-sheet="hub">Back to Lobby</button></div>';
     this.showSheet(html);
+    const hero = this.el.sheet.querySelector('#grHero');
+    if (hero) {
+      this.hero = hero;
+      try { mountPortrait(hero, this.who, 'celebrate'); } catch (e) { try { console.error(e); } catch (x) {} }
+    }
+  }
+
+  disposeHero() {
+    if (!this.hero) return;
+    try { if (window.ssMascot && window.ssMascot.disposeEl) window.ssMascot.disposeEl(this.hero); } catch (e) {}
+    this.hero = null;
   }
 
   toast(msg, secs) {
@@ -926,11 +923,38 @@ class BuddyRun {
     const r = this.run, s = this.stage, q = this.q;
     this.t += dt;
 
+    /* Intro: the buddy drops from above the track, lands with a squash and
+       only then does the run settle into its rhythm. */
+    if (r.intro > 0) {
+      r.intro = Math.max(0, r.intro - dt);
+      const k = clamp(1 - r.intro / 1.15, 0, 1);
+      r.introK = k;
+      const fall = clamp(k / 0.7, 0, 1);
+      r.introY = 6.9 * Math.pow(1 - fall, 2);
+      if (fall >= 1 && r.introY <= 0.001) {
+        r.introY = 0;
+        if (r.land == null) { r.land = 1; r.splash = 1; this.toast('Go!', 0.9); }
+      }
+    }
+    r.land = r.land == null ? 0 : Math.max(0, r.land - dt * 3.2);
+    r.splash = Math.max(0, r.splash - dt * 2.4);
+
+    /* A hit slows the world down for a beat before the question opens. */
+    if (r.stagger > 0) {
+      r.stagger = Math.max(0, r.stagger - dt);
+      if (r.stagger === 0 && !this.q && !this.over) {
+        const kind = r.nextQ || 'hit';
+        r.nextQ = '';
+        this.askQuestion(kind);
+      }
+    }
+    const sdt = dt * (r.intro > 0 ? 0.55 : 1) * (r.stagger > 0 ? 0.24 : 1);
+
     const base = 10.5 + Math.min(9.5, r.travel / 210);
-    const target = q ? Math.max(3.2, base * 0.32) : base;
+    const target = q ? Math.max(3.2, base * 0.32) : r.intro > 0 ? 7.4 : base;
     r.speed += (target - r.speed) * Math.min(1, dt * (q ? 6 : 2.4));
     const prev = r.travel;
-    r.travel += r.speed * dt;
+    r.travel += r.speed * sdt;
     r.level = 1 + Math.min(11, Math.floor(r.travel / 210));
     r.invuln = Math.max(0, r.invuln - dt);
     r.slideT = Math.max(0, r.slideT - dt);
@@ -951,8 +975,8 @@ class BuddyRun {
     r.px += (targetX - r.px) * Math.min(1, dt * 15);
     if (Math.abs(targetX - r.px) < 0.002) r.px = targetX;
     if (r.py > 0 || r.vy > 0) {
-      r.vy -= 24 * dt;
-      r.py += r.vy * dt;
+      r.vy -= 24 * sdt;
+      r.py += r.vy * sdt;
       if (r.py <= 0) { r.py = 0; r.vy = 0; }
     }
 
@@ -970,16 +994,26 @@ class BuddyRun {
       if (!c.got && Math.abs(dz) < 0.8 && Math.abs(c.x - r.px) < 0.9 && Math.abs(c.y - (r.py + 0.55)) < 1.05) {
         c.got = true; r.coins++;
         s.coins.setMatrixAt(c.slot, hideM);
+        s.coinRims.setMatrixAt(c.slot, hideM);
+        s.coinBoss.setMatrixAt(c.slot, hideM);
+        this.burstSpark(c.x, c.y, -dz);
+        const chip = this.el.coins.parentElement;
+        if (chip) { chip.classList.remove('gr-pop'); void chip.offsetWidth; chip.classList.add('gr-pop'); }
         continue;
       }
-      c.rot += dt * 4.2;
-      dummy.position.set(c.x, c.y, -dz);
+      c.rot += dt * 3.6;
+      dummy.position.set(c.x, c.y + Math.sin(this.t * 2.4 + c.s) * 0.03, -dz);
       dummy.rotation.set(0, c.rot, 0);
       dummy.scale.setScalar(1);
       dummy.updateMatrix();
       s.coins.setMatrixAt(c.slot, dummy.matrix);
+      s.coinRims.setMatrixAt(c.slot, dummy.matrix);
+      s.coinBoss.setMatrixAt(c.slot, dummy.matrix);
     }
     s.coins.instanceMatrix.needsUpdate = true;
+    s.coinRims.instanceMatrix.needsUpdate = true;
+    s.coinBoss.instanceMatrix.needsUpdate = true;
+    this.updateSparks(dt);
     for (const g of this.gates) {
       g.mesh.position.z = -(g.s - r.travel);
       if (!g.used && r.travel >= g.s) {
@@ -995,6 +1029,7 @@ class BuddyRun {
       if (o.judged) continue;
       if (r.travel < o.s) continue;
       o.judged = true;
+      const hitZ = -(o.s - r.travel);
       const dz = Math.abs(o.s - prev);
       const close = Math.abs(((o.lane - 1) * LANE) - r.px) < 1.0;
       let safe = true;
@@ -1004,27 +1039,31 @@ class BuddyRun {
         else safe = false;
       }
       if (safe) { r.dodged++; continue; }
-      if (r.invuln > 0 || q) continue;
-      r.invuln = 1.1;
-      r.shake = 0.7;
+      if (r.invuln > 0 || q || r.stagger > 0) continue;
+      r.invuln = 1.3;
+      r.shake = 0.85;
       r.hitFlash = 1;
-      o.flash = 0.5;
+      /* break the obstacle on impact so it never sits inside the buddy */
+      o.mesh.visible = false;
+      this.burstSpark((o.lane - 1) * LANE, 0.7, hitZ);
       r.hearts = Math.max(0, r.hearts - 1);
       this.paintHearts();
+      this.hurt();
       if (r.hearts <= 0) {
         if (!r.lifeUsed) {
           r.lifeUsed = true;
           this.dying = true;
-          this.askQuestion('rescue');
+          r.stagger = 0.62;
+          r.nextQ = 'rescue';
         } else {
           this.dying = true;
           this.gameOver();
         }
       } else if (!this.dying) {
-        clearTimeout(this._qT);
-        this._qT = setTimeout(() => this.askQuestion('hit'), 320);
+        /* ~0.7s impact stagger, then the question slides in. */
+        r.stagger = 0.72;
+        r.nextQ = 'hit';
       }
-      this.toast('Obstacle hit · -1 heart', 1.6);
       break;
     }
 
@@ -1039,7 +1078,7 @@ class BuddyRun {
     for (let i = this.coins.length - 1; i >= 0; i--) {
       const c = this.coins[i];
       if (c.s < r.travel - 14 || c.got) {
-        if (!c.got) s.coins.setMatrixAt(c.slot, hideM);
+        if (!c.got) { s.coins.setMatrixAt(c.slot, hideM); s.coinRims.setMatrixAt(c.slot, hideM); s.coinBoss.setMatrixAt(c.slot, hideM); }
         this.coinUsed[c.slot] = 0;
         this.coins.splice(i, 1);
       }
@@ -1072,10 +1111,12 @@ class BuddyRun {
     this.animT += dt * (0.9 + r.speed / 9) * slow;
     const b = s.buddies[this.who];
     b.position.x = r.px;
-    b.position.y = PLAYER_Y + r.py;
-    b.userData.anim = q ? 'idle' : 'run';
+    b.position.y = PLAYER_Y + r.py + r.introY;
+    /* The intro fall shows the buddy's face, then turns into the run. */
+    b.rotation.y = r.intro > 0 ? RUN_YAW * clamp(((r.introK || 0) - 0.7) / 0.3, 0, 1) : RUN_YAW;
+    b.userData.anim = q || r.intro > 0 ? 'idle' : 'run';
     animateMascot(b, this.animT, 0, dt);
-    if (r.slideT > 0 && !q) {
+    if (r.slideT > 0 && !q && r.intro <= 0) {
       const u = b.userData;
       u.bodyGroup.rotation.x = -0.85;
       u.bodyGroup.scale.y *= 0.62;
@@ -1083,15 +1124,20 @@ class BuddyRun {
     } else if (r.py > 0.02) {
       b.userData.bodyGroup.rotation.x -= 0.12;
     }
+    if (r.land > 0) {
+      b.userData.bodyGroup.scale.y *= 1 - 0.26 * r.land;
+      b.userData.bodyGroup.position.y -= 0.08 * r.land;
+    }
     b.userData.bodyGroup.rotation.z += (targetX - r.px) * 0.09;
 
     /* shadow */
+    const airY = r.py + r.introY;
     s.shadow.position.set(r.px, 0.035, 0.02);
-    s.shadow.scale.setScalar(clamp(1 - r.py * 0.35, 0.45, 1));
-    s.shadow.material.opacity = 0.24 * clamp(1 - r.py * 0.4, 0.35, 1);
+    s.shadow.scale.setScalar(clamp(1 - airY * 0.16, 0.32, 1.06));
+    s.shadow.material.opacity = 0.24 * clamp(1 - airY * 0.2, 0.22, 1);
 
-    /* dash scroll (instanced) */
-    const off = r.travel % 5, off2 = r.travel % 7;
+    /* dash scroll (instanced) — the ground itself never moves */
+    const off = r.travel % 5, off2 = r.travel % 7, off3 = r.travel % 9;
     const dd = s.coinDummy; dd.rotation.set(0, 0, 0); dd.scale.setScalar(1);
     for (let i = 0; i < 84; i++) {
       dd.position.set((i < 42 ? -1 : 1) * LANE / 2, 0.03, 8 - (i % 42) * 5 - off);
@@ -1101,8 +1147,13 @@ class BuddyRun {
       dd.position.set((i < 30 ? -1 : 1) * 3.35, 0.03, 6 - (i % 30) * 7 - off2);
       dd.updateMatrix(); s.edgeDashes.setMatrixAt(i, dd.matrix);
     }
+    for (let i = 0; i < 44; i++) {
+      dd.position.set((i < 22 ? -1 : 1) * 3.6, 0.23, 6 - (i % 22) * 9 - off3);
+      dd.updateMatrix(); s.shoulderDashes.setMatrixAt(i, dd.matrix);
+    }
     s.laneDashes.instanceMatrix.needsUpdate = true;
     s.edgeDashes.instanceMatrix.needsUpdate = true;
+    s.shoulderDashes.instanceMatrix.needsUpdate = true;
 
     /* decor scroll */
     for (const it of s.decor) {
@@ -1121,16 +1172,16 @@ class BuddyRun {
 
   draw(dt) {
     const r = this.run, s = this.stage, cam = s.camera;
-    const shake = r.shake;
+    const shake = r.shake + (r.intro > 0 ? 0 : 0);
     const k = 1 - Math.exp(-dt * 7.5);
     const targetCamX = r.px * 0.42 + (Math.random() - 0.5) * shake * 0.22;
-    const targetCamY = 4.3 + r.py * 0.28 + (Math.random() - 0.5) * shake * 0.18;
+    const targetCamY = 3.55 + r.py * 0.3 + (r.introY || 0) * 0.55 + (Math.random() - 0.5) * shake * 0.18;
     cam.position.x += (targetCamX - cam.position.x) * k;
     cam.position.y += (targetCamY - cam.position.y) * k;
     cam.position.z += (8.4 - cam.position.z) * Math.min(1, dt * 4);
     this.look = this.look || new THREE.Vector3(0, 1.1, -10);
     this.look.x += (r.px * 0.5 - this.look.x) * k;
-    this.look.y += (1.05 + r.py * 0.35 - this.look.y) * k;
+    this.look.y += (1.15 + r.py * 0.35 + (r.introY || 0) * 0.45 - this.look.y) * k;
     this.look.z = -10;
     cam.lookAt(this.look);
     s.renderer.render(s.scene, cam);
@@ -1165,6 +1216,8 @@ class BuddyRun {
     cancelAnimationFrame(this.raf);
     clearTimeout(this._animT);
     clearTimeout(this._qT);
+    clearTimeout(this._introT);
+    this.disposeHero();
     document.removeEventListener('keydown', this.keyBound);
     window.removeEventListener('resize', this.resizeBound);
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);

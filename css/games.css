@@ -12,20 +12,33 @@
 .g-coin { display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 7px 12px 7px 9px; border-radius: 999px; background: color-mix(in srgb, #e0a83c 15%, var(--card)); border: 1px solid color-mix(in srgb, #e0a83c 34%, var(--line)); font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
 .g-coin svg { width: 17px; height: 17px; fill: none; stroke: #b9812a; stroke-width: 1.7; stroke-linecap: round; }
 
-.g-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.g-tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; min-height: 118px; padding: 14px; border-radius: 18px; background: var(--card); color: var(--ink); border: 1px solid var(--line); font-weight: 400; }
-.g-tile b { font-size: 15.5px; font-weight: 700; letter-spacing: -.1px; }
-.g-tile small { color: var(--muted); font-size: 11.5px; }
-.g-tile-live { grid-column: 1 / -1; min-height: 136px; justify-content: flex-end; background: linear-gradient(140deg, color-mix(in srgb, var(--accent) 16%, var(--card)), var(--card) 62%); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
-.g-tile-live b { font-size: 19px; }
-.g-tile-art { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 13%, var(--card)); color: var(--accent); margin-bottom: 8px; }
-.g-tile-art svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.g-tile-live .g-tile-art { width: 52px; height: 52px; border-radius: 17px; background: color-mix(in srgb, var(--accent) 18%, var(--card)); }
-.g-tile-live .g-tile-art svg { width: 29px; height: 29px; }
-.g-tile-dot { position: absolute; right: 16px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: #4b9d74; box-shadow: 0 0 0 4px color-mix(in srgb, #4b9d74 22%, transparent); }
-.g-badge { position: absolute; right: 14px; bottom: 14px; padding: 5px 13px; border-radius: 999px; background: var(--accent); color: var(--on); font-size: 11.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-.g-tile.is-soon { opacity: .62; border-style: dashed; }
-.g-tile.is-soon .g-tile-art { color: var(--muted); background: color-mix(in srgb, var(--muted) 9%, var(--card)); }
+/* Tasks and Accessories sit above the game list, as two balanced cards. */
+.g-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.g-quick { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 13px 12px; border-radius: 17px; text-align: left; color: var(--ink); background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 8%, var(--card)), var(--card) 72%); border: 1px solid var(--line); font-weight: 400; }
+.g-quick-art { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line)); }
+.g-quick-art svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.g-quick-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.g-quick-txt b { font-size: 13.5px; font-weight: 700; letter-spacing: -.1px; }
+.g-quick-txt small { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-quick-go { flex: none; margin-left: auto; width: 15px; height: 15px; color: var(--muted); opacity: .6; }
+.g-quick-go svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Games: one wide Buddy Run card and two identical Coming Soon rectangles. */
+.g-games { display: grid; gap: 10px; grid-auto-rows: 156px; }
+.g-run { position: relative; display: flex; align-items: stretch; justify-content: flex-start; width: 100%; height: 100%; min-height: 0; padding: 0; overflow: hidden; border-radius: 21px; border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line)); background-color: #cfe6d7; background-size: cover; background-position: center right; background-repeat: no-repeat; box-shadow: 0 14px 30px -18px rgba(24, 48, 36, .55); text-align: left; color: #fff; font-weight: 400; }
+.g-run::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(19, 33, 27, .84) 0%, rgba(19, 33, 27, .58) 46%, rgba(19, 33, 27, .04) 68%); pointer-events: none; }
+.g-run:hover::before { background: linear-gradient(90deg, rgba(19, 33, 27, .8) 0%, rgba(19, 33, 27, .5) 46%, rgba(19, 33, 27, .04) 68%); }
+.g-run-txt { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; max-width: 53%; padding: 16px; }
+.g-run-txt small { font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .95; color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, .5); white-space: nowrap; }
+.g-run-txt b { font-size: 24px; font-weight: 800; letter-spacing: -.7px; line-height: 1.04; text-shadow: 0 2px 14px rgba(0, 0, 0, .34); }
+.g-run-cta { margin-top: 7px; padding: 7px 18px; border-radius: 999px; background: #fff; color: #2c5f47; font-size: 11.5px; font-weight: 800; letter-spacing: .05em; box-shadow: 0 6px 16px rgba(8, 20, 14, .24); }
+.g-run:active { transform: scale(.985); }
+.g-wide { display: flex; align-items: center; gap: 12px; width: 100%; height: 100%; min-height: 0; padding: 18px; border-radius: 21px; border: 1px dashed color-mix(in srgb, var(--muted) 34%, var(--line)); background: color-mix(in srgb, var(--muted) 4%, var(--card)); color: var(--muted); }
+.g-wide-art { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: color-mix(in srgb, var(--muted) 8%, var(--card)); }
+.g-wide-art svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.g-wide-txt { display: flex; flex-direction: column; gap: 3px; }
+.g-wide-txt b { font-size: 15.5px; font-weight: 700; color: var(--ink); opacity: .72; }
+.g-wide-txt small { font-size: 11.5px; color: var(--muted); }
 
 .g-shortcuts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 .g-short { display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px 13px; border-radius: 15px; background: var(--card); border: 1px solid var(--line); color: var(--ink); font-weight: 400; }
@@ -104,7 +117,26 @@
 .g-slot b { font-size: 11.5px; font-weight: 700; }
 .g-slot small { font-size: 9.5px; color: var(--muted); }
 
+/* ================= ACCESSORIES FITTING ROOM ================= */
+.g-fit { margin: 0 0 14px; }
+.g-fit-stage { position: relative; height: min(44vh, 330px); min-height: 230px; border-radius: 22px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line)); background:
+  radial-gradient(70% 58% at 50% 38%, color-mix(in srgb, var(--accent) 14%, var(--card)) 0%, var(--card) 68%),
+  linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--bg)), var(--bg));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 18px 36px -26px rgba(22, 48, 34, .55); }
+.g-fit-glow { position: absolute; left: 50%; bottom: 12%; width: 62%; height: 26%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 72%); filter: blur(10px); pointer-events: none; }
+.g-fit-stage::before { content: ""; position: absolute; left: 8%; right: 8%; bottom: 13%; height: 15%; border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, rgba(40, 58, 48, .13), transparent 72%); pointer-events: none; }
+.g-fit-stage .b3d { position: absolute; inset: 0; }
+.g-fit-views { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; padding: 5px; border-radius: 15px; background: color-mix(in srgb, var(--muted) 8%, var(--bg)); border: 1px solid var(--line); }
+.g-fit-views button { padding: 9px 4px; border-radius: 11px; background: transparent; color: var(--muted); font-size: 11.5px; font-weight: 700; text-align: center; }
+.g-fit-views button.on { background: var(--card); color: var(--accent); box-shadow: 0 2px 8px rgba(30, 43, 36, .12); }
+.g-fit-meta { display: flex; align-items: baseline; justify-content: flex-start; gap: 8px; margin: 9px 2px 0; }
+.g-fit-meta b { font-size: 12.5px; font-weight: 700; }
+.g-fit-meta small { font-size: 10.5px; color: var(--muted); }
+
 /* ================= BUDDY RUN OVERLAY ================= */
+/* The lobby and the run both hide the tab bar for a full-screen game. */
+html.gr-navless nav { display: none !important; }
+html.gr-navless #view { padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
 html.gr-lock, html.gr-lock body { overflow: hidden; touch-action: none; }
 /* keep the app's floating quick-add chrome behind the game */
 html.gr-lock #qa, html.gr-lock #qabk, html.gr-lock #qamenu, html.gr-lock #snlayer { display: none !important; }
@@ -176,6 +208,36 @@ html.gr-lock #qa, html.gr-lock #qabk, html.gr-lock #qamenu, html.gr-lock #snlaye
 .gr-btn { width: 100%; min-height: 46px; border-radius: 13px; background: #3d7a5a; color: #fff; font-size: 14.5px; font-weight: 800; }
 .gr-btn.ghost { background: transparent; color: #35443c; border: 1px solid #dbe6dd; }
 .gr-over .gr-scene { filter: saturate(.92) brightness(.96); }
+
+/* Heart-loss feedback and coin pickup */
+.gr-hurt { position: absolute; top: calc(88px + env(safe-area-inset-top, 0px)); left: 50%; transform: translate(-50%, 6px); display: flex; align-items: baseline; gap: 5px; padding: 5px 12px; border-radius: 999px; background: rgba(196, 58, 78, .92); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .02em; opacity: 0; pointer-events: none; box-shadow: 0 8px 20px rgba(120, 20, 34, .3); }
+.gr-hurt b { font-size: 14px; font-weight: 900; }
+.gr-hurt.on { animation: grHurt .95s cubic-bezier(.22, .9, .28, 1) both; }
+@keyframes grHurt { 0% { opacity: 0; transform: translate(-50%, 8px) scale(.82); } 18% { opacity: 1; transform: translate(-50%, -2px) scale(1.06); } 62% { opacity: 1; transform: translate(-50%, -4px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -34px) scale(.96); } }
+.gr-hurt.on + .gr-toast { opacity: 0 !important; }
+.gr-hearts.gr-hpulse { animation: grHp .55s cubic-bezier(.3, 1.5, .5, 1); }
+@keyframes grHp { 0%, 100% { transform: scale(1); } 32% { transform: scale(1.13); } 64% { transform: scale(.965); } }
+.gr-chip.gr-pop { animation: grCoinPop .45s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes grCoinPop { 0% { transform: scale(1); } 40% { transform: scale(1.16); } 100% { transform: scale(1); } }
+
+/* Question gate slides in after the impact stagger, never pops in. */
+.gr-question { animation: grQin .42s cubic-bezier(.18, 1.16, .28, 1) both; }
+@keyframes grQin { from { opacity: 0; transform: translateY(34px) scale(.975); } to { opacity: 1; transform: none; } }
+
+/* Celebratory game-over card with the buddy you played */
+.gr-over .gr-card { max-height: 93dvh; padding: 14px 16px 16px; background: linear-gradient(180deg, #fffaf0 0%, #fdfefc 46%); }
+.gr-hero { position: relative; width: 100%; height: 132px; margin: 0 auto 2px; }
+.gr-over-top .gr-sub { margin-bottom: 0; }
+.gr-over .gr-badge { background: #fdf1d8; color: #8a6120; }
+.gr-over .gr-stats { margin: 10px 0 2px; }
+.gr-over .gr-rewards { margin-top: 8px; }
+.gr-over .gr-rw { padding: 6px 9px; }
+.gr-over .gr-sheet-btns { margin-top: 12px; }
+.gr-over .gr-btn { background: linear-gradient(135deg, #56a074, #3d7a5a); box-shadow: 0 10px 22px -12px rgba(38, 103, 73, .8); }
+.gr-over .gr-btn.ghost { background: transparent; color: #35443c; border: 1px solid #dbe6dd; box-shadow: none; }
+
+@media (max-height: 720px) { .gr-hero { height: 104px; } .gr-over .gr-card { padding-top: 10px; } }
+@media (max-width: 360px) { .g-quick { padding: 11px 10px; gap: 8px; } .g-quick-art { width: 34px; height: 34px; } .g-run b { font-size: 23px; } }
 
 @media (max-height: 620px) {
   .gr-question { bottom: 8px; padding: 10px 12px; }

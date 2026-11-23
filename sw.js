@@ -8,10 +8,10 @@
        -> CACHE FIRST so offline study keeps working.
      - everything else (the AI server, model downloads) -> straight to network.
    Bump CACHE whenever the shell changes; activate() deletes the old versions. */
-const CACHE = "studyspace-v48";
+const CACHE = "studyspace-v49";
 const NET_WAIT_MS = 4000; // on a slow connection, use the saved copy after this long
 
-const SHELL = ["./", "./index.html", "./css/motion.css", "./css/cool.css", "./css/buddies.css", "./css/accounts.css", "./css/social.css", "./css/calendar.css", "./css/study-extras.css", "./css/games.css", "./js/motion.js", "./js/cool.js", "./js/buddies.js", "./js/accounts.js", "./js/social.js", "./js/calendar.js", "./js/games.js", "./js/buddyrun.js", "./js/vendor/three.module.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
+const SHELL = ["./", "./index.html", "./css/motion.css", "./css/cool.css", "./css/buddies.css", "./css/accounts.css", "./css/social.css", "./css/calendar.css", "./css/study-extras.css", "./css/games.css", "./css/mascots.css", "./js/motion.js", "./js/cool.js", "./js/buddies.js", "./js/accounts.js", "./js/social.js", "./js/calendar.js", "./js/games.js", "./js/mascotmodels.js", "./js/mascots.js", "./js/buddyrun.js", "./js/vendor/three.module.js", "./manifest.webmanifest", "./icons/buddy-run-thumb.png", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 const CODE_RE = /\.(?:html?|css|js|mjs|webmanifest|json)$/i;
 const IMAGE_RE = /\.(?:png|jpe?g|gif|svg|webp|avif|ico|bmp)$/i;
