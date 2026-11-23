@@ -478,10 +478,14 @@ img,video,canvas{max-width:100%;height:auto}
 .gsp .tag.mut{background:color-mix(in srgb,#e05252 15%,var(--card));color:#b23b3b}
 .gsp.empty{background:transparent;border-style:dashed;opacity:.6}
 .gsp.empty .av{width:56px;height:56px;background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted);font-weight:400;font-size:22px;border-radius:50%;display:grid;place-items:center}
-.gsl-dock{margin-top:auto;display:flex;gap:8px;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:999px;padding:7px;box-shadow:0 20px 40px -26px rgba(16,24,20,.8);backdrop-filter:blur(14px);position:sticky;bottom:0}
-.gsl-dock button{flex:1;min-height:44px;border-radius:999px;font-size:13px;font-weight:800;background:var(--bg);border:1px solid var(--line);color:var(--ink);box-shadow:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
+.gsl-dock{margin:auto auto 0;display:flex;gap:10px;align-items:center;justify-content:center;width:fit-content;max-width:100%;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:999px;padding:8px;box-shadow:0 20px 40px -26px rgba(16,24,20,.8);backdrop-filter:blur(14px);position:sticky;bottom:0}
+.gsl-dock button{flex:none;width:48px;height:48px;min-height:48px;border-radius:50%;background:var(--bg);border:1px solid var(--line);color:var(--ink);box-shadow:none;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),transform .16s var(--spring)}
+.gsl-dock button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.gsl-dock button:hover{border-color:color-mix(in srgb,var(--accent) 42%,var(--line))}
+.gsl-dock button:active{transform:scale(.94)}
 .gsl-dock button.off{background:color-mix(in srgb,#e05252 15%,var(--card));border-color:color-mix(in srgb,#e05252 32%,var(--line));color:#b23b3b}
-.gsl-dock button.gsl-leave{background:#c2410c;border-color:#c2410c;color:#fff;flex:0 0 46px;padding:0}
+.gsl-dock button.gsl-leave{width:52px;height:52px;min-height:52px;background:#c2410c;border-color:#c2410c;color:#fff}
+.gsl-dock button.gsl-leave:hover{background:#a8360a;border-color:#a8360a}
 .gsl-dock button.gsl-leave svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* leave confirmation */
@@ -4567,6 +4571,16 @@ document.addEventListener('click',async function(e){
       mb.setAttribute('aria-label',G.muted?'Unmute microphone':'Mute microphone');
     }
   }
+  /* Icon-only dock controls. Each button swaps its own glyph and label
+     instead of showing text, so the bar stays compact on a phone. */
+  var IC={
+    mic:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    micoff:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 10.6 6.1M12 18v3M4 4l16 16"/></svg>',
+    spk:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.4 8.6a5 5 0 0 1 0 6.8M18.2 5.8a9 9 0 0 1 0 12.4"/></svg>',
+    spkoff:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+    friends:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6"/></svg>',
+    leave:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h9"/></svg>'
+  };
   function room(){
     var r=shell();
     r.innerHTML='<div class="gsl">'+
@@ -4576,10 +4590,10 @@ document.addEventListener('click',async function(e){
       '<div class="gsl-seats" id="gspeople"></div>'+
       '<p class="gsnote" style="text-align:center;margin:0">A glowing ring shows who is speaking. Audio only, max five people.</p>'+
       '<div class="gsl-dock">'+
-        '<button type="button" data-gs="mute" id="gsmute">'+(G.muted?'Unmute':'Mute')+'</button>'+
-        '<button type="button" data-gs="invite" id="gsinvite" aria-label="Invite a friend to this room"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6"/></svg>Friends</button>'+
-        '<button type="button" data-gs="speaker" id="gsspk"'+(G.spk?'':' class="off"')+'>'+(G.spk?'Speaker':'Speaker off')+'</button>'+
-        '<button type="button" class="gsl-leave" data-gs="leave" aria-label="Leave room"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h9"/></svg></button></div>'+
+        '<button type="button" data-gs="mute" id="gsmute" aria-label="'+(G.muted?'Unmute microphone':'Mute microphone')+'" title="'+(G.muted?'Unmute microphone':'Mute microphone')+'">'+(G.muted?IC.micoff:IC.mic)+'</button>'+
+        '<button type="button" data-gs="invite" id="gsinvite" aria-label="Invite a friend to this room" title="Invite a friend">'+IC.friends+'</button>'+
+        '<button type="button" data-gs="speaker" id="gsspk"'+(G.spk?'':' class="off"')+' aria-label="'+(G.spk?'Turn speaker off':'Turn speaker on')+'" title="'+(G.spk?'Turn speaker off':'Turn speaker on')+'">'+(G.spk?IC.spk:IC.spkoff)+'</button>'+
+        '<button type="button" class="gsl-leave" data-gs="leave" aria-label="Leave room" title="Leave room">'+IC.leave+'</button></div>'+
       '<div class="gsl-confirm" id="gslconfirm" role="alertdialog" aria-modal="true" aria-labelledby="gslcfm-t" aria-describedby="gslcfm-d" hidden><div class="gsl-confirm-card"><b id="gslcfm-t">Leave the study room?</b><p id="gslcfm-d">Your microphone turns off and you disconnect from everyone here.</p><div class="gsl-confirm-actions"><button type="button" class="ghost" data-gs="leave-cancel">Cancel</button><button type="button" class="danger" data-gs="leave-yes">Leave Room</button></div></div></div>'+
       '<div id="gsaudio"></div></div>';
     paintPeople();paintTimer();applyMin();
@@ -4817,7 +4831,13 @@ document.addEventListener('click',async function(e){
   function toggleMute(){
     G.muted=!G.muted;
     applyMic();
-    var b=q('gsmute');if(b){b.textContent=G.muted?'Unmute':'Mute';b.classList.toggle('off',G.muted)}
+    var b=q('gsmute');
+    if(b){
+      b.innerHTML=G.muted?IC.micoff:IC.mic;
+      b.setAttribute('aria-label',G.muted?'Unmute microphone':'Mute microphone');
+      b.title=G.muted?'Unmute microphone':'Mute microphone';
+      b.classList.toggle('off',G.muted);
+    }
     var tag=document.querySelector('[data-gsp="'+G.id+'"] [data-gsl]');
     if(tag){tag.textContent=G.muted?'Muted':'Listening';tag.classList.toggle('mut',G.muted)}
     if(G.min)pill();
@@ -4825,7 +4845,13 @@ document.addEventListener('click',async function(e){
   function toggleSpeaker(){
     G.spk=!G.spk;
     applySpeaker();
-    var b=q('gsspk');if(b){b.textContent=G.spk?'Speaker':'Speaker off';b.classList.toggle('off',!G.spk)}
+    var b=q('gsspk');
+    if(b){
+      b.innerHTML=G.spk?IC.spk:IC.spkoff;
+      b.setAttribute('aria-label',G.spk?'Turn speaker off':'Turn speaker on');
+      b.title=G.spk?'Turn speaker off':'Turn speaker on';
+      b.classList.toggle('off',!G.spk);
+    }
   }
 
   document.addEventListener('click',function(e){
