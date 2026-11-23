@@ -3224,9 +3224,10 @@ wallet:'M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4zM4 7V6a2 2 0 0 1 2-2h11M16 13.5h
 journal:'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3',
 lifetracker:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8.5 12.5l2.5 2.5 4.5-5',
 lifebuddy:'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
-friends:'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 20v-2a4 4 0 0 0-3-3.9M16 2.1a4 4 0 0 1 0 7.8'
+friends:'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 20v-2a4 4 0 0 0-3-3.9M16 2.1a4 4 0 0 1 0 7.8',
+calendar:'M4 5h16v15H4zM4 10h16M8 3v4M16 3v4M8 14h3v3H8z'
 };
-var TC={notes:'#5b7fb5',learn:'#8a8f3a',lib:'#c0793b',buddy:'#3d7a5a',acct:'#a45a7c',grades:'#c0793b',exams:'#5b7fb5',wallet:'#3d7a5a',journal:'#a45a7c',lifetracker:'#8a8f3a',lifebuddy:'#d9667a',friends:'#5b7fb5'};
+var TC={notes:'#5b7fb5',learn:'#8a8f3a',lib:'#c0793b',buddy:'#3d7a5a',acct:'#a45a7c',grades:'#c0793b',exams:'#5b7fb5',wallet:'#3d7a5a',journal:'#a45a7c',lifetracker:'#8a8f3a',lifebuddy:'#d9667a',friends:'#5b7fb5',calendar:'#7c6bb0'};
 tile=function(id,t,sub){
   return '<button class="tile" data-mod="'+id+'" style="--tc:'+(TC[id]||'var(--accent)')+'"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(TI[id]||'')+'"/></svg></span><b>'+t+'</b><small>'+sub+'</small></button>';
 };
